@@ -156,10 +156,10 @@
         
         .modal-box { 
             background: var(--bg-deep); width: 100%; max-width: 460px; 
-            max-height: 88vh; /* السماح للنافذة بأن تأخذ مساحة كبيرة */
+            max-height: 88vh; 
             border-radius: 24px; border: 1px solid var(--surface-border); 
-            display: block; /* تغيير جذري لحل مشكلة السكرول */
-            overflow-y: auto; /* السماح للنافذة نفسها بالنزول للأسفل بحرية */
+            display: block; 
+            overflow-y: auto; 
             transform: translateY(20px) scale(0.95); transition: var(--transition-smooth); 
             box-shadow: 0 20px 40px rgba(0,0,0,0.6);
             -webkit-overflow-scrolling: touch;
@@ -180,7 +180,7 @@
         .close-modal { background: var(--surface); border: 1px solid var(--surface-border); color: var(--text-muted); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; transition: var(--transition-smooth); display: flex; align-items: center; justify-content: center; }
         .close-modal:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; transform: scale(1.1); }
         
-        /* الأقسام الداخلية للنافذة تأخذ مساحتها الطبيعية */
+        /* الأقسام الداخلية للنافذة */
         .step-panel { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
         .step-panel.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
@@ -198,7 +198,6 @@
             display: flex; flex-direction: column; gap: 12px; padding-bottom: 10px;
         }
 
-        /* -------- التصميم المانع للتداخل نهائياً (CSS Grid) -------- */
         .price-card-modern {
             position: relative;
             border-radius: 16px;
@@ -208,50 +207,62 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             transition: transform 0.2s ease;
         }
-
+        .price-card-modern:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 15px rgba(6, 182, 212, 0.3);
+        }
         .price-card-modern::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
             background: conic-gradient(transparent 70%, rgba(255, 255, 255, 0.4) 100%);
-            animation: spin-transparent-ray 3s linear infinite;
-            z-index: 0;
-            pointer-events: none;
+            animation: spin-transparent-ray 3s linear infinite; z-index: 0; pointer-events: none;
         }
+        @keyframes spin-transparent-ray { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        @keyframes spin-transparent-ray {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* استخدام الـ Grid يقضي على مشكلة التداخل نهائياً */
         .price-card-content {
             position: relative;
             z-index: 2; 
             display: grid;
-            grid-template-columns: 1fr max-content; /* الاسم يأخذ الباقي، السعر يأخذ حجمه الفعلي دون أن ينضغط */
+            grid-template-columns: 1fr max-content; 
             align-items: center;
-            gap: 12px; /* مسافة إجبارية بين الاسم والسعر */
+            gap: 12px; 
             width: 100%;
             padding: 14px 16px;
             background: var(--surface);
             border-radius: 14px;
         }
         
-        .item-details {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap; /* النزول لسطر جديد لو الاسم طويل */
-            word-break: break-word;
-        }
+        .item-details { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; word-break: break-word; }
         .item-quantity { font-size: 1.15rem; font-weight: 900; color: #fff; }
         .item-type { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; }
         
-        /* السعر */
+        /* تنسيقات منطقة السعر والخصم الجديدة */
+        .price-area {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+        .discount-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .discount-badge {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 800;
+        }
+        .old-price {
+            text-decoration: line-through;
+            color: #ef4444;
+            font-size: 0.85rem;
+            opacity: 0.8;
+            font-weight: 700;
+        }
         .item-price-tag {
             background: rgba(16, 185, 129, 0.1);
             color: #10b981;
@@ -262,7 +273,7 @@
             border: 1px solid rgba(16, 185, 129, 0.3);
             direction: ltr;
             text-align: center;
-            min-width: 80px; /* لضمان شكل السعر */
+            min-width: 80px;
         }
 
         .empty-msg { text-align: center; color: #ef4444; padding: 18px; background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 12px; width: 100%; font-size: 0.85rem; }
@@ -303,11 +314,8 @@
 
     <div id="bottomDock" class="bottom-nav-dock" style="display:none;"></div>
 
-    <!-- النافذة المنبثقة -->
     <div id="gameModal" class="modal-overlay" onclick="closeOnOutside(event)">
         <div class="modal-box" id="modalScrollBox">
-            
-            <!-- الهيدر الثابت -->
             <div class="modal-header">
                 <div class="modal-title-area">
                     <img id="modalGameImg" src="" alt="">
@@ -327,7 +335,6 @@
                 </div>
                 <div class="prices-grid-container" id="pricesContent"></div>
             </div>
-            
         </div>
     </div>
 
@@ -370,18 +377,15 @@
 
         db.ref('settings').on('value', snap => {
             const data = snap.val() || {};
-            
             if(data.general && data.general.logo) {
                 const logo = document.getElementById('mainLogoImg');
                 logo.src = data.general.logo;
                 logo.style.display = 'block';
             }
-
             const banners = data.banners ? Object.values(data.banners) : [];
             const isAuto = data.general ? (data.general.bannerAutoPlay !== false) : true;
             const speed = data.general ? (data.general.bannerSpeed || 3) * 1000 : 3000;
             initSlider(banners, isAuto, speed);
-
             const socials = data.socials ? Object.values(data.socials) : [];
             renderBottomDock(socials);
         });
@@ -394,28 +398,17 @@
             const container = document.getElementById('sliderContainer');
             const wrapper = document.getElementById('sliderWrapper');
             const dotsContainer = document.getElementById('sliderDots');
-            
             clearInterval(sliderInterval);
-            wrapper.innerHTML = '';
-            dotsContainer.innerHTML = '';
-            totalSlides = banners.length;
-
-            if(banners.length === 0) {
-                container.style.display = 'none';
-                return;
-            }
+            wrapper.innerHTML = ''; dotsContainer.innerHTML = ''; totalSlides = banners.length;
+            if(banners.length === 0) { container.style.display = 'none'; return; }
             container.style.display = 'block';
 
             let fragment = document.createDocumentFragment();
             let dotsFragment = document.createDocumentFragment();
-
             banners.forEach((url, index) => {
                 const img = document.createElement('img');
-                img.src = url;
-                img.loading = "lazy";
-                img.className = index === 0 ? 'slide active' : 'slide';
+                img.src = url; img.loading = "lazy"; img.className = index === 0 ? 'slide active' : 'slide';
                 fragment.appendChild(img);
-
                 if(banners.length > 1) {
                     const dot = document.createElement('div');
                     dot.className = index === 0 ? 'dot active' : 'dot';
@@ -423,21 +416,16 @@
                     dotsFragment.appendChild(dot);
                 }
             });
-
-            wrapper.appendChild(fragment);
-            dotsContainer.appendChild(dotsFragment);
+            wrapper.appendChild(fragment); dotsContainer.appendChild(dotsFragment);
 
             wrapper.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(sliderInterval); }, {passive: true});
             wrapper.addEventListener('touchend', e => {
                 let endX = e.changedTouches[0].clientX;
                 let current = Array.from(wrapper.children).findIndex(el => el.classList.contains('active'));
-                
                 if (startX - endX > 40) goToSlide((current + 1) % totalSlides);
                 else if (endX - startX > 40) goToSlide((current - 1 + totalSlides) % totalSlides);
-                
                 if(banners.length > 1 && isAuto) startAutoPlay(speed);
             }, {passive: true});
-
             if(banners.length > 1 && isAuto) startAutoPlay(speed);
         }
 
@@ -454,7 +442,6 @@
             const slides = document.getElementById('sliderWrapper').children;
             const dots = document.getElementById('sliderDots').children;
             if(!slides.length) return;
-            
             for(let i=0; i<slides.length; i++) {
                 slides[i].classList.remove('active');
                 if(dots[i]) dots[i].classList.remove('active');
@@ -467,26 +454,12 @@
             const dock = document.getElementById('bottomDock');
             if(socials.length === 0) { dock.style.display = 'none'; return; }
             dock.style.display = 'flex';
-
-            const icons = {
-                'whatsapp': 'fab fa-whatsapp',
-                'facebook': 'fab fa-facebook-f',
-                'telegram': 'fab fa-telegram-plane',
-                'instagram': 'fab fa-instagram',
-                'youtube': 'fab fa-youtube',
-                'warranty': 'fas fa-star'
-            };
-
+            const icons = { 'whatsapp': 'fab fa-whatsapp', 'facebook': 'fab fa-facebook-f', 'telegram': 'fab fa-telegram-plane', 'instagram': 'fab fa-instagram', 'youtube': 'fab fa-youtube', 'warranty': 'fas fa-star' };
             let htmlString = '';
             socials.forEach(s => {
-                htmlString += `
-                    <a href="${s.url}" target="_blank" class="dock-item" data-platform="${s.platform}">
-                        <div class="dock-icon-wrapper">
-                            <i class="${icons[s.platform] || 'fas fa-link'}"></i>
-                        </div>
-                        <span>${s.name}</span>
-                    </a>
-                `;
+                htmlString += `<a href="${s.url}" target="_blank" class="dock-item" data-platform="${s.platform}">
+                    <div class="dock-icon-wrapper"><i class="${icons[s.platform] || 'fas fa-link'}"></i></div>
+                    <span>${s.name}</span></a>`;
             });
             dock.innerHTML = htmlString;
         }
@@ -494,24 +467,17 @@
         db.ref('games').on('value', snap => {
             globalGames = snap.val() || {};
             const grid = document.getElementById('gamesGrid');
-            
             let gamesArray = Object.keys(globalGames).map(key => ({ key: key, ...globalGames[key] }));
             gamesArray.sort((a, b) => (a.order || 99) - (b.order || 99));
 
             if(gamesArray.length === 0) {
-                grid.innerHTML = '<div class="empty-msg">لا توجد ألعاب مضافة حالياً</div>';
-                return;
+                grid.innerHTML = '<div class="empty-msg">لا توجد ألعاب مضافة حالياً</div>'; return;
             }
-
             let htmlString = '';
             gamesArray.forEach(g => {
-                htmlString += `
-                    <div class="game-card" data-name="${g.name.toLowerCase()}" onclick="openGame('${g.key}')">
-                        <img src="${g.img}" alt="${g.name}" loading="lazy">
-                        <h3>${g.name}</h3>
-                        <button class="btn-view">عرض الأسعار</button>
-                    </div>
-                `;
+                htmlString += `<div class="game-card" data-name="${g.name.toLowerCase()}" onclick="openGame('${g.key}')">
+                    <img src="${g.img}" alt="${g.name}" loading="lazy">
+                    <h3>${g.name}</h3><button class="btn-view">عرض الأسعار</button></div>`;
             });
             grid.innerHTML = htmlString;
         });
@@ -524,61 +490,64 @@
         }
 
         function openGame(id) {
-            currentGameId = id;
-            const game = globalGames[id];
+            currentGameId = id; const game = globalGames[id];
             document.getElementById('modalGameName').innerText = game.name;
             document.getElementById('modalGameImg').src = game.img;
             
             const optionsList = document.getElementById('modalOptionsList');
-            let htmlString = '';
-            let hasAnyOption = false;
+            let htmlString = ''; let hasAnyOption = false;
 
             if (game.id_available) {
                 hasAnyOption = true;
-                htmlString += `
-                    <div class="option-card" onclick="showPrices('id')">
-                        <div class="option-icon"><i class="fas fa-id-card"></i></div>
-                        <div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق ID</h4></div>
-                    </div>`;
+                htmlString += `<div class="option-card" onclick="showPrices('id')">
+                    <div class="option-icon"><i class="fas fa-id-card"></i></div>
+                    <div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق ID</h4></div></div>`;
             }
             if (game.account_available) {
                 hasAnyOption = true;
-                htmlString += `
-                    <div class="option-card" onclick="showPrices('account')">
-                        <div class="option-icon"><i class="fas fa-user-shield"></i></div>
-                        <div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق الحساب</h4></div>
-                    </div>`;
+                htmlString += `<div class="option-card" onclick="showPrices('account')">
+                    <div class="option-icon"><i class="fas fa-user-shield"></i></div>
+                    <div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق الحساب</h4></div></div>`;
+            }
+            if (game.custom_methods && game.custom_methods.length > 0) {
+                hasAnyOption = true;
+                game.custom_methods.forEach((cm, index) => {
+                    htmlString += `<div class="option-card" onclick="showPrices('custom_${index}')">
+                        <div class="option-icon"><i class="fas fa-bolt"></i></div>
+                        <div><h4 style="color:#fff; font-size:0.95rem;">${cm.name}</h4></div></div>`;
+                });
             }
             
             optionsList.innerHTML = hasAnyOption ? htmlString : '<div class="empty-msg">غير متوفر حالياً</div>';
-
             document.getElementById('stepSelection').classList.add('active');
             document.getElementById('stepPrices').classList.remove('active');
-            
-            // تصفير السكرول عند فتح اللعبة
             document.getElementById('modalScrollBox').scrollTop = 0;
-            
             const modal = document.getElementById('gameModal');
-            modal.style.display = 'flex';
-            void modal.offsetWidth;
-            modal.classList.add('active');
+            modal.style.display = 'flex'; void modal.offsetWidth; modal.classList.add('active');
         }
 
         function showPrices(type) {
             currentPriceType = type;
             const game = globalGames[currentGameId];
-            let pricesStr = '';
+            let pricesStr = ''; let methodTextForWhatsApp = '';
             
-            if (currentCurrency === 'USD') {
-                pricesStr = type === 'id' ? (game.id_prices_usd || '') : (game.account_prices_usd || '');
-            } else {
-                pricesStr = type === 'id' ? (game.id_prices || '') : (game.account_prices || '');
+            if (type === 'id') {
+                pricesStr = currentCurrency === 'USD' ? (game.id_prices_usd || '') : (game.id_prices || '');
+                methodTextForWhatsApp = 'عن طريق الـ ID';
+            } else if (type === 'account') {
+                pricesStr = currentCurrency === 'USD' ? (game.account_prices_usd || '') : (game.account_prices || '');
+                methodTextForWhatsApp = 'عن طريق الحساب';
+            } else if (type.startsWith('custom_')) {
+                const index = parseInt(type.split('_')[1]);
+                const customMethod = game.custom_methods[index];
+                pricesStr = currentCurrency === 'USD' ? (customMethod.prices_usd || '') : (customMethod.prices || '');
+                methodTextForWhatsApp = customMethod.name;
             }
 
             const content = document.getElementById('pricesContent');
             
             if (!pricesStr || pricesStr.trim() === '') {
-                content.innerHTML = `<div class="empty-msg">لا توجد أسعار مدخلة بهذه العملة (${currentCurrency})</div>`;
+                content.innerHTML = `<div class="empty-msg">لا توجد أسعار مدخلة لهذه الطريقة بالعملة الحالية (${currentCurrency})</div>`;
             } else {
                 const lines = pricesStr.split('\n');
                 let htmlString = '';
@@ -586,8 +555,26 @@
                     let parts = line.split('=');
                     if(parts.length === 2) {
                         let name = parts[0].trim();
-                        let val = parts[1].trim();
+                        let rawVal = parts[1].trim();
                         
+                        // ===== منطق الخصم الجديد =====
+                        let finalPrice = rawVal;
+                        let oldPriceHtml = '';
+                        
+                        if(rawVal.includes('بدل')) {
+                            let priceParts = rawVal.split('بدل');
+                            finalPrice = priceParts[0].trim(); // السعر الجديد
+                            let oldPrice = priceParts[1].trim(); // السعر القديم
+                            
+                            oldPriceHtml = `
+                                <div class="discount-wrapper">
+                                    <span class="discount-badge">خصم</span>
+                                    <span class="old-price">${oldPrice}</span>
+                                </div>
+                            `;
+                        }
+                        // ============================
+
                         let quantityMatch = name.match(/[0-9,\.]+/);
                         let quantity = quantityMatch ? quantityMatch[0] : '';
                         let itemName = name.replace(/[0-9,\.]+/, '').trim();
@@ -598,13 +585,21 @@
                             : `<span class="item-quantity" style="font-size: 1rem;">${itemName}</span>`;
 
                         htmlString += `
-                            <div class="price-card-modern">
+                            <div class="price-card-modern" style="cursor: pointer;" 
+                                 data-game="${encodeURIComponent(game.name)}" 
+                                 data-pack="${encodeURIComponent(name)}" 
+                                 data-price="${encodeURIComponent(finalPrice)}" 
+                                 data-method="${encodeURIComponent(methodTextForWhatsApp)}"
+                                 onclick="openWhatsApp(this)">
                                 <div class="price-card-content">
                                     <div class="item-details">
                                         ${displayNameHtml}
                                     </div>
-                                    <div class="item-price-tag">
-                                        ${val}
+                                    <div class="price-area">
+                                        ${oldPriceHtml}
+                                        <div class="item-price-tag">
+                                            ${finalPrice}
+                                        </div>
                                     </div>
                                 </div>
                             </div>`;
@@ -615,9 +610,24 @@
 
             document.getElementById('stepSelection').classList.remove('active');
             document.getElementById('stepPrices').classList.add('active');
-            
-            // تصفير السكرول عند فتح الأسعار
             document.getElementById('modalScrollBox').scrollTop = 0;
+        }
+
+        function openWhatsApp(element) {
+            const phone = "201125808758";
+            const gameName = decodeURIComponent(element.getAttribute('data-game'));
+            const packName = decodeURIComponent(element.getAttribute('data-pack'));
+            const price = decodeURIComponent(element.getAttribute('data-price'));
+            const method = decodeURIComponent(element.getAttribute('data-method'));
+            
+            const text = `مرحباً، أريد طلب شحن:
+🎮 اللعبة/المنتج: ${gameName}
+📦 الباقة: ${packName}
+💰 السعر: ${price}
+⚙️ طريقة الشحن: ${method}`;
+
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
         }
 
         function goBack() {
