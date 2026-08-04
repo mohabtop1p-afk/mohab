@@ -260,7 +260,6 @@
         .discount-header { text-align: center; padding: 22px 20px 10px; }
         .discount-icon { font-size: 2.8rem; color: #f59e0b; filter: drop-shadow(0 0 12px rgba(245,158,11,0.6)); margin-bottom: 8px; animation: bounce-icon 2s infinite; }
         
-        /* تأثير صورة اللعبة في الخصم */
         .discount-game-img {
             width: 75px; height: 75px; border-radius: 18px; object-fit: cover; 
             margin: 0 auto 12px auto; display: none;
@@ -366,15 +365,13 @@
         </div>
     </div>
 
-    <!-- نافذة الخصم العشوائي المحسنة -->
+    <!-- نافذة الخصم العشوائي -->
     <div id="discountModal" class="modal-overlay" onclick="closeOnOutside(event)">
         <div class="modal-box special-discount-modal">
             <div class="discount-modal-inner">
                 <button class="close-modal" style="position: absolute; top:15px; left:15px; z-index:11;" onclick="closeModal('discountModal')"><i class="fas fa-times"></i></button>
                 <div class="discount-header">
-                    <!-- الصورة التي ستظهر بدلاً من الأيقونة -->
                     <img id="dGameImage" class="discount-game-img" src="" alt="Game Icon">
-                    <!-- أيقونة الهدية تظهر فقط إذا لم يتم العثور على صورة اللعبة -->
                     <i class="fas fa-gift discount-icon" id="dGiftIconFallback"></i>
                     
                     <div class="discount-title">تهانينا! لديك خصم حصري</div>
@@ -439,6 +436,11 @@
         let discountTimerInterval = null;
         let activeDiscountData = null;
         let formattedExpiryTextForWA = '';
+        let systemCooldownHours = 24; 
+
+        db.ref('settings/discount_cooldown_hours').on('value', snap => {
+            if (snap.exists()) systemCooldownHours = parseFloat(snap.val()) || 0;
+        });
 
         window.addEventListener('popstate', function(e) {
             if (document.getElementById('discountModal').classList.contains('active')) {
@@ -463,6 +465,7 @@
                 btn.innerHTML = '<i class="fas fa-pound-sign"></i> EGP'; btn.style.background = 'rgba(6, 182, 212, 0.1)'; btn.style.color = 'var(--primary)';
             }
             if(document.getElementById('stepPrices').classList.contains('active') && currentPriceType) showPrices(currentPriceType);
+            if(activeDiscountData) updateDiscountPriceUI();
         }
 
         db.ref('settings').on('value', snap => {
@@ -526,7 +529,7 @@
             const grid = document.getElementById('gamesGrid');
             let gamesArray = Object.keys(globalGames).map(key => ({ key: key, ...globalGames[key] }));
             gamesArray.sort((a, b) => (a.order || 99) - (b.order || 99));
-            if(gamesArray.length === 0) { grid.innerHTML = '<div class="empty-msg">لا توجد ألعاب مضافة حالياً</div>'; return; }
+            if(gamesArray.length === 0) { grid.innerHTML = '<div class="empty-msg">لا توجد منتجات مضافة حالياً</div>'; return; }
             let htmlString = '';
             gamesArray.forEach(g => { htmlString += `<div class="game-card" data-name="${g.name.toLowerCase()}" onclick="openGame('${g.key}')"><img src="${g.img}" alt="${g.name}" loading="lazy"><h3>${g.name}</h3><button class="btn-view">عرض الأسعار</button></div>`; });
             grid.innerHTML = htmlString;
@@ -539,12 +542,16 @@
             currentGameId = id; const game = globalGames[id];
             document.getElementById('modalGameName').innerText = game.name; document.getElementById('modalGameImg').src = game.img;
             const optionsList = document.getElementById('modalOptionsList'); let htmlString = ''; let hasAnyOption = false;
+            
             if (game.id_available) { hasAnyOption = true; htmlString += `<div class="option-card" onclick="showPrices('id')"><div class="option-icon"><i class="fas fa-id-card"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق ID</h4></div></div>`; }
             if (game.account_available) { hasAnyOption = true; htmlString += `<div class="option-card" onclick="showPrices('account')"><div class="option-icon"><i class="fas fa-user-shield"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق الحساب</h4></div></div>`; }
+            
+            // اضافة طرق الشحن المخصصة (مثل رقم فودافون)
             if (game.custom_methods && game.custom_methods.length > 0) {
                 hasAnyOption = true;
                 game.custom_methods.forEach((cm, index) => { htmlString += `<div class="option-card" onclick="showPrices('custom_${index}')"><div class="option-icon"><i class="fas fa-bolt"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">${cm.name}</h4></div></div>`; });
             }
+            
             optionsList.innerHTML = hasAnyOption ? htmlString : '<div class="empty-msg">غير متوفر حالياً</div>';
             document.getElementById('stepSelection').classList.add('active'); document.getElementById('stepPrices').classList.remove('active');
             document.getElementById('modalScrollBox').scrollTop = 0; const modal = document.getElementById('gameModal'); modal.style.display = 'flex'; void modal.offsetWidth; modal.classList.add('active');
@@ -554,7 +561,15 @@
             pushModalState();
             currentPriceType = type; const game = globalGames[currentGameId];
             let pricesStr = ''; let methodTextForWhatsApp = '';
-            if (type === 'id') { pricesStr = currentCurrency === 'USD' ? (game.id_prices_usd || '') : (game.id_prices || ''); methodTextForWhatsApp = 'عن طريق شحن الـ ID'; } else if (type === 'account') { pricesStr = currentCurrency === 'USD' ? (game.account_prices_usd || '') : (game.account_prices || ''); methodTextForWhatsApp = 'عن طريق شحن الحساب'; } else if (type.startsWith('custom_')) { const index = parseInt(type.split('_')[1]); const customMethod = game.custom_methods[index]; pricesStr = currentCurrency === 'USD' ? (customMethod.prices_usd || '') : (customMethod.prices || ''); methodTextForWhatsApp = customMethod.name; }
+            
+            if (type === 'id') { 
+                pricesStr = currentCurrency === 'USD' ? (game.id_prices_usd || '') : (game.id_prices || ''); methodTextForWhatsApp = 'عن طريق شحن الـ ID'; 
+            } else if (type === 'account') { 
+                pricesStr = currentCurrency === 'USD' ? (game.account_prices_usd || '') : (game.account_prices || ''); methodTextForWhatsApp = 'عن طريق شحن الحساب'; 
+            } else if (type.startsWith('custom_')) { 
+                const index = parseInt(type.split('_')[1]); const customMethod = game.custom_methods[index]; pricesStr = currentCurrency === 'USD' ? (customMethod.prices_usd || '') : (customMethod.prices || ''); methodTextForWhatsApp = customMethod.name; 
+            }
+            
             const content = document.getElementById('pricesContent');
             if (!pricesStr || pricesStr.trim() === '') { content.innerHTML = `<div class="empty-msg">لا توجد أسعار مدخلة لهذه الطريقة بالعملة الحالية (${currentCurrency})</div>`; } else {
                 const lines = pricesStr.split('\n'); let htmlString = '';
@@ -636,7 +651,6 @@
                         openDiscountModal();
                     }
                 } else {
-                    // تم التعديل هنا: إذا تم مسح الخصومات من لوحة التحكم لتشغيلها من جديد
                     if (activeDiscountData || myActiveDiscountCode) {
                         activeDiscountData = null;
                         myActiveDiscountCode = null;
@@ -657,41 +671,61 @@
         function listenForAvailableDiscounts() {
             if(isListeningForDiscounts) return;
             isListeningForDiscounts = true;
-            
-            db.ref('discounts').on('value', distSnap => {
-                if(myActiveDiscountCode) return;
 
-                let activeDiscounts = [];
-                distSnap.forEach(d => {
-                    let data = d.val();
-                    if (data.status === 'active') {
-                        if (data.maxUsers === 'all' || data.currentClaims < data.maxUsers) {
-                            activeDiscounts.push({key: d.key, ...data});
+            db.ref('discount_codes').orderByChild('visitorId').equalTo(visitorId).once('value', userCodesSnap => {
+                let now = Date.now();
+                let inCooldown = false;
+
+                userCodesSnap.forEach(child => {
+                    let code = child.val();
+                    if (code.status === 'shipped' && code.shippedAt) {
+                        let cooldownMs = systemCooldownHours * 60 * 60 * 1000;
+                        if (now - code.shippedAt < cooldownMs) {
+                            inCooldown = true;
                         }
                     }
                 });
 
-                if (activeDiscounts.length > 0) {
-                    let randomDiscount = activeDiscounts[Math.floor(Math.random() * activeDiscounts.length)];
-                    assignDiscountToUser(randomDiscount);
+                if (inCooldown) {
+                    isListeningForDiscounts = false;
+                    return; 
                 }
+
+                db.ref('discounts').on('value', distSnap => {
+                    if(myActiveDiscountCode) return;
+
+                    let activeDiscounts = [];
+                    distSnap.forEach(d => {
+                        let data = d.val();
+                        if (data.status === 'active') {
+                            if (data.maxUsers === 'all' || data.currentClaims < data.maxUsers) {
+                                activeDiscounts.push({key: d.key, ...data});
+                            }
+                        }
+                    });
+
+                    if (activeDiscounts.length > 0) {
+                        let randomDiscount = activeDiscounts[Math.floor(Math.random() * activeDiscounts.length)];
+                        assignDiscountToUser(randomDiscount);
+                    }
+                });
             });
         }
 
         function assignDiscountToUser(discount) {
             let code = 'MOHABSTORE-' + Math.floor(100000 + Math.random() * 900000);
             let expiresAt = Date.now() + (discount.durationHours * 60 * 60 * 1000);
-            
-            let typeFormatted = discount.type === 'ID' ? 'عن طريق شحن الـ ID' : 'عن طريق شحن الحساب';
 
             let codeData = {
                 visitorId: visitorId,
                 discountId: discount.key,
                 game: discount.gameName,
                 package: discount.package,
-                type: typeFormatted,
-                oldPrice: discount.oldPrice,
+                type: discount.type,
+                oldPrice: discount.oldPrice || '',
                 newPrice: discount.newPrice,
+                oldPriceUsd: discount.oldPriceUsd || '',
+                newPriceUsd: discount.newPriceUsd || '',
                 expiresAt: expiresAt,
                 status: 'active'
             };
@@ -703,15 +737,23 @@
             });
         }
 
+        function updateDiscountPriceUI() {
+            if(!activeDiscountData) return;
+            let displayOld = (currentCurrency === 'USD' && activeDiscountData.oldPriceUsd) ? activeDiscountData.oldPriceUsd : activeDiscountData.oldPrice;
+            let displayNew = (currentCurrency === 'USD' && activeDiscountData.newPriceUsd) ? activeDiscountData.newPriceUsd : activeDiscountData.newPrice;
+            
+            document.getElementById('dOldPrice').innerText = displayOld || '';
+            document.getElementById('dNewPrice').innerText = displayNew;
+        }
+
         function loadDiscountDetails(codeData) {
             activeDiscountData = codeData;
             document.getElementById('dGameName').innerText = codeData.game;
             document.getElementById('dPackage').innerText = codeData.package;
             document.getElementById('dType').innerText = codeData.type;
-            document.getElementById('dOldPrice').innerText = codeData.oldPrice || '';
-            document.getElementById('dNewPrice').innerText = codeData.newPrice;
 
-            // البحث عن صورة اللعبة المرتبطة بالخصم
+            updateDiscountPriceUI();
+
             let gameImgSrc = '';
             for(let key in globalGames) {
                 if(globalGames[key].name === codeData.game) {
@@ -778,7 +820,8 @@
 
         function claimDiscountWhatsApp() {
             const phone = "201125808758";
-            const text = `مرحباً، لدي كود خصم حصري أريد شحنه!\n\n🎁 الكود: ${myActiveDiscountCode}\n🎮 المنتج: ${activeDiscountData.game}\n📦 الباقة: ${activeDiscountData.package}\n⚙️ طريقة الشحن: ${activeDiscountData.type}\n💰 السعر المطلوب: ${activeDiscountData.newPrice}\n⏳ (الخصم ينتهي ${formattedExpiryTextForWA})`;
+            let currentPriceStr = (currentCurrency === 'USD' && activeDiscountData.newPriceUsd) ? activeDiscountData.newPriceUsd : activeDiscountData.newPrice;
+            const text = `مرحباً، لدي كود خصم حصري أريد شحنه!\n\n🎁 الكود: ${myActiveDiscountCode}\n🎮 المنتج: ${activeDiscountData.game}\n📦 الباقة: ${activeDiscountData.package}\n⚙️ طريقة الشحن: ${activeDiscountData.type}\n💰 السعر المطلوب: ${currentPriceStr}\n⏳ (الخصم ينتهي ${formattedExpiryTextForWA})`;
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
