@@ -1,712 +1,788 @@
-<!DOCTYPE html>  
-<html lang="ar" dir="rtl">  
-<head>  
-    <meta charset="UTF-8">  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
-    <title>MOHAB STORE | المتجر الرسمي</title>  
-    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">  
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>  
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>  
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MOHAB STORE | المتجر الرسمي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<style>  
-    :root {  
-        --bg-deep: #090d16;   
-        --surface: #131c2e;   
-        --surface-hover: #1e293b;  
-        --surface-border: rgba(255, 255, 255, 0.08);  
-        --primary: #06b6d4;   
-        --primary-glow: rgba(6, 182, 212, 0.25);   
-        --accent: #3b82f6;  
-        --text-main: #f8fafc;   
-        --text-muted: #94a3b8;  
-        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);  
-    }  
+    <style>
+        :root {
+            --bg-deep: #090d16; 
+            --surface: #131c2e; 
+            --surface-hover: #1e293b;
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --primary: #06b6d4; 
+            --primary-glow: rgba(6, 182, 212, 0.25); 
+            --accent: #3b82f6;
+            --text-main: #f8fafc; 
+            --text-muted: #94a3b8;
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Almarai', sans-serif; -webkit-tap-highlight-color: transparent; }  
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Almarai', sans-serif; -webkit-tap-highlight-color: transparent; }
 
-    body {   
-        background-color: var(--bg-deep);   
-        color: var(--text-main);   
-        min-height: 100vh;   
-        display: flex;   
-        flex-direction: column;   
-        overflow-x: hidden;   
-        padding-bottom: 95px;  
-    }  
-      
-    nav {   
-        position: sticky; top: 0; z-index: 50;   
-        background: rgba(9, 13, 22, 0.85);   
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);  
-        border-bottom: 1px solid var(--surface-border);   
-        padding: 12px 20px; display: flex; justify-content: center; align-items: center;   
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);  
-    }  
-    .nav-content { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 900px; }  
-    .main-logo { height: 48px; max-width: 180px; object-fit: contain; filter: drop-shadow(0 0 8px var(--primary-glow)); transition: var(--transition-smooth); will-change: filter, transform; }  
-    .main-logo:hover { filter: drop-shadow(0 0 15px var(--primary-glow)); transform: scale(1.02); }  
-      
-    .currency-toggle {   
-        background: rgba(6, 182, 212, 0.1);   
-        border: 1px solid rgba(6, 182, 212, 0.3); color: var(--primary);   
-        padding: 7px 14px; border-radius: 20px; cursor: pointer;   
-        font-weight: 700; font-size: 0.85rem; transition: var(--transition-smooth);   
-        display: flex; align-items: center; gap: 6px;  
-    }  
-    .currency-toggle:hover {   
-        background: var(--primary); color: #fff; border-color: transparent;   
-        box-shadow: 0 4px 15px var(--primary-glow); transform: translateY(-2px);  
-    }  
-    .spacer { width: 75px; }   
+        body { 
+            background-color: var(--bg-deep); 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-x: hidden; 
+            padding-bottom: 95px;
+        }
+        
+        nav { 
+            position: sticky; top: 0; z-index: 50; 
+            background: rgba(9, 13, 22, 0.85); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--surface-border); 
+            padding: 12px 20px; display: flex; justify-content: center; align-items: center; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .nav-content { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 900px; }
+        .main-logo { height: 48px; max-width: 180px; object-fit: contain; filter: drop-shadow(0 0 8px var(--primary-glow)); transition: var(--transition-smooth); will-change: filter, transform; }
+        .main-logo:hover { filter: drop-shadow(0 0 15px var(--primary-glow)); transform: scale(1.02); }
+        
+        .currency-toggle { 
+            background: rgba(6, 182, 212, 0.1); 
+            border: 1px solid rgba(6, 182, 212, 0.3); color: var(--primary); 
+            padding: 7px 14px; border-radius: 20px; cursor: pointer; 
+            font-weight: 700; font-size: 0.85rem; transition: var(--transition-smooth); 
+            display: flex; align-items: center; gap: 6px;
+        }
+        .currency-toggle:hover { 
+            background: var(--primary); color: #fff; border-color: transparent; 
+            box-shadow: 0 4px 15px var(--primary-glow); transform: translateY(-2px);
+        }
+        .spacer { width: 75px; } 
 
-    @media (min-width: 768px) { .main-logo { height: 60px; max-width: 230px; } .games-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }  
+        @media (min-width: 768px) { .main-logo { height: 60px; max-width: 230px; } .games-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
 
-    .slider-container { max-width: 900px; margin: 18px auto 8px; padding: 0 20px; width: 100%; position: relative; }  
-    .slider {   
-        width: 100%; border-radius: 20px; overflow: hidden; position: relative; aspect-ratio: 16/9;   
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);   
-        border: 1px solid var(--surface-border); background: var(--surface); touch-action: pan-y;   
-        transform: translateZ(0);   
-    }  
-    .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s ease-in-out; object-fit: cover; will-change: opacity; }  
-    .slide.active { opacity: 1; z-index: 1; }  
-      
-    .slider-dots {   
-        position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);   
-        display: flex; gap: 5px; z-index: 2;   
-        background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 10px;   
-    }  
-    .dot { width: 5px; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.4); cursor: pointer; transition: width 0.3s ease, background-color 0.3s ease; }  
-    .dot.active { width: 14px; background: var(--primary); box-shadow: 0 0 6px var(--primary-glow); }  
+        .slider-container { max-width: 900px; margin: 18px auto 8px; padding: 0 20px; width: 100%; position: relative; }
+        .slider { 
+            width: 100%; border-radius: 20px; overflow: hidden; position: relative; aspect-ratio: 16/9; 
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); 
+            border: 1px solid var(--surface-border); background: var(--surface); touch-action: pan-y; 
+            transform: translateZ(0); 
+        }
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s ease-in-out; object-fit: cover; will-change: opacity; }
+        .slide.active { opacity: 1; z-index: 1; }
+        
+        .slider-dots { 
+            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); 
+            display: flex; gap: 5px; z-index: 2; 
+            background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 10px; 
+        }
+        .dot { 
+            width: 5px; height: 3px; border-radius: 3px; 
+            background: rgba(255,255,255,0.4); cursor: pointer; 
+            transition: width 0.3s ease, background-color 0.3s ease; 
+        }
+        .dot.active { width: 14px; background: var(--primary); box-shadow: 0 0 6px var(--primary-glow); }
 
-    .search-container { max-width: 900px; margin: 12px auto; padding: 0 20px; width: 100%; }  
-    .search-box { position: relative; width: 100%; }  
-    .search-box input {   
-        width: 100%; background: var(--surface); border: 1px solid var(--surface-border); padding: 13px 45px 13px 18px;   
-        border-radius: 16px; color: #fff; font-size: 0.9rem; outline: none; transition: var(--transition-smooth); box-shadow: 0 2px 10px rgba(0,0,0,0.1);  
-    }  
-    .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15); background: var(--surface-hover); }  
-    .search-box i { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1rem; transition: var(--transition-smooth); }  
-    .search-box input:focus + i { color: var(--primary); }  
+        .search-container { max-width: 900px; margin: 12px auto; padding: 0 20px; width: 100%; }
+        .search-box { position: relative; width: 100%; }
+        .search-box input { 
+            width: 100%; background: var(--surface); 
+            border: 1px solid var(--surface-border); padding: 13px 45px 13px 18px; 
+            border-radius: 16px; color: #fff; font-size: 0.9rem; outline: none; 
+            transition: var(--transition-smooth); box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15); background: var(--surface-hover); }
+        .search-box i { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1rem; transition: var(--transition-smooth); }
+        .search-box input:focus + i { color: var(--primary); }
 
-    .container { max-width: 900px; margin: 0 auto; padding: 5px 20px 20px; width: 100%; flex: 1; }  
-    .games-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; position: relative; }  
-      
-    .loader-wrapper { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; min-height: 40vh; font-size: 3rem; color: var(--primary); filter: drop-shadow(0 0 10px var(--primary-glow)); }  
+        .container { max-width: 900px; margin: 0 auto; padding: 5px 20px 20px; width: 100%; flex: 1; }
+        .games-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; position: relative; }
+        
+        .loader-wrapper {
+            grid-column: 1 / -1; display: flex; justify-content: center; align-items: center;
+            min-height: 40vh; font-size: 3rem; color: var(--primary); filter: drop-shadow(0 0 10px var(--primary-glow));
+        }
 
-    .game-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 20px; padding: 16px; text-align: center; cursor: pointer; transition: var(--transition-smooth); display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }  
-    .game-card:hover { transform: translateY(-5px); background: var(--surface-hover); border-color: rgba(6, 182, 212, 0.3); box-shadow: 0 10px 20px rgba(0,0,0,0.25); }  
-    .game-card img { width: 75px; height: 75px; border-radius: 16px; object-fit: cover; margin-bottom: 10px; border: 2px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: var(--transition-smooth); }  
-    .game-card:hover img { border-color: var(--primary); transform: scale(1.04); }  
-    .game-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e2e8f0; }  
-    .btn-view { background: rgba(255, 255, 255, 0.02); color: var(--text-muted); border: 1px solid var(--surface-border); padding: 7px 0; width: 100%; border-radius: 12px; font-size: 0.78rem; font-weight: 700; transition: var(--transition-smooth); }  
-    .game-card:hover .btn-view { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; border-color: transparent; box-shadow: 0 4px 12px var(--primary-glow); }  
+        .game-card { 
+            background: var(--surface); border: 1px solid var(--surface-border); border-radius: 20px; padding: 16px; 
+            text-align: center; cursor: pointer; transition: var(--transition-smooth); 
+            display: flex; flex-direction: column; align-items: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .game-card:hover { transform: translateY(-5px); background: var(--surface-hover); border-color: rgba(6, 182, 212, 0.3); box-shadow: 0 10px 20px rgba(0,0,0,0.25); }
+        .game-card img { width: 75px; height: 75px; border-radius: 16px; object-fit: cover; margin-bottom: 10px; border: 2px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: var(--transition-smooth); }
+        .game-card:hover img { border-color: var(--primary); transform: scale(1.04); }
+        .game-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e2e8f0; }
+        .btn-view { background: rgba(255, 255, 255, 0.02); color: var(--text-muted); border: 1px solid var(--surface-border); padding: 7px 0; width: 100%; border-radius: 12px; font-size: 0.78rem; font-weight: 700; transition: var(--transition-smooth); }
+        .game-card:hover .btn-view { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; border-color: transparent; box-shadow: 0 4px 12px var(--primary-glow); }
 
-    .bottom-nav-dock { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(13, 20, 35, 0.9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 8px 10px; display: flex; justify-content: space-around; align-items: center; z-index: 90; box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.4); }  
-    .dock-item { display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; color: var(--text-muted); transition: var(--transition-smooth); flex: 1; text-align: center; }  
-    .dock-icon-wrapper { width: 38px; height: 38px; border-radius: 12px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid var(--surface-border); transition: var(--transition-smooth); }  
-    .dock-item span { font-size: 0.7rem; font-weight: 700; transition: var(--transition-smooth); }  
-    .dock-item:hover { color: #fff; }  
-    .dock-item:hover .dock-icon-wrapper { transform: translateY(-4px); background: var(--surface-hover); border-color: var(--primary); box-shadow: 0 4px 12px var(--primary-glow); }  
+        .bottom-nav-dock {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(13, 20, 35, 0.9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 8px 10px;
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 90; box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.4);
+        }
+        .dock-item {
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            text-decoration: none; color: var(--text-muted); transition: var(--transition-smooth);
+            flex: 1; text-align: center;
+        }
+        .dock-icon-wrapper {
+            width: 38px; height: 38px; border-radius: 12px; background: rgba(255,255,255,0.03);
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+            border: 1px solid var(--surface-border); transition: var(--transition-smooth);
+        }
+        .dock-item span { font-size: 0.7rem; font-weight: 700; transition: var(--transition-smooth); }
+        .dock-item:hover { color: #fff; }
+        .dock-item:hover .dock-icon-wrapper { transform: translateY(-4px); background: var(--surface-hover); border-color: var(--primary); box-shadow: 0 4px 12px var(--primary-glow); }
 
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100; opacity: 0; visibility: hidden; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s ease, visibility 0.3s ease; padding: 15px; }  
-    .modal-overlay.active { opacity: 1; visibility: visible; }  
-      
-    .modal-box { background: var(--bg-deep); width: 100%; max-width: 460px; max-height: 88vh; border-radius: 24px; border: 1px solid var(--surface-border); display: block; overflow-y: auto; transform: translateY(20px) scale(0.95); transition: var(--transition-smooth); box-shadow: 0 20px 40px rgba(0,0,0,0.6); -webkit-overflow-scrolling: touch; }  
-    .modal-overlay.active .modal-box { transform: translateY(0) scale(1); }  
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 100; opacity: 0; visibility: hidden; display: flex; align-items: center; justify-content: center; 
+            transition: opacity 0.3s ease, visibility 0.3s ease; padding: 15px;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        
+        .modal-box { 
+            background: var(--bg-deep); width: 100%; max-width: 460px; 
+            max-height: 88vh; 
+            border-radius: 24px; border: 1px solid var(--surface-border); 
+            display: block; 
+            overflow-y: auto; 
+            transform: translateY(20px) scale(0.95); transition: var(--transition-smooth); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            -webkit-overflow-scrolling: touch;
+        }
+        .modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
 
-    .modal-header { display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--bg-deep); z-index: 10; padding: 20px; border-bottom: 1px solid var(--surface-border); }  
-    .modal-title-area { display: flex; align-items: center; gap: 12px; }  
-    .modal-title-area img { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; }  
-    .modal-title { font-size: 1.05rem; font-weight: 800; color: #fff; }  
-      
-    .close-modal { background: var(--surface); border: 1px solid var(--surface-border); color: var(--text-muted); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; transition: var(--transition-smooth); display: flex; align-items: center; justify-content: center; }  
-    .close-modal:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; transform: scale(1.1); }  
-      
-    .step-panel { display: none; padding: 20px; animation: fadeIn 0.3s ease; }  
-    .step-panel.active { display: block; }  
-    @keyframes fadeIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }  
+        .modal-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; background: var(--bg-deep); z-index: 10;
+            padding: 20px; border-bottom: 1px solid var(--surface-border);
+        }
+        
+        .modal-title-area { display: flex; align-items: center; gap: 12px; }
+        .modal-title-area img { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; }
+        .modal-title { font-size: 1.05rem; font-weight: 800; color: #fff; }
+        
+        .close-modal { background: var(--surface); border: 1px solid var(--surface-border); color: var(--text-muted); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; transition: var(--transition-smooth); display: flex; align-items: center; justify-content: center; }
+        .close-modal:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; transform: scale(1.1); }
+        
+        .step-panel { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+        .step-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
 
-    .options-list { display: flex; flex-direction: column; gap: 12px; }  
-    .option-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: var(--transition-smooth); }  
-    .option-card:hover { background: var(--surface-hover); border-color: var(--primary); transform: translateX(-4px); }  
-    .option-icon { width: 42px; height: 42px; border-radius: 12px; background: rgba(6, 182, 212, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: var(--transition-smooth); }  
-      
-    .prices-top-bar { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; }  
-    .back-step-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 0.9rem; transition: 0.2s; }  
-    .back-step-btn:hover { color: var(--accent); transform: translateX(4px); }  
-      
-    .prices-grid-container { display: flex; flex-direction: column; gap: 12px; padding-bottom: 10px; }  
+        .options-list { display: flex; flex-direction: column; gap: 12px; }
+        .option-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: var(--transition-smooth); }
+        .option-card:hover { background: var(--surface-hover); border-color: var(--primary); transform: translateX(-4px); }
+        .option-icon { width: 42px; height: 42px; border-radius: 12px; background: rgba(6, 182, 212, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: var(--transition-smooth); }
+        
+        .prices-top-bar { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; }
+        .back-step-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 0.9rem; transition: 0.2s; }
+        .back-step-btn:hover { color: var(--accent); transform: translateX(4px); }
+        
+        .prices-grid-container { display: flex; flex-direction: column; gap: 12px; padding-bottom: 10px; }
 
-    .price-card-modern { position: relative; border-radius: 16px; padding: 2px; background-color: var(--surface-border); overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: transform 0.2s ease; }  
-    .price-card-modern:hover { transform: scale(1.02); box-shadow: 0 6px 15px rgba(6, 182, 212, 0.3); }  
-    .price-card-modern::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(transparent 70%, rgba(255, 255, 255, 0.4) 100%); animation: spin-transparent-ray 3s linear infinite; z-index: 0; pointer-events: none; }  
-    @keyframes spin-transparent-ray { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }  
+        .price-card-modern {
+            position: relative; border-radius: 16px; padding: 2px; 
+            background: linear-gradient(45deg, var(--surface-border), var(--primary), var(--surface-border), var(--accent));
+            background-size: 300% 300%;
+            animation: gradientBorder 4s ease infinite;
+            overflow: hidden; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: transform 0.2s ease;
+        }
+        @keyframes gradientBorder {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .price-card-modern:hover { transform: scale(1.02); box-shadow: 0 6px 15px rgba(6, 182, 212, 0.3); }
+        
+        .price-card-modern::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent);
+            transform: skewX(-25deg); animation: shine 3s infinite; z-index: 3; pointer-events: none;
+        }
+        @keyframes shine { 
+            0% { left: -100%; } 
+            20% { left: 200%; } 
+            100% { left: 200%; } 
+        }
 
-    .price-card-content { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr max-content; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: var(--surface); border-radius: 14px; }  
-      
-    .item-details { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; word-break: break-word; }  
-    .item-quantity { font-size: 1.15rem; font-weight: 900; color: #fff; }  
-    .item-type { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; }  
-      
-    .price-area { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }  
-    .discount-wrapper { display: flex; align-items: center; gap: 6px; }  
-    .discount-badge { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; font-weight: 800; }  
-    .old-price { text-decoration: line-through; color: #ef4444; font-size: 0.85rem; opacity: 0.8; font-weight: 700; }  
-    .item-price-tag { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; border: 1px solid rgba(16, 185, 129, 0.3); direction: ltr; text-align: center; min-width: 80px; }  
+        .price-card-content {
+            position: relative; z-index: 2; display: grid; grid-template-columns: 1fr max-content; 
+            align-items: center; gap: 12px; width: 100%; padding: 14px 16px;
+            background: var(--surface); border-radius: 14px;
+        }
+        
+        .item-details { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; word-break: break-word; }
+        .item-quantity { font-size: 1.15rem; font-weight: 900; color: #fff; }
+        .item-type { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; }
+        
+        .price-area { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .discount-wrapper { display: flex; align-items: center; gap: 6px; }
+        .discount-badge { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; font-weight: 800; }
+        .old-price { text-decoration: line-through; color: #ef4444; font-size: 0.85rem; opacity: 0.8; font-weight: 700; }
+        .item-price-tag { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; border: 1px solid rgba(16, 185, 129, 0.3); direction: ltr; text-align: center; min-width: 80px; }
+        .empty-msg { text-align: center; color: #ef4444; padding: 18px; background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 12px; width: 100%; font-size: 0.85rem; }
 
-    .empty-msg { text-align: center; color: #ef4444; padding: 18px; background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 12px; width: 100%; font-size: 0.85rem; }  
+        .special-discount-modal {
+            position: relative;
+            background: linear-gradient(45deg, var(--surface-border), var(--primary), var(--surface-border), var(--accent));
+            background-size: 300% 300%;
+            animation: gradientBorder 4s ease infinite;
+            border-radius: 24px;
+            padding: 2px;
+            border: none;
+            box-shadow: 0 0 35px rgba(6, 182, 212, 0.25);
+            overflow: hidden;
+        }
 
-    /* --- تنسيقات الخصم العشوائي والأيقونة العائمة --- */
-    .lucky-box { background: linear-gradient(145deg, #131c2e 0%, #0f172a 100%); border: 2px solid #fbbf24; box-shadow: 0 0 30px rgba(251, 191, 36, 0.2); animation: pulseGlow 2s infinite alternate; text-align: center; overflow: hidden; position: relative; }
-    @keyframes pulseGlow { 0% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); border-color: rgba(251, 191, 36, 0.5); } 100% { box-shadow: 0 0 40px rgba(251, 191, 36, 0.5); border-color: rgba(251, 191, 36, 1); } }
-    .lucky-header { background: rgba(251, 191, 36, 0.1); padding: 20px; border-bottom: 1px solid rgba(251, 191, 36, 0.2); position: relative; }
-    .lucky-header h2 { color: #fbbf24; font-size: 1.3rem; font-weight: 900; margin: 0; }
-    .lucky-header .close-modal { position: absolute; left: 15px; top: 15px; background: rgba(255,255,255,0.05); border: none; color: #fff; }
-    .lucky-body { padding: 25px; }
-    .lucky-img { width: 100px; height: 100px; border-radius: 20px; object-fit: cover; border: 3px solid #fbbf24; box-shadow: 0 10px 20px rgba(0,0,0,0.3); margin: 0 auto 15px; display: block; }
-    .lucky-game-name { font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 5px; }
-    .lucky-pack-name { color: var(--primary); font-size: 1rem; font-weight: 700; margin-bottom: 15px; }
-    .promo-code-box { background: rgba(251, 191, 36, 0.1); border: 1px dashed #fbbf24; padding: 12px; border-radius: 12px; margin-bottom: 15px; }
-    .promo-code-box span { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 5px; }
-    .promo-code-box strong { font-size: 1.5rem; color: #fbbf24; letter-spacing: 2px; }
-    .lucky-price-box { background: rgba(0,0,0,0.3); border-radius: 15px; padding: 15px; display: flex; justify-content: center; align-items: center; gap: 20px; border: 1px dashed rgba(251, 191, 36, 0.3); margin-bottom: 25px; }
-    .lucky-old-price { color: #ef4444; text-decoration: line-through; font-size: 1.1rem; font-weight: 700; }
-    .lucky-new-price { color: #10b981; font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
-    .lucky-btn { background: linear-gradient(135deg, #fbbf24, #d97706); color: #fff; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 1.1rem; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: transform 0.2s, box-shadow 0.2s; }
-    .lucky-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(251, 191, 36, 0.4); }
+        .special-discount-modal::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent);
+            transform: skewX(-25deg); animation: shine 3s infinite; z-index: 3; pointer-events: none;
+        }
 
-    /* الأيقونة العائمة للهدايا */
-    .floating-gift {
-        position: fixed;
-        bottom: 90px;
-        right: 20px;
-        background: linear-gradient(135deg, #fbbf24, #d97706);
-        color: #fff;
-        width: 60px; height: 60px;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.8rem;
-        box-shadow: 0 8px 25px rgba(251, 191, 36, 0.5);
-        cursor: pointer; z-index: 80;
-        animation: bounceGift 2s infinite;
-        border: 2px solid #fff;
-    }
-    @keyframes bounceGift {
-        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-        40% { transform: translateY(-12px) scale(1.05); }
-        60% { transform: translateY(-6px) scale(1.02); }
-    }
+        .discount-modal-inner {
+            background: linear-gradient(145deg, #182235, #0b111e);
+            border-radius: 22px;
+            width: 100%; height: 100%;
+            position: relative; z-index: 5;
+            padding-bottom: 22px;
+        }
 
-</style>
+        .discount-header { text-align: center; padding: 22px 20px 10px; }
+        .discount-icon { font-size: 2.8rem; color: #f59e0b; filter: drop-shadow(0 0 12px rgba(245,158,11,0.6)); margin-bottom: 8px; animation: bounce-icon 2s infinite; }
+        
+        /* تأثير صورة اللعبة في الخصم */
+        .discount-game-img {
+            width: 75px; height: 75px; border-radius: 18px; object-fit: cover; 
+            margin: 0 auto 12px auto; display: none;
+            border: 2px solid var(--primary);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+            animation: bounce-icon 2s infinite;
+        }
 
-</head>  
-<body>  <nav>  
-    <div class="nav-content">  
-        <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()">  
-            <i class="fas fa-pound-sign"></i> EGP  
-        </button>  
-        <img id="mainLogoImg" src="" alt="Logo" class="main-logo" style="display:none;">  
-        <div class="spacer"></div>  
-    </div>  
-</nav>  
+        @keyframes bounce-icon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        
+        .discount-title { font-size: 1.25rem; font-weight: 900; color: #fff; margin-bottom: 4px; }
+        .discount-body { padding: 10px 22px 0px; }
+        
+        .discount-details-box { background: rgba(0,0,0,0.35); border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.06); }
+        .d-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.9rem; }
+        .d-row:last-child { margin-bottom: 0; }
+        .d-label { color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+        .d-val { color: #fff; font-weight: bold; }
+        
+        .timer-title-text { text-align: center; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 700; }
+        .timer-box { display: flex; justify-content: center; align-items: center; gap: 8px; direction: ltr; margin-bottom: 20px; }
+        .timer-card { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 8px 10px; min-width: 60px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .time-unit { color: #f59e0b; font-weight: 900; font-size: 1.2rem; display: block; line-height: 1.2; }
+        .time-label { font-size: 0.65rem; font-weight: bold; color: var(--text-muted); display: block; margin-top: 2px; }
+        .timer-separator { color: #f59e0b; font-weight: 900; font-size: 1.1rem; margin-top: -10px; }
 
-<div class="slider-container" id="sliderContainer" style="display:none;">  
-    <div class="slider" id="sliderWrapper"></div>  
-    <div class="slider-dots" id="sliderDots"></div>  
-</div>  
+        .discount-btn { background: #25d366; color: #fff; width: 100%; border: none; padding: 14px; border-radius: 14px; font-size: 1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3); }
+        .discount-btn:hover { background: #1ebd5a; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4); }
+        
+        .floating-gift {
+            position: fixed; bottom: 85px; right: 20px; width: 55px; height: 55px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: #fff; cursor: pointer; z-index: 80;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+            animation: pulse-gift 2s infinite; display: none;
+        }
+        @keyframes pulse-gift {
+            0% { transform: scale(1); box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+            50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(245, 158, 11, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+        }
+    </style>
+</head>
+<body>
 
-<div class="search-container">  
-    <div class="search-box">  
-        <input type="text" id="searchInput" placeholder="ابحث عن لعبتك المفضلة..." onkeyup="filterGames()">  
-        <i class="fas fa-search"></i>  
-    </div>  
-</div>  
-
-<div class="container">  
-    <div class="games-grid" id="gamesGrid">  
-        <div class="loader-wrapper">  
-            <i class="fas fa-spinner fa-spin"></i>  
-        </div>  
-    </div>  
-</div>  
-
-<!-- الأيقونة العائمة -->
-<div id="luckyFloatingIcon" class="floating-gift" onclick="openActiveDiscount()" style="display:none;">
-    <i class="fas fa-gift"></i>
-</div>
-
-<div id="bottomDock" class="bottom-nav-dock" style="display:none;"></div>  
-
-<!-- نافذة اللعبة العادية -->
-<div id="gameModal" class="modal-overlay" onclick="closeOnOutside(event)">  
-    <div class="modal-box" id="modalScrollBox">  
-        <div class="modal-header">  
-            <div class="modal-title-area">  
-                <img id="modalGameImg" src="" alt="">  
-                <div id="modalGameName" class="modal-title">اسم اللعبة</div>  
-            </div>  
-            <button class="close-modal" onclick="closeModal()"><i class="fas fa-times"></i></button>  
-        </div>  
-          
-        <div id="stepSelection" class="step-panel active">  
-            <div class="options-list" id="modalOptionsList"></div>  
-        </div>  
-          
-        <div id="stepPrices" class="step-panel">  
-            <div class="prices-top-bar">  
-                <button class="back-step-btn" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>  
-                <span style="color:#fff; font-weight:800; font-size:0.95rem;">الأسعار</span>  
-            </div>  
-            <div class="prices-grid-container" id="pricesContent"></div>  
-        </div>  
-    </div>  
-</div>  
-
-<!-- نافذة الخصم العشوائي المحظوظ -->
-<div id="luckyDiscountModal" class="modal-overlay" onclick="closeLuckyModalOutside(event)">
-    <div class="modal-box lucky-box">
-        <div class="lucky-header">
-            <h2>🎉 مبروك! عرض محظوظ لك 🎉</h2>
-            <button class="close-modal" onclick="closeLuckyModal()"><i class="fas fa-times"></i></button>
+    <nav>
+        <div class="nav-content">
+            <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()">
+                <i class="fas fa-pound-sign"></i> EGP
+            </button>
+            <img id="mainLogoImg" src="" alt="Logo" class="main-logo" style="display:none;">
+            <div class="spacer"></div>
         </div>
-        <div class="lucky-body" id="luckyBodyContent">
-            <!-- سيتم إضافة محتوى الخصم هنا برمجياً -->
+    </nav>
+
+    <div class="slider-container" id="sliderContainer" style="display:none;">
+        <div class="slider" id="sliderWrapper"></div>
+        <div class="slider-dots" id="sliderDots"></div>
+    </div>
+
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="ابحث عن لعبتك المفضلة..." onkeyup="filterGames()">
+            <i class="fas fa-search"></i>
         </div>
     </div>
-</div>
 
-<script>  
-    const firebaseConfig = {  
-        apiKey: "AIzaSyAVV1wjaYY1saP5Op9TdY_Snrt7DQcXSwU",  
-        authDomain: "mohab-store.firebaseapp.com",  
-        databaseURL: "https://mohab-store-default-rtdb.firebaseio.com",  
-        projectId: "mohab-store",  
-        storageBucket: "mohab-store.firebasestorage.app",  
-        messagingSenderId: "883837761283",  
-        appId: "1:883837761283:web:87c2c19ea0d0f224eb5b36"  
-    };  
-    firebase.initializeApp(firebaseConfig);  
-    const db = firebase.database();  
+    <div class="container">
+        <div class="games-grid" id="gamesGrid">
+            <div class="loader-wrapper"><i class="fas fa-spinner fa-spin"></i></div>
+        </div>
+    </div>
 
-    let globalGames = {};  
-    let currentGameId = null;  
-    let currentPriceType = null;   
-    let currentCurrency = 'EGP';  
-    
-    let randomDiscountsList = [];
-    let discountSettings = { chance: 0 };
-    let hasCheckedDiscount = false;
-    
-    let activeDiscount = JSON.parse(localStorage.getItem('mohab_active_discount') || 'null');
-    let usedCodesList = {};
+    <div id="bottomDock" class="bottom-nav-dock" style="display:none;"></div>
 
-    function toggleCurrency() {  
-        currentCurrency = currentCurrency === 'EGP' ? 'USD' : 'EGP';  
-        const btn = document.getElementById('currencyBtn');  
-        if(currentCurrency === 'USD') {  
-            btn.innerHTML = '<i class="fas fa-dollar-sign"></i> USD';  
-            btn.style.background = 'var(--primary)';  
-            btn.style.color = '#fff';  
-        } else {  
-            btn.innerHTML = '<i class="fas fa-pound-sign"></i> EGP';  
-            btn.style.background = 'rgba(6, 182, 212, 0.1)';  
-            btn.style.color = 'var(--primary)';  
-        }  
-        if(document.getElementById('stepPrices').classList.contains('active') && currentPriceType) {  
-            showPrices(currentPriceType);  
-        }  
-    }  
+    <div id="floatingGift" class="floating-gift" onclick="openDiscountModal()">
+        <i class="fas fa-gift"></i>
+    </div>
 
-    db.ref('settings').on('value', snap => {  
-        const data = snap.val() || {};  
-        if(data.general && data.general.logo) {  
-            const logo = document.getElementById('mainLogoImg');  
-            logo.src = data.general.logo; logo.style.display = 'block';  
-        }  
-        const banners = data.banners ? Object.values(data.banners) : [];  
-        const isAuto = data.general ? (data.general.bannerAutoPlay !== false) : true;  
-        const speed = data.general ? (data.general.bannerSpeed || 3) * 1000 : 3000;  
-        initSlider(banners, isAuto, speed);  
-        const socials = data.socials ? Object.values(data.socials) : [];  
-        renderBottomDock(socials);  
-        
-        if(data.discount_config) {
-            const oldResetStamp = discountSettings.globalResetTimestamp;
-            discountSettings = data.discount_config;
+    <!-- نافذة الألعاب -->
+    <div id="gameModal" class="modal-overlay" onclick="closeOnOutside(event)">
+        <div class="modal-box" id="modalScrollBox">
+            <div class="modal-header">
+                <div class="modal-title-area">
+                    <img id="modalGameImg" src="" alt="">
+                    <div id="modalGameName" class="modal-title">اسم اللعبة</div>
+                </div>
+                <button class="close-modal" onclick="closeModal('gameModal')"><i class="fas fa-times"></i></button>
+            </div>
             
-            // إذا ضغط الأدمن على زر إعادة التشغيل من السيستم، نقوم بمسح القديم فوراً
-            if (discountSettings.globalResetTimestamp && discountSettings.globalResetTimestamp !== oldResetStamp) {
-                localStorage.removeItem('mohab_last_discount_time');
-                localStorage.removeItem('mohab_active_discount');
-                activeDiscount = null;
-                hasCheckedDiscount = false;
-                document.getElementById('luckyFloatingIcon').style.display = 'none';
-                triggerRandomDiscountCheck();
-            }
-        }
-    });  
-
-    db.ref('used_codes').on('value', snap => {
-        usedCodesList = snap.val() || {};
-        checkActiveDiscountStatus();
-    });
-
-    db.ref('random_discounts').on('value', snap => {
-        const data = snap.val() || {};
-        randomDiscountsList = Object.keys(data).map(key => ({ key, ...data[key] }));
-        triggerRandomDiscountCheck();
-    });
-
-    let sliderInterval; let startX = 0; let totalSlides = 0;  
-
-    function initSlider(banners, isAuto, speed) {  
-        const container = document.getElementById('sliderContainer');  
-        const wrapper = document.getElementById('sliderWrapper');  
-        const dotsContainer = document.getElementById('sliderDots');  
-        clearInterval(sliderInterval);  
-        wrapper.innerHTML = ''; dotsContainer.innerHTML = ''; totalSlides = banners.length;  
-        if(banners.length === 0) { container.style.display = 'none'; return; }  
-        container.style.display = 'block';  
-
-        let fragment = document.createDocumentFragment();  
-        let dotsFragment = document.createDocumentFragment();  
-        banners.forEach((url, index) => {  
-            const img = document.createElement('img');  
-            img.src = url; img.loading = "lazy"; img.className = index === 0 ? 'slide active' : 'slide';  
-            fragment.appendChild(img);  
-            if(banners.length > 1) {  
-                const dot = document.createElement('div');  
-                dot.className = index === 0 ? 'dot active' : 'dot';  
-                dot.onclick = () => goToSlide(index);  
-                dotsFragment.appendChild(dot);  
-            }  
-        });  
-        wrapper.appendChild(fragment); dotsContainer.appendChild(dotsFragment);  
-
-        wrapper.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(sliderInterval); }, {passive: true});  
-        wrapper.addEventListener('touchend', e => {  
-            let endX = e.changedTouches[0].clientX;  
-            let current = Array.from(wrapper.children).findIndex(el => el.classList.contains('active'));  
-            if (startX - endX > 40) goToSlide((current + 1) % totalSlides);  
-            else if (endX - startX > 40) goToSlide((current - 1 + totalSlides) % totalSlides);  
-            if(banners.length > 1 && isAuto) startAutoPlay(speed);  
-        }, {passive: true});  
-        if(banners.length > 1 && isAuto) startAutoPlay(speed);  
-    }  
-
-    function startAutoPlay(speed) {  
-        clearInterval(sliderInterval);  
-        sliderInterval = setInterval(() => {  
-            let wrapper = document.getElementById('sliderWrapper');  
-            let current = Array.from(wrapper.children).findIndex(el => el.classList.contains('active'));  
-            goToSlide((current + 1) % totalSlides);  
-        }, speed);  
-    }  
-
-    function goToSlide(index) {  
-        const slides = document.getElementById('sliderWrapper').children;  
-        const dots = document.getElementById('sliderDots').children;  
-        if(!slides.length) return;  
-        for(let i=0; i<slides.length; i++) {  
-            slides[i].classList.remove('active');  
-            if(dots[i]) dots[i].classList.remove('active');  
-        }  
-        slides[index].classList.add('active');  
-        if(dots[index]) dots[index].classList.add('active');  
-    }  
-
-    function renderBottomDock(socials) {  
-        const dock = document.getElementById('bottomDock');  
-        if(socials.length === 0) { dock.style.display = 'none'; return; }  
-        dock.style.display = 'flex';  
-        const icons = { 'whatsapp': 'fab fa-whatsapp', 'facebook': 'fab fa-facebook-f', 'telegram': 'fab fa-telegram-plane', 'instagram': 'fab fa-instagram', 'youtube': 'fab fa-youtube', 'warranty': 'fas fa-star' };  
-        let htmlString = '';  
-        socials.forEach(s => {  
-            htmlString += `<a href="${s.url}" target="_blank" class="dock-item" data-platform="${s.platform}">  
-                <div class="dock-icon-wrapper"><i class="${icons[s.platform] || 'fas fa-link'}"></i></div>  
-                <span>${s.name}</span></a>`;  
-        });  
-        dock.innerHTML = htmlString;  
-    }  
-
-    db.ref('games').on('value', snap => {  
-        globalGames = snap.val() || {};  
-        const grid = document.getElementById('gamesGrid');  
-        let gamesArray = Object.keys(globalGames).map(key => ({ key: key, ...globalGames[key] }));  
-        gamesArray.sort((a, b) => (a.order || 99) - (b.order || 99));  
-
-        if(gamesArray.length === 0) {  
-            grid.innerHTML = '<div class="empty-msg">لا توجد ألعاب مضافة حالياً</div>'; return;  
-        }  
-        let htmlString = '';  
-        gamesArray.forEach(g => {  
-            htmlString += `<div class="game-card" data-name="${g.name.toLowerCase()}" onclick="openGame('${g.key}')">  
-                <img src="${g.img}" alt="${g.name}" loading="lazy">  
-                <h3>${g.name}</h3><button class="btn-view">عرض الأسعار</button></div>`;  
-        });  
-        grid.innerHTML = htmlString;  
-        
-        triggerRandomDiscountCheck();
-    });  
-
-    function checkActiveDiscountStatus() {
-        if (!activeDiscount) return;
-        
-        if (usedCodesList[activeDiscount.code]) {
-            localStorage.removeItem('mohab_active_discount');
-            activeDiscount = null;
-            document.getElementById('luckyFloatingIcon').style.display = 'none';
-            return;
-        }
-        
-        const now = new Date().getTime();
-        const timePassed = now - activeDiscount.timestamp;
-        const cooldownMs = 48 * 60 * 60 * 1000; 
-        
-        if (timePassed >= cooldownMs) {
-            localStorage.removeItem('mohab_active_discount');
-            activeDiscount = null;
-            document.getElementById('luckyFloatingIcon').style.display = 'none';
-            return;
-        }
-        
-        document.getElementById('luckyFloatingIcon').style.display = 'flex';
-    }
-
-    function generatePromoCode() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let result = 'MHB-';
-        for (let i = 0; i < 5; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
-    }
-
-    function triggerRandomDiscountCheck() {
-        if(hasCheckedDiscount || randomDiscountsList.length === 0 || Object.keys(globalGames).length === 0) return;
-        hasCheckedDiscount = true; 
-        
-        checkActiveDiscountStatus();
-        
-        if (activeDiscount) return; 
-
-        const chance = parseInt(discountSettings.chance) || 0;
-        if (chance <= 0) return; 
-
-        const lastDiscountTime = localStorage.getItem('mohab_last_discount_time');
-        const now = new Date().getTime();
-        
-        if (lastDiscountTime) {
-            const timePassed = now - parseInt(lastDiscountTime);
-            const cooldownMs = 48 * 60 * 60 * 1000; 
-            if (timePassed < cooldownMs) {
-                return; 
-            }
-        }
-
-        let shouldShow = false;
-
-        if (!lastDiscountTime) {
-            shouldShow = true; 
-        } else {
-            const roll = Math.random() * 100;
-            if (roll <= chance) {
-                shouldShow = true;
-            }
-        }
-
-        if (shouldShow) {
-            const randomIndex = Math.floor(Math.random() * randomDiscountsList.length);
-            const selectedDiscount = randomDiscountsList[randomIndex];
+            <div id="stepSelection" class="step-panel active">
+                <div class="options-list" id="modalOptionsList"></div>
+            </div>
             
-            activeDiscount = {
-                ...selectedDiscount,
-                code: generatePromoCode(),
-                timestamp: now
+            <div id="stepPrices" class="step-panel">
+                <div class="prices-top-bar">
+                    <button class="back-step-btn" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>
+                    <span style="color:#fff; font-weight:800; font-size:0.95rem;">الأسعار</span>
+                </div>
+                <div class="prices-grid-container" id="pricesContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة الخصم العشوائي المحسنة -->
+    <div id="discountModal" class="modal-overlay" onclick="closeOnOutside(event)">
+        <div class="modal-box special-discount-modal">
+            <div class="discount-modal-inner">
+                <button class="close-modal" style="position: absolute; top:15px; left:15px; z-index:11;" onclick="closeModal('discountModal')"><i class="fas fa-times"></i></button>
+                <div class="discount-header">
+                    <!-- الصورة التي ستظهر بدلاً من الأيقونة -->
+                    <img id="dGameImage" class="discount-game-img" src="" alt="Game Icon">
+                    <!-- أيقونة الهدية تظهر فقط إذا لم يتم العثور على صورة اللعبة -->
+                    <i class="fas fa-gift discount-icon" id="dGiftIconFallback"></i>
+                    
+                    <div class="discount-title">تهانينا! لديك خصم حصري</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);" id="discountEndDateText"></div>
+                </div>
+                <div class="discount-body">
+                    <div class="discount-details-box">
+                        <div class="d-row"><span class="d-label"><i class="fas fa-gamepad"></i> المنتج:</span> <span class="d-val" id="dGameName"></span></div>
+                        <div class="d-row"><span class="d-label"><i class="fas fa-box"></i> الباقة:</span> <span class="d-val" id="dPackage"></span></div>
+                        <div class="d-row"><span class="d-label"><i class="fas fa-bolt"></i> طريقة الشحن:</span> <span class="d-val" id="dType"></span></div>
+                        <hr style="border-color: rgba(255,255,255,0.08); margin: 10px 0;">
+                        <div class="d-row" style="align-items: center;">
+                            <span class="d-label">السعر:</span> 
+                            <div>
+                                <span class="old-price" id="dOldPrice" style="margin-left: 6px;"></span>
+                                <span class="item-price-tag" id="dNewPrice" style="padding: 4px 12px;"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timer-title-text">الوقت المتبقي لانتهاء الخصم</div>
+                    <div class="timer-box" id="discountTimer">
+                        <div class="timer-card"><span class="time-unit" id="tHours">00</span><span class="time-label">ساعة</span></div>
+                        <div class="timer-separator">:</div>
+                        <div class="timer-card"><span class="time-unit" id="tMins">00</span><span class="time-label">دقيقة</span></div>
+                        <div class="timer-separator">:</div>
+                        <div class="timer-card"><span class="time-unit" id="tSecs">00</span><span class="time-label">ثانية</span></div>
+                    </div>
+
+                    <button class="discount-btn" onclick="claimDiscountWhatsApp()">
+                        <i class="fab fa-whatsapp"></i> الحصول على الخصم الآن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVV1wjaYY1saP5Op9TdY_Snrt7DQcXSwU",
+            authDomain: "mohab-store.firebaseapp.com",
+            databaseURL: "https://mohab-store-default-rtdb.firebaseio.com",
+            projectId: "mohab-store",
+            storageBucket: "mohab-store.firebasestorage.app",
+            messagingSenderId: "883837761283",
+            appId: "1:883837761283:web:87c2c19ea0d0f224eb5b36"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.database();
+
+        let globalGames = {};
+        let currentGameId = null;
+        let currentPriceType = null; 
+        let currentCurrency = 'EGP';
+
+        let visitorId = localStorage.getItem('mohab_visitor_id');
+        if(!visitorId) {
+            visitorId = 'V_' + Math.random().toString(36).substr(2, 9) + Date.now();
+            localStorage.setItem('mohab_visitor_id', visitorId);
+        }
+        let myActiveDiscountCode = null;
+        let discountTimerInterval = null;
+        let activeDiscountData = null;
+        let formattedExpiryTextForWA = '';
+
+        window.addEventListener('popstate', function(e) {
+            if (document.getElementById('discountModal').classList.contains('active')) {
+                closeModal('discountModal', true);
+            } else if (document.getElementById('gameModal').classList.contains('active')) {
+                if (document.getElementById('stepPrices').classList.contains('active')) {
+                    goBack(true);
+                } else {
+                    closeModal('gameModal', true);
+                }
+            }
+        });
+
+        function pushModalState() { history.pushState({ modal: true }, ''); }
+
+        function toggleCurrency() {
+            currentCurrency = currentCurrency === 'EGP' ? 'USD' : 'EGP';
+            const btn = document.getElementById('currencyBtn');
+            if(currentCurrency === 'USD') {
+                btn.innerHTML = '<i class="fas fa-dollar-sign"></i> USD'; btn.style.background = 'var(--primary)'; btn.style.color = '#fff';
+            } else {
+                btn.innerHTML = '<i class="fas fa-pound-sign"></i> EGP'; btn.style.background = 'rgba(6, 182, 212, 0.1)'; btn.style.color = 'var(--primary)';
+            }
+            if(document.getElementById('stepPrices').classList.contains('active') && currentPriceType) showPrices(currentPriceType);
+        }
+
+        db.ref('settings').on('value', snap => {
+            const data = snap.val() || {};
+            if(data.general && data.general.logo) { const logo = document.getElementById('mainLogoImg'); logo.src = data.general.logo; logo.style.display = 'block'; }
+            const banners = data.banners ? Object.values(data.banners) : [];
+            const isAuto = data.general ? (data.general.bannerAutoPlay !== false) : true;
+            const speed = data.general ? (data.general.bannerSpeed || 3) * 1000 : 3000;
+            initSlider(banners, isAuto, speed);
+            const socials = data.socials ? Object.values(data.socials) : [];
+            renderBottomDock(socials);
+        });
+
+        let sliderInterval; let totalSlides = 0; let globalSpeed = 3000;
+        function initSlider(banners, isAuto, speed) {
+            const container = document.getElementById('sliderContainer');
+            const wrapper = document.getElementById('sliderWrapper');
+            const dotsContainer = document.getElementById('sliderDots');
+            clearInterval(sliderInterval);
+            globalSpeed = speed;
+            wrapper.innerHTML = ''; dotsContainer.innerHTML = ''; totalSlides = banners.length;
+            if(banners.length === 0) { container.style.display = 'none'; return; }
+            container.style.display = 'block';
+            let fragment = document.createDocumentFragment(); let dotsFragment = document.createDocumentFragment();
+            banners.forEach((url, index) => {
+                const img = document.createElement('img'); img.src = url; img.loading = "lazy"; img.className = index === 0 ? 'slide active' : 'slide';
+                fragment.appendChild(img);
+                if(banners.length > 1) {
+                    const dot = document.createElement('div'); dot.className = index === 0 ? 'dot active' : 'dot';
+                    dot.onclick = () => { goToSlide(index); if(sliderInterval) { clearInterval(sliderInterval); startAutoPlay(globalSpeed); } }; 
+                    dotsFragment.appendChild(dot);
+                }
+            });
+            wrapper.appendChild(fragment); dotsContainer.appendChild(dotsFragment);
+            if(banners.length > 1 && isAuto) startAutoPlay(speed);
+        }
+        function startAutoPlay(speed) { sliderInterval = setInterval(() => { let w = document.getElementById('sliderWrapper'); let c = Array.from(w.children).findIndex(el => el.classList.contains('active')); goToSlide((c + 1) % totalSlides); }, speed); }
+        function goToSlide(index) { const s = document.getElementById('sliderWrapper').children; const d = document.getElementById('sliderDots').children; if(!s.length) return; for(let i=0; i<s.length; i++) { s[i].classList.remove('active'); if(d[i]) d[i].classList.remove('active'); } s[index].classList.add('active'); if(d[index]) d[index].classList.add('active'); }
+        
+        let touchstartX = 0; let touchendX = 0;
+        const sWrapper = document.getElementById('sliderWrapper');
+        sWrapper.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, {passive: true});
+        sWrapper.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            if(totalSlides > 1) {
+                let current = Array.from(sWrapper.children).findIndex(el => el.classList.contains('active'));
+                if (touchendX < touchstartX - 40) { 
+                    goToSlide((current + 1) % totalSlides); 
+                    if(sliderInterval) { clearInterval(sliderInterval); startAutoPlay(globalSpeed); }
+                } else if (touchendX > touchstartX + 40) { 
+                    goToSlide((current - 1 + totalSlides) % totalSlides); 
+                    if(sliderInterval) { clearInterval(sliderInterval); startAutoPlay(globalSpeed); }
+                }
+            }
+        }, {passive: true});
+
+        function renderBottomDock(socials) { const dock = document.getElementById('bottomDock'); if(socials.length === 0) { dock.style.display = 'none'; return; } dock.style.display = 'flex'; const icons = { 'whatsapp': 'fab fa-whatsapp', 'facebook': 'fab fa-facebook-f', 'telegram': 'fab fa-telegram-plane', 'instagram': 'fab fa-instagram', 'youtube': 'fab fa-youtube', 'warranty': 'fas fa-star' }; let htmlString = ''; socials.forEach(s => { htmlString += `<a href="${s.url}" target="_blank" class="dock-item"><div class="dock-icon-wrapper"><i class="${icons[s.platform] || 'fas fa-link'}"></i></div><span>${s.name}</span></a>`; }); dock.innerHTML = htmlString; }
+
+        db.ref('games').on('value', snap => {
+            globalGames = snap.val() || {};
+            const grid = document.getElementById('gamesGrid');
+            let gamesArray = Object.keys(globalGames).map(key => ({ key: key, ...globalGames[key] }));
+            gamesArray.sort((a, b) => (a.order || 99) - (b.order || 99));
+            if(gamesArray.length === 0) { grid.innerHTML = '<div class="empty-msg">لا توجد ألعاب مضافة حالياً</div>'; return; }
+            let htmlString = '';
+            gamesArray.forEach(g => { htmlString += `<div class="game-card" data-name="${g.name.toLowerCase()}" onclick="openGame('${g.key}')"><img src="${g.img}" alt="${g.name}" loading="lazy"><h3>${g.name}</h3><button class="btn-view">عرض الأسعار</button></div>`; });
+            grid.innerHTML = htmlString;
+        });
+
+        function filterGames() { let q = document.getElementById('searchInput').value.toLowerCase(); document.querySelectorAll('.game-card').forEach(card => { card.style.display = card.dataset.name.includes(q) ? "flex" : "none"; }); }
+
+        function openGame(id) {
+            pushModalState();
+            currentGameId = id; const game = globalGames[id];
+            document.getElementById('modalGameName').innerText = game.name; document.getElementById('modalGameImg').src = game.img;
+            const optionsList = document.getElementById('modalOptionsList'); let htmlString = ''; let hasAnyOption = false;
+            if (game.id_available) { hasAnyOption = true; htmlString += `<div class="option-card" onclick="showPrices('id')"><div class="option-icon"><i class="fas fa-id-card"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق ID</h4></div></div>`; }
+            if (game.account_available) { hasAnyOption = true; htmlString += `<div class="option-card" onclick="showPrices('account')"><div class="option-icon"><i class="fas fa-user-shield"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق الحساب</h4></div></div>`; }
+            if (game.custom_methods && game.custom_methods.length > 0) {
+                hasAnyOption = true;
+                game.custom_methods.forEach((cm, index) => { htmlString += `<div class="option-card" onclick="showPrices('custom_${index}')"><div class="option-icon"><i class="fas fa-bolt"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">${cm.name}</h4></div></div>`; });
+            }
+            optionsList.innerHTML = hasAnyOption ? htmlString : '<div class="empty-msg">غير متوفر حالياً</div>';
+            document.getElementById('stepSelection').classList.add('active'); document.getElementById('stepPrices').classList.remove('active');
+            document.getElementById('modalScrollBox').scrollTop = 0; const modal = document.getElementById('gameModal'); modal.style.display = 'flex'; void modal.offsetWidth; modal.classList.add('active');
+        }
+
+        function showPrices(type) {
+            pushModalState();
+            currentPriceType = type; const game = globalGames[currentGameId];
+            let pricesStr = ''; let methodTextForWhatsApp = '';
+            if (type === 'id') { pricesStr = currentCurrency === 'USD' ? (game.id_prices_usd || '') : (game.id_prices || ''); methodTextForWhatsApp = 'عن طريق شحن الـ ID'; } else if (type === 'account') { pricesStr = currentCurrency === 'USD' ? (game.account_prices_usd || '') : (game.account_prices || ''); methodTextForWhatsApp = 'عن طريق شحن الحساب'; } else if (type.startsWith('custom_')) { const index = parseInt(type.split('_')[1]); const customMethod = game.custom_methods[index]; pricesStr = currentCurrency === 'USD' ? (customMethod.prices_usd || '') : (customMethod.prices || ''); methodTextForWhatsApp = customMethod.name; }
+            const content = document.getElementById('pricesContent');
+            if (!pricesStr || pricesStr.trim() === '') { content.innerHTML = `<div class="empty-msg">لا توجد أسعار مدخلة لهذه الطريقة بالعملة الحالية (${currentCurrency})</div>`; } else {
+                const lines = pricesStr.split('\n'); let htmlString = '';
+                lines.forEach(line => {
+                    let parts = line.split('=');
+                    if(parts.length === 2) {
+                        let name = parts[0].trim(); let rawVal = parts[1].trim(); let finalPrice = rawVal; let oldPriceHtml = '';
+                        if(rawVal.includes('بدل')) { let priceParts = rawVal.split('بدل'); finalPrice = priceParts[0].trim(); let oldPrice = priceParts[1].trim(); oldPriceHtml = `<div class="discount-wrapper"><span class="discount-badge">خصم</span><span class="old-price">${oldPrice}</span></div>`; }
+                        let quantityMatch = name.match(/[0-9,\.]+/); let quantity = quantityMatch ? quantityMatch[0] : ''; let itemName = name.replace(/[0-9,\.]+/, '').trim(); if (!itemName && !quantity) { itemName = name; }
+                        let displayNameHtml = quantity ? `<span class="item-quantity">${quantity}</span> <span class="item-type">${itemName}</span>` : `<span class="item-quantity" style="font-size: 1rem;">${itemName}</span>`;
+                        
+                        htmlString += `<div class="price-card-modern" style="cursor: pointer;" data-game="${encodeURIComponent(game.name)}" data-pack="${encodeURIComponent(name)}" data-price="${encodeURIComponent(finalPrice)}" data-method="${encodeURIComponent(methodTextForWhatsApp)}" onclick="openWhatsApp(this)">
+                                        <div class="price-card-content">
+                                            <div class="item-details">${displayNameHtml}</div>
+                                            <div class="price-area">${oldPriceHtml}<div class="item-price-tag">${finalPrice}</div></div>
+                                        </div>
+                                       </div>`;
+                    }
+                });
+                content.innerHTML = htmlString;
+            }
+            document.getElementById('stepSelection').classList.remove('active'); document.getElementById('stepPrices').classList.add('active'); document.getElementById('modalScrollBox').scrollTop = 0;
+        }
+
+        function openWhatsApp(element) {
+            const phone = "201125808758";
+            const gameName = decodeURIComponent(element.getAttribute('data-game')); const packName = decodeURIComponent(element.getAttribute('data-pack')); const price = decodeURIComponent(element.getAttribute('data-price')); const method = decodeURIComponent(element.getAttribute('data-method'));
+            const text = `مرحباً، أريد طلب شحن:\n🎮 اللعبة/المنتج: ${gameName}\n📦 الباقة: ${packName}\n💰 السعر: ${price}\n⚙️ طريقة الشحن: ${method}`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function goBack(fromHistory = false) {
+            if(!fromHistory) { history.back(); return; } 
+            currentPriceType = null; document.getElementById('stepPrices').classList.remove('active'); document.getElementById('stepSelection').classList.add('active'); document.getElementById('modalScrollBox').scrollTop = 0;
+        }
+
+        function closeModal(modalId, fromHistory = false) {
+            if(!fromHistory) { history.back(); return; } 
+            if(modalId === 'gameModal') currentPriceType = null;
+            const modal = document.getElementById(modalId); modal.classList.remove('active'); setTimeout(() => modal.style.display = 'none', 300);
+            
+            if(modalId === 'discountModal' && activeDiscountData) {
+                document.getElementById('floatingGift').style.display = 'flex';
+            }
+        }
+        function closeOnOutside(e) { if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id); }
+
+        function openDiscountModal() {
+            pushModalState();
+            document.getElementById('floatingGift').style.display = 'none';
+            const modal = document.getElementById('discountModal');
+            modal.style.display = 'flex'; void modal.offsetWidth; modal.classList.add('active');
+        }
+
+        function initLiveDiscounts() {
+            db.ref('discount_codes').orderByChild('visitorId').equalTo(visitorId).on('value', codeSnap => {
+                let hasActiveCode = false;
+                let now = Date.now();
+                let latestCode = null;
+
+                codeSnap.forEach(child => {
+                    let codeData = child.val();
+                    if (codeData.status === 'active' && codeData.expiresAt > now) {
+                        hasActiveCode = true;
+                        latestCode = { key: child.key, ...codeData };
+                    } else if (codeData.status === 'shipped' && myActiveDiscountCode === child.key) {
+                        activeDiscountData = null;
+                        clearInterval(discountTimerInterval);
+                        document.getElementById('floatingGift').style.display = 'none';
+                        if (document.getElementById('discountModal').classList.contains('active')) closeModal('discountModal');
+                        myActiveDiscountCode = null;
+                    }
+                });
+
+                if (hasActiveCode && latestCode) {
+                    if (myActiveDiscountCode !== latestCode.key) {
+                        myActiveDiscountCode = latestCode.key;
+                        loadDiscountDetails(latestCode);
+                        openDiscountModal();
+                    }
+                } else {
+                    // تم التعديل هنا: إذا تم مسح الخصومات من لوحة التحكم لتشغيلها من جديد
+                    if (activeDiscountData || myActiveDiscountCode) {
+                        activeDiscountData = null;
+                        myActiveDiscountCode = null;
+                        clearInterval(discountTimerInterval);
+                        document.getElementById('floatingGift').style.display = 'none';
+                        const modal = document.getElementById('discountModal');
+                        if (modal.classList.contains('active')) {
+                            modal.classList.remove('active');
+                            setTimeout(() => modal.style.display = 'none', 300);
+                        }
+                    }
+                    listenForAvailableDiscounts();
+                }
+            });
+        }
+
+        let isListeningForDiscounts = false;
+        function listenForAvailableDiscounts() {
+            if(isListeningForDiscounts) return;
+            isListeningForDiscounts = true;
+            
+            db.ref('discounts').on('value', distSnap => {
+                if(myActiveDiscountCode) return;
+
+                let activeDiscounts = [];
+                distSnap.forEach(d => {
+                    let data = d.val();
+                    if (data.status === 'active') {
+                        if (data.maxUsers === 'all' || data.currentClaims < data.maxUsers) {
+                            activeDiscounts.push({key: d.key, ...data});
+                        }
+                    }
+                });
+
+                if (activeDiscounts.length > 0) {
+                    let randomDiscount = activeDiscounts[Math.floor(Math.random() * activeDiscounts.length)];
+                    assignDiscountToUser(randomDiscount);
+                }
+            });
+        }
+
+        function assignDiscountToUser(discount) {
+            let code = 'MOHABSTORE-' + Math.floor(100000 + Math.random() * 900000);
+            let expiresAt = Date.now() + (discount.durationHours * 60 * 60 * 1000);
+            
+            let typeFormatted = discount.type === 'ID' ? 'عن طريق شحن الـ ID' : 'عن طريق شحن الحساب';
+
+            let codeData = {
+                visitorId: visitorId,
+                discountId: discount.key,
+                game: discount.gameName,
+                package: discount.package,
+                type: typeFormatted,
+                oldPrice: discount.oldPrice,
+                newPrice: discount.newPrice,
+                expiresAt: expiresAt,
+                status: 'active'
             };
-            
-            localStorage.setItem('mohab_active_discount', JSON.stringify(activeDiscount));
-            localStorage.setItem('mohab_last_discount_time', now.toString());
-            
-            document.getElementById('luckyFloatingIcon').style.display = 'flex';
-            openActiveDiscount();
+
+            db.ref('discount_codes/' + code).set(codeData).then(() => {
+                if (discount.maxUsers !== 'all') {
+                    db.ref('discounts/' + discount.key + '/currentClaims').set(firebase.database.ServerValue.increment(1));
+                }
+            });
         }
-    }
 
-    function openActiveDiscount() {
-        if (!activeDiscount) return;
-        const discount = activeDiscount;
-        const game = globalGames[discount.gameId];
-        if(!game) return;
+        function loadDiscountDetails(codeData) {
+            activeDiscountData = codeData;
+            document.getElementById('dGameName').innerText = codeData.game;
+            document.getElementById('dPackage').innerText = codeData.package;
+            document.getElementById('dType').innerText = codeData.type;
+            document.getElementById('dOldPrice').innerText = codeData.oldPrice || '';
+            document.getElementById('dNewPrice').innerText = codeData.newPrice;
 
-        let oldPrice = currentCurrency === 'USD' ? discount.oldUsd : discount.oldEgp;
-        let newPrice = currentCurrency === 'USD' ? discount.newUsd : discount.newEgp;
-        
-        if(!oldPrice || !newPrice) { oldPrice = discount.oldEgp; newPrice = discount.newEgp; }
+            // البحث عن صورة اللعبة المرتبطة بالخصم
+            let gameImgSrc = '';
+            for(let key in globalGames) {
+                if(globalGames[key].name === codeData.game) {
+                    gameImgSrc = globalGames[key].img;
+                    break;
+                }
+            }
 
-        const bodyHtml = `
-            <img src="${game.img}" class="lucky-img" alt="${game.name}">
-            <div class="lucky-game-name">${game.name}</div>
-            <div class="lucky-pack-name">${discount.packName}</div>
+            const imgEl = document.getElementById('dGameImage');
+            const fallbackIcon = document.getElementById('dGiftIconFallback');
             
-            <div class="promo-code-box">
-                <span>كود الخصم الخاص بك:</span>
-                <strong>${discount.code}</strong>
-            </div>
+            if(gameImgSrc) {
+                imgEl.src = gameImgSrc;
+                imgEl.style.display = 'block';
+                fallbackIcon.style.display = 'none';
+            } else {
+                imgEl.style.display = 'none';
+                fallbackIcon.style.display = 'inline-block';
+            }
 
-            <div class="lucky-price-box">
-                <div style="text-align:right;">
-                    <span style="font-size:0.8rem; color:#94a3b8; display:block;">السعر الأصلي</span>
-                    <span class="lucky-old-price">${oldPrice}</span>
-                </div>
-                <div style="text-align:left;">
-                    <span style="font-size:0.8rem; color:#fbbf24; display:block; font-weight:bold;">بعد الخصم</span>
-                    <span class="lucky-new-price">${newPrice}</span>
-                </div>
-            </div>
+            let date = new Date(codeData.expiresAt);
+            let timeString = date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            let todayDate = new Date().getDate();
+            let expiryDateNum = date.getDate();
             
-            <button class="lucky-btn" onclick="openWhatsAppLucky('${game.name}', '${discount.packName}', '${oldPrice}', '${newPrice}', '${discount.method}', '${discount.code}')">
-                <i class="fab fa-whatsapp"></i> شحن العرض الآن
-            </button>
-        `;
-        
-        document.getElementById('luckyBodyContent').innerHTML = bodyHtml;
-        const modal = document.getElementById('luckyDiscountModal');
-        modal.style.display = 'flex'; void modal.offsetWidth; modal.classList.add('active');
-    }
+            let dayText = "";
+            if (expiryDateNum === todayDate) {
+                dayText = "اليوم";
+            } else if (expiryDateNum === todayDate + 1) {
+                dayText = "غداً";
+            } else {
+                dayText = "يوم " + date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
+            }
 
-    function openWhatsAppLucky(gameName, packName, oldPrice, newPrice, method, code) {
-        const phone = "201125808758";  
-        const text = `مرحباً، لقد حصلت على العرض المحظوظ وأريد شحنه:
+            formattedExpiryTextForWA = `${dayText} الساعة ${timeString}`;
+            document.getElementById('discountEndDateText').innerText = `ينتهي ${formattedExpiryTextForWA}`;
 
-🎁 العرض المحظوظ 🎁
-🎮 اللعبة/المنتج: ${gameName}
-📦 الباقة: ${packName}
-💰 السعر: ${newPrice} (بدلاً من ${oldPrice})
-⚙️ طريقة الشحن: ${method}
-🏷️ كود الخصم الخاص بي: *${code}*`;
+            startCountdown(codeData.expiresAt);
+        }
 
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;  
-        window.open(url, '_blank'); 
-        closeLuckyModal();
-    }
+        function startCountdown(endTime) {
+            clearInterval(discountTimerInterval);
+            discountTimerInterval = setInterval(() => {
+                let now = Date.now();
+                let distance = endTime - now;
 
-    function closeLuckyModal() {
-        const modal = document.getElementById('luckyDiscountModal');
-        modal.classList.remove('active');
-        setTimeout(() => modal.style.display = 'none', 300);
-    }
-    
-    function closeLuckyModalOutside(e) { if (e.target.id === 'luckyDiscountModal') closeLuckyModal(); }
+                if (distance < 0) {
+                    clearInterval(discountTimerInterval);
+                    activeDiscountData = null;
+                    document.getElementById('floatingGift').style.display = 'none';
+                    if (document.getElementById('discountModal').classList.contains('active')) closeModal('discountModal');
+                    return;
+                }
 
-    function filterGames() {  
-        let q = document.getElementById('searchInput').value.toLowerCase();  
-        document.querySelectorAll('.game-card').forEach(card => {  
-            card.style.display = card.dataset.name.includes(q) ? "flex" : "none";  
-        });  
-    }  
+                let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-    function openGame(id) {  
-        currentGameId = id; const game = globalGames[id];  
-        document.getElementById('modalGameName').innerText = game.name;  
-        document.getElementById('modalGameImg').src = game.img;  
-          
-        const optionsList = document.getElementById('modalOptionsList');  
-        let htmlString = ''; let hasAnyOption = false;  
+                document.getElementById('tHours').innerText = hours.toString().padStart(2, '0');
+                document.getElementById('tMins').innerText = minutes.toString().padStart(2, '0');
+                document.getElementById('tSecs').innerText = seconds.toString().padStart(2, '0');
+            }, 1000);
+        }
 
-        if (game.id_available) {  
-            hasAnyOption = true;  
-            htmlString += `<div class="option-card" onclick="showPrices('id')">  
-                <div class="option-icon"><i class="fas fa-id-card"></i></div>  
-                <div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق ID</h4></div></div>`;  
-        }  
-        if (game.account_available) {  
-            hasAnyOption = true;  
-            htmlString += `<div class="option-card" onclick="showPrices('account')">  
-                <div class="option-icon"><i class="fas fa-user-shield"></i></div>  
-                <div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق الحساب</h4></div></div>`;  
-        }  
-        if (game.custom_methods && game.custom_methods.length > 0) {  
-            hasAnyOption = true;  
-            game.custom_methods.forEach((cm, index) => {  
-                htmlString += `<div class="option-card" onclick="showPrices('custom_${index}')">  
-                    <div class="option-icon"><i class="fas fa-bolt"></i></div>  
-                    <div><h4 style="color:#fff; font-size:0.95rem;">${cm.name}</h4></div></div>`;  
-            });  
-        }  
-          
-        optionsList.innerHTML = hasAnyOption ? htmlString : '<div class="empty-msg">غير متوفر حالياً</div>';  
-        document.getElementById('stepSelection').classList.add('active');  
-        document.getElementById('stepPrices').classList.remove('active');  
-        document.getElementById('modalScrollBox').scrollTop = 0;  
-        const modal = document.getElementById('gameModal');  
-        modal.style.display = 'flex'; void modal.offsetWidth; modal.classList.add('active');  
-    }  
+        function claimDiscountWhatsApp() {
+            const phone = "201125808758";
+            const text = `مرحباً، لدي كود خصم حصري أريد شحنه!\n\n🎁 الكود: ${myActiveDiscountCode}\n🎮 المنتج: ${activeDiscountData.game}\n📦 الباقة: ${activeDiscountData.package}\n⚙️ طريقة الشحن: ${activeDiscountData.type}\n💰 السعر المطلوب: ${activeDiscountData.newPrice}\n⏳ (الخصم ينتهي ${formattedExpiryTextForWA})`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+        }
 
-    function showPrices(type) {  
-        currentPriceType = type;  
-        const game = globalGames[currentGameId];  
-        let pricesStr = ''; let methodTextForWhatsApp = '';  
-          
-        if (type === 'id') { pricesStr = currentCurrency === 'USD' ? (game.id_prices_usd || '') : (game.id_prices || ''); methodTextForWhatsApp = 'عن طريق الـ ID'; } 
-        else if (type === 'account') { pricesStr = currentCurrency === 'USD' ? (game.account_prices_usd || '') : (game.account_prices || ''); methodTextForWhatsApp = 'عن طريق الحساب'; } 
-        else if (type.startsWith('custom_')) { const index = parseInt(type.split('_')[1]); const customMethod = game.custom_methods[index]; pricesStr = currentCurrency === 'USD' ? (customMethod.prices_usd || '') : (customMethod.prices || ''); methodTextForWhatsApp = customMethod.name; }  
-
-        const content = document.getElementById('pricesContent');  
-          
-        if (!pricesStr || pricesStr.trim() === '') {  
-            content.innerHTML = `<div class="empty-msg">لا توجد أسعار مدخلة لهذه الطريقة بالعملة الحالية (${currentCurrency})</div>`;  
-        } else {  
-            const lines = pricesStr.split('\n');  
-            let htmlString = '';  
-            lines.forEach(line => {  
-                let parts = line.split('=');  
-                if(parts.length === 2) {  
-                    let name = parts[0].trim(); let rawVal = parts[1].trim();  
-                    let finalPrice = rawVal; let oldPriceHtml = '';  
-                      
-                    if(rawVal.includes('بدل')) {  
-                        let priceParts = rawVal.split('بدل'); finalPrice = priceParts[0].trim(); let oldPrice = priceParts[1].trim();  
-                        oldPriceHtml = `<div class="discount-wrapper"><span class="discount-badge">خصم</span><span class="old-price">${oldPrice}</span></div>`;  
-                    }  
-
-                    let quantityMatch = name.match(/[0-9,\.]+/); let quantity = quantityMatch ? quantityMatch[0] : '';  
-                    let itemName = name.replace(/[0-9,\.]+/, '').trim(); if (!itemName && !quantity) { itemName = name; }  
-                    let displayNameHtml = quantity ? `<span class="item-quantity">${quantity}</span> <span class="item-type">${itemName}</span>` : `<span class="item-quantity" style="font-size: 1rem;">${itemName}</span>`;  
-
-                    htmlString += `  
-                        <div class="price-card-modern" style="cursor: pointer;" data-game="${encodeURIComponent(game.name)}" data-pack="${encodeURIComponent(name)}" data-price="${encodeURIComponent(finalPrice)}" data-method="${encodeURIComponent(methodTextForWhatsApp)}" onclick="openWhatsApp(this)">  
-                            <div class="price-card-content">  
-                                <div class="item-details">${displayNameHtml}</div>  
-                                <div class="price-area">${oldPriceHtml}<div class="item-price-tag">${finalPrice}</div></div>  
-                            </div>  
-                        </div>`;  
-                }  
-            });  
-            content.innerHTML = htmlString;  
-        }  
-        document.getElementById('stepSelection').classList.remove('active');  
-        document.getElementById('stepPrices').classList.add('active');  
-        document.getElementById('modalScrollBox').scrollTop = 0;  
-    }  
-
-    function openWhatsApp(element) {  
-        const phone = "201125808758";  
-        const gameName = decodeURIComponent(element.getAttribute('data-game'));  
-        const packName = decodeURIComponent(element.getAttribute('data-pack'));  
-        const price = decodeURIComponent(element.getAttribute('data-price'));  
-        const method = decodeURIComponent(element.getAttribute('data-method'));  
-        const text = `مرحباً، أريد طلب شحن:\n\n🎮 اللعبة/المنتج: ${gameName}\n📦 الباقة: ${packName}\n💰 السعر: ${price}\n⚙️ طريقة الشحن: ${method}`;
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;  
-        window.open(url, '_blank');  
-    }  
-
-    function goBack() { currentPriceType = null; document.getElementById('stepPrices').classList.remove('active'); document.getElementById('stepSelection').classList.add('active'); document.getElementById('modalScrollBox').scrollTop = 0; }  
-    function closeModal() { currentPriceType = null; const modal = document.getElementById('gameModal'); modal.classList.remove('active'); setTimeout(() => modal.style.display = 'none', 300); }  
-    function closeOnOutside(e) { if (e.target.id === 'gameModal') closeModal(); }  
-</script>
-
-</body>  
+        initLiveDiscounts();
+    </script>
+</body>
 </html>
