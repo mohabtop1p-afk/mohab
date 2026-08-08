@@ -383,16 +383,10 @@
 
     <!-- Recovery Embedded Page -->
     <div id="recoveryPage">
-        <div class="recovery-topbar">
-            <div class="recovery-topbar-title">
-                <i class="fas fa-shield-alt"></i>
-                 الاستعادة
-            </div>
-            <button class="recovery-close-btn" onclick="closeRecovery()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <iframe id="recoveryFrame" src="" allow="fullscreen" loading="lazy"></iframe>
+        <button class="recovery-close-btn" style="position: absolute; top: 15px; left: 15px; z-index: 201; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); width: 38px; height: 38px; border-radius: 50%; color: #fff; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.5);" onclick="closeRecovery()">
+            <i class="fas fa-times"></i>
+        </button>
+        <iframe id="recoveryFrame" src="https://mohabstore.wisp.uno" allow="fullscreen" style="width:100%; height:100%; border:none; background: var(--bg-deep);"></iframe>
     </div>
 
     <div id="floatingGift" class="floating-gift" onclick="openDiscountModal()">
@@ -601,7 +595,7 @@
                 <div class="dock-icon-wrapper" style="border-color: rgba(6,182,212,0.4); background: rgba(6,182,212,0.08);">
                     <i class="fas fa-shield-alt" style="color: var(--primary);"></i>
                 </div>
-                <span style="color: var(--primary);"> كشف الاستعاده </span>
+                <span style="color: var(--primary);"> كشف</span>
             </button>`;
             dock.innerHTML = htmlString;
         }
@@ -910,10 +904,6 @@
         initLiveDiscounts();
 
         function openRecovery() {
-            const frame = document.getElementById('recoveryFrame');
-            if (!frame.src || frame.src === window.location.href) {
-                frame.src = 'https://mohabstore.wisp.uno';
-            }
             document.getElementById('recoveryPage').classList.add('open');
             document.body.style.overflow = 'hidden';
             history.pushState({ recovery: true }, '');
