@@ -302,6 +302,51 @@
             50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(245, 158, 11, 0.8); }
             100% { transform: scale(1); box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
         }
+
+        /* Recovery Page */
+        #recoveryPage {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 200;
+            background: var(--bg-deep);
+            flex-direction: column;
+        }
+        #recoveryPage.open { display: flex; }
+        .recovery-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(9, 13, 22, 0.95);
+            border-bottom: 1px solid var(--surface-border);
+            backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 201;
+        }
+        .recovery-topbar-title {
+            font-weight: 900;
+            font-size: 1rem;
+            color: var(--primary);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .recovery-close-btn {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #ef4444;
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .recovery-close-btn:hover { background: #ef4444; color: #fff; }
+        #recoveryFrame {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: var(--bg-deep);
+        }
     </style>
 </head>
 <body>
@@ -335,6 +380,20 @@
     </div>
 
     <div id="bottomDock" class="bottom-nav-dock" style="display:none;"></div>
+
+    <!-- Recovery Embedded Page -->
+    <div id="recoveryPage">
+        <div class="recovery-topbar">
+            <div class="recovery-topbar-title">
+                <i class="fas fa-shield-alt"></i>
+                 الاستعادة
+            </div>
+            <button class="recovery-close-btn" onclick="closeRecovery()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <iframe id="recoveryFrame" src="" allow="fullscreen" loading="lazy"></iframe>
+    </div>
 
     <div id="floatingGift" class="floating-gift" onclick="openDiscountModal()">
         <i class="fas fa-gift"></i>
@@ -522,7 +581,30 @@
             }
         }, {passive: true});
 
-        function renderBottomDock(socials) { const dock = document.getElementById('bottomDock'); if(socials.length === 0) { dock.style.display = 'none'; return; } dock.style.display = 'flex'; const icons = { 'whatsapp': 'fab fa-whatsapp', 'facebook': 'fab fa-facebook-f', 'telegram': 'fab fa-telegram-plane', 'instagram': 'fab fa-instagram', 'youtube': 'fab fa-youtube', 'warranty': 'fas fa-star' }; let htmlString = ''; socials.forEach(s => { htmlString += `<a href="${s.url}" target="_blank" class="dock-item"><div class="dock-icon-wrapper"><i class="${icons[s.platform] || 'fas fa-link'}"></i></div><span>${s.name}</span></a>`; }); dock.innerHTML = htmlString; }
+        function renderBottomDock(socials) {
+            const dock = document.getElementById('bottomDock');
+            if(socials.length === 0 && true) {
+                dock.style.display = 'flex';
+            } else if (socials.length > 0) {
+                dock.style.display = 'flex';
+            } else {
+                dock.style.display = 'none';
+                return;
+            }
+            const icons = { 'whatsapp': 'fab fa-whatsapp', 'facebook': 'fab fa-facebook-f', 'telegram': 'fab fa-telegram-plane', 'instagram': 'fab fa-instagram', 'youtube': 'fab fa-youtube', 'warranty': 'fas fa-star' };
+            let htmlString = '';
+            socials.forEach(s => {
+                htmlString += `<a href="${s.url}" target="_blank" class="dock-item"><div class="dock-icon-wrapper"><i class="${icons[s.platform] || 'fas fa-link'}"></i></div><span>${s.name}</span></a>`;
+            });
+            // Always add recovery tab at the end
+            htmlString += `<button class="dock-item" onclick="openRecovery()" style="background:none;border:none;font-family:inherit;cursor:pointer;" id="recoveryDockBtn">
+                <div class="dock-icon-wrapper" style="border-color: rgba(6,182,212,0.4); background: rgba(6,182,212,0.08);">
+                    <i class="fas fa-shield-alt" style="color: var(--primary);"></i>
+                </div>
+                <span style="color: var(--primary);"> كشف الاستعاده </span>
+            </button>`;
+            dock.innerHTML = htmlString;
+        }
 
         db.ref('games').on('value', snap => {
             globalGames = snap.val() || {};
@@ -826,6 +908,29 @@
         }
 
         initLiveDiscounts();
+
+        function openRecovery() {
+            const frame = document.getElementById('recoveryFrame');
+            if (!frame.src || frame.src === window.location.href) {
+                frame.src = 'https://mohabstore.wisp.uno';
+            }
+            document.getElementById('recoveryPage').classList.add('open');
+            document.body.style.overflow = 'hidden';
+            history.pushState({ recovery: true }, '');
+        }
+
+        function closeRecovery() {
+            document.getElementById('recoveryPage').classList.remove('open');
+            document.body.style.overflow = '';
+            if (history.state && history.state.recovery) history.back();
+        }
+
+        window.addEventListener('popstate', function(e) {
+            if (document.getElementById('recoveryPage').classList.contains('open')) {
+                document.getElementById('recoveryPage').classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        });
     </script>
 </body>
 </html>
