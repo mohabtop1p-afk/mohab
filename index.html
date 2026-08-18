@@ -303,7 +303,7 @@
             100% { transform: scale(1); box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
         }
 
-        /* Recovery Page */
+        /* Recovery Page / Telegram Notification Modal Styling */
         #recoveryPage {
             display: none;
             position: fixed;
@@ -311,41 +311,96 @@
             z-index: 200;
             background: var(--bg-deep);
             flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
         #recoveryPage.open { display: flex; }
-        .recovery-topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: rgba(9, 13, 22, 0.95);
-            border-bottom: 1px solid var(--surface-border);
-            backdrop-filter: blur(12px);
-            position: sticky; top: 0; z-index: 201;
+        
+        .recovery-card {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 420px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            position: relative;
+            animation: fadeIn 0.3s ease;
         }
-        .recovery-topbar-title {
-            font-weight: 900;
-            font-size: 1rem;
-            color: var(--primary);
-            display: flex; align-items: center; gap: 8px;
-        }
-        .recovery-close-btn {
-            background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.3);
+
+        .recovery-close-icon {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
             color: #ef4444;
-            width: 34px; height: 34px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 1rem;
             transition: all 0.2s;
         }
-        .recovery-close-btn:hover { background: #ef4444; color: #fff; }
-        #recoveryFrame {
-            flex: 1;
+        .recovery-close-icon:hover { background: #ef4444; color: #fff; }
+
+        .recovery-icon-glow {
+            width: 70px;
+            height: 70px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 2px solid rgba(6, 182, 212, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+            color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .recovery-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .recovery-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        .telegram-btn {
+            background: #229ed9;
+            color: #fff;
             width: 100%;
             border: none;
-            background: var(--bg-deep);
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(34, 158, 217, 0.3);
+        }
+        .telegram-btn:hover {
+            background: #1d8ac0;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 158, 217, 0.4);
         }
     </style>
 </head>
@@ -381,12 +436,23 @@
 
     <div id="bottomDock" class="bottom-nav-dock" style="display:none;"></div>
 
-    <!-- Recovery Embedded Page -->
+    <!-- Recovery Page / Telegram Notification Modal -->
     <div id="recoveryPage">
-        <button class="recovery-close-btn" style="position: absolute; top: 15px; left: 15px; z-index: 201; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); width: 38px; height: 38px; border-radius: 50%; color: #fff; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.5);" onclick="closeRecovery()">
-            <i class="fas fa-times"></i>
-        </button>
-        <iframe id="recoveryFrame" src="https://mohab-chi.vercel.app" allow="fullscreen" style="width:100%; height:100%; border:none; background: var(--bg-deep);"></iframe>
+        <div class="recovery-card">
+            <button class="recovery-close-icon" onclick="closeRecovery()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="recovery-icon-glow">
+                <i class="fab fa-telegram-plane"></i>
+            </div>
+            <div class="recovery-title">نقل خدمة كشف الاستعادة</div>
+            <div class="recovery-desc">
+                تم نقل خدمة كشف الاستعادة الى بوت تليجرام لاضافة المزيد من الخدمات مثل تخمين رمز الامان، اسبام تسجيل الدخول، الحصول على معلومات الحساب بشكل كامل واستعمال ميزة المقبرة.
+            </div>
+            <a href="https://t.me/mohabstore_bot" target="_blank" class="telegram-btn">
+                <i class="fab fa-telegram-plane" style="font-size: 1.2rem;"></i> الانتقال إلى بوت التليجرام
+            </a>
+        </div>
     </div>
 
     <div id="floatingGift" class="floating-gift" onclick="openDiscountModal()">
@@ -590,12 +656,12 @@
             socials.forEach(s => {
                 htmlString += `<a href="${s.url}" target="_blank" class="dock-item"><div class="dock-icon-wrapper"><i class="${icons[s.platform] || 'fas fa-link'}"></i></div><span>${s.name}</span></a>`;
             });
-            // Always add recovery tab at the end
+            // Recovery tab configured with modern icon linking to the Telegram bot announcement modal
             htmlString += `<button class="dock-item" onclick="openRecovery()" style="background:none;border:none;font-family:inherit;cursor:pointer;" id="recoveryDockBtn">
                 <div class="dock-icon-wrapper" style="border-color: rgba(6,182,212,0.4); background: rgba(6,182,212,0.08);">
                     <i class="fas fa-shield-alt" style="color: var(--primary);"></i>
                 </div>
-                <span style="color: var(--primary);"> كشف الاستعاده</span>
+                <span style="color: var(--primary);">كشف الاستعادة</span>
             </button>`;
             dock.innerHTML = htmlString;
         }
@@ -622,7 +688,6 @@
             if (game.id_available) { hasAnyOption = true; htmlString += `<div class="option-card" onclick="showPrices('id')"><div class="option-icon"><i class="fas fa-id-card"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق ID</h4></div></div>`; }
             if (game.account_available) { hasAnyOption = true; htmlString += `<div class="option-card" onclick="showPrices('account')"><div class="option-icon"><i class="fas fa-user-shield"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق الحساب</h4></div></div>`; }
             
-            // اضافة طرق الشحن المخصصة (مثل رقم فودافون)
             if (game.custom_methods && game.custom_methods.length > 0) {
                 hasAnyOption = true;
                 game.custom_methods.forEach((cm, index) => { htmlString += `<div class="option-card" onclick="showPrices('custom_${index}')"><div class="option-icon"><i class="fas fa-bolt"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">${cm.name}</h4></div></div>`; });
