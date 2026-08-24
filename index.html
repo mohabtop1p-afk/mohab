@@ -41,11 +41,10 @@
             user-select: none;
         }
 
-        /* تحسين أداء الأنيميشن */
         img {
             background: linear-gradient(90deg, var(--surface) 0%, var(--surface-hover) 50%, var(--surface) 100%);
             background-size: 200% 100%;
-            animation: loadingSkeleton 1.5s infinite linear; /* linear للأداء */
+            animation: loadingSkeleton 1.5s infinite linear;
             will-change: background-position;
         }
         @keyframes loadingSkeleton {
@@ -56,15 +55,24 @@
         nav { 
             position: sticky; top: 0; z-index: 50; 
             background: rgba(9, 13, 22, 0.85); 
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); /* تخفيف البلور قليلًا للسرعة */
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             border-bottom: 1px solid var(--surface-border); 
             padding: 12px 20px; display: flex; justify-content: center; align-items: center; 
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            transform: translateZ(0); /* تسريع الهاردوير */
+            transform: translateZ(0); 
         }
         .nav-content { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 900px; }
-        .main-logo { height: 48px; max-width: 180px; object-fit: contain; filter: drop-shadow(0 0 6px var(--primary-glow)); transition: var(--transition-smooth); will-change: filter, transform; transform: translateZ(0); }
-        .main-logo:hover { filter: drop-shadow(0 0 12px var(--primary-glow)); transform: scale(1.02) translateZ(0); }
+        
+        .main-logo { 
+            height: 60px; 
+            max-width: 200px; 
+            object-fit: contain; 
+            border-radius: 12px;
+            transition: var(--transition-smooth); 
+            will-change: transform; 
+            transform: translateZ(0); 
+        }
+        .main-logo:hover { transform: scale(1.02) translateZ(0); }
         
         .currency-toggle { 
             background: rgba(6, 182, 212, 0.1); 
@@ -84,7 +92,7 @@
         .slider { 
             width: 100%; border-radius: 20px; overflow: hidden; position: relative; 
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); 
-            border: 1px solid var(--surface-border); background: var(--surface); touch-action: pan-y; 
+            border: 1px solid var(--surface-border); background: #05070c; touch-action: pan-y; 
             transform: translateZ(0); 
         }
         
@@ -92,25 +100,40 @@
             .slider { aspect-ratio: 16/9; }
         }
         @media (min-width: 768px) {
-            .main-logo { height: 60px; max-width: 230px; } 
+            .main-logo { height: 75px; max-width: 280px; } 
             .games-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } 
-            .slider { aspect-ratio: 21/9; max-height: 350px; }
+            .slider { aspect-ratio: 21/9; max-height: 380px; }
         }
 
-        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s ease-in-out; object-fit: cover; will-change: opacity; }
-        .slide.active { opacity: 1; z-index: 1; }
+        .slide-wrapper-box {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; transition: opacity 0.4s ease-in-out; will-change: opacity;
+            display: flex; align-items: center; justify-content: center; background-color: #05070c;
+        }
+        .slide-wrapper-box.active { opacity: 1; z-index: 1; }
+        
+        .slide-bg-blur {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            filter: blur(20px) brightness(0.4); transform: scale(1.1); z-index: 1; pointer-events: none;
+        }
+        .slide { 
+            position: relative; width: 100%; height: 100%; 
+            object-fit: contain; z-index: 2; background: transparent; 
+        }
         
         .slider-dots { 
             position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%) translateZ(0); 
-            display: flex; gap: 5px; z-index: 2; 
-            background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 10px; 
+            display: flex; gap: 5px; z-index: 5; 
+            background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 12px; 
+            backdrop-filter: blur(4px);
         }
         .dot { 
-            width: 5px; height: 3px; border-radius: 3px; 
+            width: 6px; height: 4px; border-radius: 4px; 
             background: rgba(255,255,255,0.4); cursor: pointer; 
             transition: width 0.3s ease, background-color 0.3s ease; 
         }
-        .dot.active { width: 14px; background: var(--primary); box-shadow: 0 0 6px var(--primary-glow); }
+        .dot.active { width: 16px; background: var(--primary); box-shadow: 0 0 8px var(--primary-glow); }
 
         .search-container { max-width: 900px; margin: 12px auto; padding: 0 20px; width: 100%; }
         .search-box { position: relative; width: 100%; }
@@ -118,7 +141,7 @@
             width: 100%; background: var(--surface); 
             border: 1px solid var(--surface-border); padding: 13px 45px 13px 18px; 
             border-radius: 16px; color: #fff; font-size: 0.9rem; outline: none; 
-            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; /* تحسين انتقال الألوان */
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15); background: var(--surface-hover); }
@@ -131,7 +154,7 @@
         .loader-wrapper {
             grid-column: 1 / -1; display: flex; justify-content: center; align-items: center;
             min-height: 40vh; font-size: 3rem; color: var(--primary); 
-            text-shadow: 0 0 8px var(--primary-glow); /* أسرع من drop-shadow */
+            text-shadow: 0 0 8px var(--primary-glow); 
         }
 
         .game-card { 
@@ -149,56 +172,32 @@
         .game-card:hover .btn-view { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; border-color: transparent; box-shadow: 0 4px 10px var(--primary-glow); }
 
         .bottom-nav-dock {
-            position: fixed; 
-            bottom: 15px; 
-            left: 50%; 
-            transform: translateX(-50%) translateZ(0); /* تسريع */
-            width: 95%; 
-            max-width: 600px;
-            background: rgba(13, 20, 35, 0.88); 
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            border-radius: 28px; 
-            padding: 8px 10px;
-            display: flex; justify-content: space-around; align-items: center;
-            z-index: 90; 
+            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%) translateZ(0); 
+            width: 95%; max-width: 600px;
+            background: rgba(13, 20, 35, 0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 28px; padding: 8px 10px;
+            display: flex; justify-content: space-around; align-items: center; z-index: 90; 
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05);
-            transition: transform 0.3s;
-            will-change: transform;
+            transition: transform 0.3s; will-change: transform;
         }
-        
         .dock-item {
             display: flex; flex-direction: column; align-items: center; gap: 4px;
             text-decoration: none; color: var(--text-muted); transition: transform 0.2s;
-            flex: 1; text-align: center;
-            will-change: transform;
+            flex: 1; text-align: center; will-change: transform;
         }
-        
         .dock-icon-wrapper {
-            width: 36px; 
-            height: 36px; 
-            border-radius: 12px; 
+            width: 36px; height: 36px; border-radius: 12px; 
             display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
-            transition: all 0.2s;
-            border: 1px solid rgba(34, 158, 217, 0.3);
-            background: rgba(34, 158, 217, 0.05);
-            color: var(--telegram-blue);
+            transition: all 0.2s; border: 1px solid rgba(34, 158, 217, 0.3);
+            background: rgba(34, 158, 217, 0.05); color: var(--telegram-blue);
         }
-        
-        .dock-item span { 
-            font-size: 0.65rem; 
-            font-weight: 700; transition: color 0.2s; color: var(--telegram-blue); 
-        }
+        .dock-item span { font-size: 0.65rem; font-weight: 700; transition: color 0.2s; color: var(--telegram-blue); }
         .dock-item:hover { transform: translateY(-4px) translateZ(0); }
-        .dock-item:hover .dock-icon-wrapper { 
-            background: rgba(34, 158, 217, 0.2); 
-            box-shadow: 0 4px 10px rgba(34, 158, 217, 0.3); 
-            border-color: var(--telegram-blue);
-        }
+        .dock-item:hover .dock-icon-wrapper { background: rgba(34, 158, 217, 0.2); box-shadow: 0 4px 10px rgba(34, 158, 217, 0.3); border-color: var(--telegram-blue); }
 
         .modal-overlay { 
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); /* تقليل البلور لسرعة الفتح */
+            background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
             z-index: 100; opacity: 0; visibility: hidden; display: flex; align-items: center; justify-content: center; 
             transition: opacity 0.25s ease, visibility 0.25s ease; padding: 15px;
             will-change: opacity, visibility;
@@ -206,17 +205,104 @@
         .modal-overlay.active { opacity: 1; visibility: visible; }
         
         .modal-box { 
-            background: var(--bg-deep); width: 100%; max-width: 460px; 
-            max-height: 88vh; 
-            border-radius: 24px; border: 1px solid var(--surface-border); 
-            display: block; 
-            overflow-y: auto; 
+            background: var(--bg-deep); width: 100%; max-width: 460px; max-height: 88vh; 
+            border-radius: 24px; border: 1px solid var(--surface-border); display: block; overflow-y: auto; 
             transform: translateY(20px) scale(0.95) translateZ(0); transition: transform 0.25s ease; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-            -webkit-overflow-scrolling: touch;
-            will-change: transform;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6); -webkit-overflow-scrolling: touch; will-change: transform;
         }
         .modal-overlay.active .modal-box { transform: translateY(0) scale(1) translateZ(0); }
+
+        /* ========================================================== */
+        /* تصميم إحترافي لنافذة الإشعار (صورة فقط) Ultra Modern Image Notification */
+        /* ========================================================== */
+        .ultra-event-modal {
+            position: relative;
+            background: transparent;
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(6, 182, 212, 0.25);
+            border-radius: 26px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 420px;
+            transform: scale(0.7) translateY(30px) translateZ(0);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-overlay.active .ultra-event-modal {
+            transform: scale(1) translateY(0) translateZ(0);
+            opacity: 1;
+        }
+        .ultra-img-container {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #090d16;
+            border-radius: 26px;
+            overflow: hidden;
+        }
+        .ultra-img-container img {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+            object-fit: contain;
+            display: block;
+            border-radius: 26px;
+        }
+        .ultra-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 10;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        .ultra-close-btn:hover {
+            background: #ef4444;
+            border-color: transparent;
+            transform: scale(1.1);
+        }
+
+        /* تحكم إشعار الدخول */
+        .welcome-countdown {
+            position: absolute;
+            left: 14px;
+            top: 14px;
+            z-index: 10;
+            min-width: 38px;
+            height: 38px;
+            padding: 0 10px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 900;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            direction: rtl;
+        }
+        .welcome-event-link { display: block; width: 100%; text-decoration: none; color: inherit; }
+        .welcome-event-link img { cursor: pointer; }
+
+        /* ========================================================== */
 
         .modal-header { 
             display: flex; justify-content: space-between; align-items: center; 
@@ -270,11 +356,7 @@
             transform: skewX(-25deg); animation: shine 3s infinite linear; z-index: 3; pointer-events: none;
             will-change: left;
         }
-        @keyframes shine { 
-            0% { left: -100%; } 
-            20% { left: 200%; } 
-            100% { left: 200%; } 
-        }
+        @keyframes shine { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
 
         .price-card-content {
             position: relative; z-index: 2; display: grid; grid-template-columns: 1fr max-content; 
@@ -294,44 +376,24 @@
         .empty-msg { text-align: center; color: #ef4444; padding: 18px; background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 12px; width: 100%; font-size: 0.85rem; }
 
         .special-discount-modal {
-            position: relative;
-            background: linear-gradient(45deg, var(--surface-border), var(--primary), var(--surface-border), var(--accent));
-            background-size: 200% 200%;
-            animation: gradientBorder 4s ease infinite;
-            border-radius: 24px;
-            padding: 2px;
-            border: none;
-            box-shadow: 0 0 25px rgba(6, 182, 212, 0.2);
-            overflow: hidden;
-            will-change: background-position, transform;
+            position: relative; background: linear-gradient(45deg, var(--surface-border), var(--primary), var(--surface-border), var(--accent));
+            background-size: 200% 200%; animation: gradientBorder 4s ease infinite;
+            border-radius: 24px; padding: 2px; border: none; box-shadow: 0 0 25px rgba(6, 182, 212, 0.2);
+            overflow: hidden; will-change: background-position, transform;
         }
-
         .special-discount-modal::after {
             content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
             background: linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent);
             transform: skewX(-25deg); animation: shine 3s infinite linear; z-index: 3; pointer-events: none;
         }
-
         .discount-modal-inner {
-            background: linear-gradient(145deg, #182235, #0b111e);
-            border-radius: 22px;
-            width: 100%; height: 100%;
-            position: relative; z-index: 5;
-            padding-bottom: 22px;
+            background: linear-gradient(145deg, #182235, #0b111e); border-radius: 22px; width: 100%; height: 100%;
+            position: relative; z-index: 5; padding-bottom: 22px;
         }
 
         .discount-header { text-align: center; padding: 22px 20px 10px; }
         .discount-icon { font-size: 2.8rem; color: #f59e0b; text-shadow: 0 0 10px rgba(245,158,11,0.5); margin-bottom: 8px; animation: bounce-icon 2s infinite ease-in-out; will-change: transform; }
-        
-        .discount-game-img {
-            width: 75px; height: 75px; border-radius: 18px; object-fit: cover; 
-            margin: 0 auto 12px auto; display: none;
-            border: 2px solid var(--primary);
-            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
-            animation: bounce-icon 2s infinite ease-in-out;
-            will-change: transform;
-        }
-
+        .discount-game-img { width: 75px; height: 75px; border-radius: 18px; object-fit: cover; margin: 0 auto 12px auto; display: none; border: 2px solid var(--primary); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); animation: bounce-icon 2s infinite ease-in-out; will-change: transform; }
         @keyframes bounce-icon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         
         .discount-title { font-size: 1.25rem; font-weight: 900; color: #fff; margin-bottom: 4px; }
@@ -353,128 +415,20 @@
         .discount-btn { background: #25d366; color: #fff; width: 100%; border: none; padding: 14px; border-radius: 14px; font-size: 1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s, background 0.2s; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2); will-change: transform; }
         .discount-btn:hover { background: #1ebd5a; transform: translateY(-2px) translateZ(0); box-shadow: 0 6px 15px rgba(37, 211, 102, 0.3); }
         
-        .floating-gift {
-            position: fixed; 
-            bottom: 95px; 
-            right: 20px; 
-            width: 50px; 
-            height: 50px;
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem; color: #fff; cursor: pointer; 
-            z-index: 95; 
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
-            animation: pulse-gift 2s infinite ease-in-out; display: none;
-            will-change: transform, box-shadow;
-            transform: translateZ(0);
-        }
-        @keyframes pulse-gift {
-            0% { transform: scale(1) translateZ(0); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
-            50% { transform: scale(1.1) translateZ(0); box-shadow: 0 0 25px rgba(245, 158, 11, 0.6); }
-            100% { transform: scale(1) translateZ(0); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
-        }
+        .floating-gift { position: fixed; bottom: 95px; right: 20px; width: 50px; height: 50px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #fff; cursor: pointer; z-index: 95; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); animation: pulse-gift 2s infinite ease-in-out; display: none; will-change: transform, box-shadow; transform: translateZ(0); }
+        @keyframes pulse-gift { 0% { transform: scale(1) translateZ(0); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); } 50% { transform: scale(1.1) translateZ(0); box-shadow: 0 0 25px rgba(245, 158, 11, 0.6); } 100% { transform: scale(1) translateZ(0); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); } }
 
-        #recoveryPage {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 200;
-            background: var(--bg-deep);
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            will-change: opacity;
-        }
+        #recoveryPage { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200; background: var(--bg-deep); flex-direction: column; justify-content: center; align-items: center; padding: 20px; will-change: opacity; }
         #recoveryPage.open { display: flex; animation: fadeIn 0.25s ease; }
         
-        .recovery-card {
-            background: var(--surface);
-            border: 1px solid var(--surface-border);
-            border-radius: 24px;
-            width: 100%;
-            max-width: 420px;
-            padding: 30px 20px;
-            text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            position: relative;
-            transform: translateZ(0);
-        }
-
-        .recovery-close-icon {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #ef4444;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            transition: all 0.2s;
-            will-change: transform;
-        }
+        .recovery-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 24px; width: 100%; max-width: 420px; padding: 30px 20px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.5); position: relative; transform: translateZ(0); }
+        .recovery-close-icon { position: absolute; top: 15px; left: 15px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; will-change: transform; }
         .recovery-close-icon:hover { background: #ef4444; color: #fff; transform: scale(1.1); }
-
-        .recovery-icon-glow {
-            width: 70px;
-            height: 70px;
-            background: rgba(6, 182, 212, 0.1);
-            border: 2px solid rgba(6, 182, 212, 0.3);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 2rem;
-            color: var(--primary);
-            box-shadow: 0 0 15px var(--primary-glow);
-        }
-
-        .recovery-title {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 12px;
-            line-height: 1.5;
-        }
-
-        .recovery-desc {
-            font-size: 0.88rem;
-            color: var(--text-muted);
-            line-height: 1.7;
-            margin-bottom: 25px;
-        }
-
-        .telegram-btn {
-            background: #229ed9;
-            color: #fff;
-            width: 100%;
-            border: none;
-            padding: 14px;
-            border-radius: 14px;
-            font-size: 1rem;
-            font-weight: 800;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: transform 0.2s, background 0.2s;
-            text-decoration: none;
-            box-shadow: 0 4px 12px rgba(34, 158, 217, 0.2);
-            will-change: transform;
-        }
-        .telegram-btn:hover {
-            background: #1d8ac0;
-            transform: translateY(-2px) translateZ(0);
-            box-shadow: 0 6px 15px rgba(34, 158, 217, 0.3);
-        }
+        .recovery-icon-glow { width: 70px; height: 70px; background: rgba(6, 182, 212, 0.1); border: 2px solid rgba(6, 182, 212, 0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2rem; color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+        .recovery-title { font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 12px; line-height: 1.5; }
+        .recovery-desc { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 25px; }
+        .telegram-btn { background: #229ed9; color: #fff; width: 100%; border: none; padding: 14px; border-radius: 14px; font-size: 1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s, background 0.2s; text-decoration: none; box-shadow: 0 4px 12px rgba(34, 158, 217, 0.2); will-change: transform; }
+        .telegram-btn:hover { background: #1d8ac0; transform: translateY(-2px) translateZ(0); box-shadow: 0 6px 15px rgba(34, 158, 217, 0.3); }
     </style>
 </head>
 <body>
@@ -484,7 +438,9 @@
             <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()">
                 <i class="fas fa-pound-sign"></i> EGP
             </button>
+            
             <img id="mainLogoImg" src="" alt="Logo" class="main-logo" style="display:none;" loading="lazy">
+
             <div class="spacer"></div>
         </div>
     </nav>
@@ -529,6 +485,21 @@
 
     <div id="floatingGift" class="floating-gift" onclick="openDiscountModal()">
         <i class="fas fa-gift"></i>
+    </div>
+
+    <!-- نافذة الإشعار (صورة فقط) بالتصميم الاحترافي الجذاب -->
+    <div id="welcomeEventModal" class="modal-overlay" onclick="closeOnOutside(event)">
+        <div class="ultra-event-modal">
+            <button class="ultra-close-btn" onclick="closeWelcomeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div id="welcomeCountdown" class="welcome-countdown">10</div>
+            <div class="ultra-img-container">
+                <a id="welcomeEventLink" class="welcome-event-link" href="#" target="_blank" rel="noopener noreferrer">
+                    <img id="welcomeEventImg" src="https://via.placeholder.com/600x600?text=إشعار+المتجر" alt="إشعار">
+                </a>
+            </div>
+        </div>
     </div>
 
     <div id="gameModal" class="modal-overlay" onclick="closeOnOutside(event)">
@@ -635,6 +606,100 @@
         let formattedExpiryTextForWA = '';
         let systemCooldownHours = 24; 
 
+        // ----- إشعار الدخول القابل للتحكم من السيستم ----- //
+        let eventTimerInterval;
+        let welcomePopupSettings = {
+            enabled: true,
+            image: '',
+            duration: 10,
+            link: ''
+        };
+        let welcomePopupFallbackImage = '';
+        let welcomePopupLoaded = false;
+
+        function applyWelcomePopupSettings() {
+            if (!welcomePopupSettings.image && !welcomePopupFallbackImage) return;
+            const img = document.getElementById('welcomeEventImg');
+            const link = document.getElementById('welcomeEventLink');
+            const finalImage = welcomePopupSettings.image || welcomePopupFallbackImage;
+            if (finalImage) img.src = finalImage;
+
+            if (welcomePopupSettings.link) {
+                link.href = welcomePopupSettings.link;
+                link.style.pointerEvents = 'auto';
+            } else {
+                link.removeAttribute('href');
+                link.style.pointerEvents = 'none';
+            }
+        }
+
+        function triggerWelcomeEventModal() {
+            if (!welcomePopupSettings.enabled) return;
+            applyWelcomePopupSettings();
+
+            const modal = document.getElementById('welcomeEventModal');
+            const img = document.getElementById('welcomeEventImg');
+            if (!img.getAttribute('src') || img.getAttribute('src').includes('via.placeholder.com')) return;
+
+            modal.style.display = 'flex';
+            void modal.offsetWidth;
+            modal.classList.add('active');
+
+            let timeLeft = Math.max(1, parseInt(welcomePopupSettings.duration, 10) || 10);
+            const countdown = document.getElementById('welcomeCountdown');
+            countdown.textContent = timeLeft;
+
+            clearInterval(eventTimerInterval);
+            eventTimerInterval = setInterval(() => {
+                timeLeft--;
+                countdown.textContent = Math.max(0, timeLeft);
+                if (timeLeft <= 0) closeWelcomeModal();
+            }, 1000);
+        }
+
+        function closeWelcomeModal() {
+            clearInterval(eventTimerInterval);
+            const modal = document.getElementById('welcomeEventModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 400);
+        }
+
+        // الإعدادات الجديدة: الصورة، مدة الظهور، التفعيل، والرابط
+        db.ref('settings/welcomePopup').on('value', snap => {
+            welcomePopupLoaded = true;
+            if (snap.exists()) {
+                const data = snap.val() || {};
+                welcomePopupSettings = {
+                    enabled: data.enabled !== false,
+                    image: data.image || '',
+                    duration: Math.max(1, parseInt(data.duration, 10) || 10),
+                    link: data.link || ''
+                };
+            } else {
+                // الحفاظ على السلوك القديم إذا لم يتم إعداد الإشعار من لوحة التحكم
+                welcomePopupSettings = { enabled: true, image: '', duration: 10, link: '' };
+            }
+            applyWelcomePopupSettings();
+        });
+
+        // الصور القديمة الموجودة في settings/banners تظل متاحة كاحتياطي
+        db.ref('settings/banners').limitToFirst(1).on('value', snap => {
+            let firstImage = '';
+            snap.forEach(c => {
+                if (!firstImage) firstImage = c.val() || '';
+            });
+            welcomePopupFallbackImage = firstImage;
+            if (!welcomePopupSettings.image) applyWelcomePopupSettings();
+        });
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (!welcomePopupLoaded) setTimeout(triggerWelcomeEventModal, 500);
+                else triggerWelcomeEventModal();
+            }, 800);
+        });
+        // --------------------------------------------------- //
+
         db.ref('settings/discount_cooldown_hours').on('value', snap => {
             if (snap.exists()) systemCooldownHours = parseFloat(snap.val()) || 0;
         });
@@ -648,6 +713,8 @@
                 } else {
                     closeModal('gameModal', true);
                 }
+            } else if (document.getElementById('welcomeEventModal').classList.contains('active')) {
+                closeWelcomeModal();
             }
         });
 
@@ -687,9 +754,17 @@
             if(banners.length === 0) { container.style.display = 'none'; return; }
             container.style.display = 'block';
             let fragment = document.createDocumentFragment(); let dotsFragment = document.createDocumentFragment();
+            
             banners.forEach((url, index) => {
-                const img = document.createElement('img'); img.src = url; img.loading = "lazy"; img.className = index === 0 ? 'slide active' : 'slide';
-                fragment.appendChild(img);
+                const box = document.createElement('div');
+                box.className = index === 0 ? 'slide-wrapper-box active' : 'slide-wrapper-box';
+                
+                box.innerHTML = `
+                    <div class="slide-bg-blur" style="background-image: url('${url}');"></div>
+                    <img src="${url}" loading="lazy" class="slide" alt="Banner">
+                `;
+                fragment.appendChild(box);
+
                 if(banners.length > 1) {
                     const dot = document.createElement('div'); dot.className = index === 0 ? 'dot active' : 'dot';
                     dot.onclick = () => { goToSlide(index); if(sliderInterval) { clearInterval(sliderInterval); startAutoPlay(globalSpeed); } }; 
@@ -709,10 +784,10 @@
             touchendX = e.changedTouches[0].screenX;
             if(totalSlides > 1) {
                 let current = Array.from(sWrapper.children).findIndex(el => el.classList.contains('active'));
-                if (touchendX < touchstartX - 40) { 
+                if (touchendX > touchstartX + 40) { 
                     goToSlide((current + 1) % totalSlides); 
                     if(sliderInterval) { clearInterval(sliderInterval); startAutoPlay(globalSpeed); }
-                } else if (touchendX > touchstartX + 40) { 
+                } else if (touchendX < touchstartX - 40) { 
                     goToSlide((current - 1 + totalSlides) % totalSlides); 
                     if(sliderInterval) { clearInterval(sliderInterval); startAutoPlay(globalSpeed); }
                 }
@@ -759,7 +834,6 @@
             grid.innerHTML = htmlString;
         });
 
-        // تحسين أداء البحث باستخدام خاصية (Debounce)
         let searchTimeout;
         function filterGamesDebounced() {
             clearTimeout(searchTimeout);
@@ -768,7 +842,7 @@
                 document.querySelectorAll('.game-card').forEach(card => { 
                     card.style.display = card.dataset.name.includes(q) ? "flex" : "none"; 
                 });
-            }, 150); // الانتظار أجزاء من الثانية بعد توقف الكتابة لتقليل الحمل على الجهاز
+            }, 150); 
         }
 
         function openGame(id) {
