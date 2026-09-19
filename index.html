@@ -86,7 +86,70 @@
             background: var(--primary); color: #fff; border-color: transparent; 
             box-shadow: 0 4px 12px var(--primary-glow); transform: translateY(-2px);
         }
-        .spacer { width: 75px; } 
+        .spacer { width: 75px; }
+
+        /* بطاقة عجلة الحظ - خارج الشريط العلوي */
+        .luck-feature-wrap {
+            max-width: 900px; width: 100%; margin: 10px auto 4px; padding: 0 20px;
+            display: flex; justify-content: center;
+        }
+        .luck-feature {
+            position: relative; width: min(100%, 360px); min-height: 76px;
+            display: flex; align-items: center; gap: 14px; padding: 9px 16px;
+            border-radius: 20px; text-decoration: none; color: #fff; overflow: hidden;
+            background: linear-gradient(135deg, rgba(6,182,212,.14), rgba(59,130,246,.10));
+            border: 1px solid rgba(6,182,212,.30);
+            box-shadow: 0 8px 28px rgba(6,182,212,.12), inset 0 0 24px rgba(59,130,246,.05);
+            transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+            animation: luckFloat 3.2s ease-in-out infinite;
+        }
+        .luck-feature::before {
+            content:''; position:absolute; width:90px; height:90px; right:-30px; top:-40px;
+            border-radius:50%; background:rgba(6,182,212,.22); filter:blur(18px);
+            animation: luckGlow 2.4s ease-in-out infinite;
+        }
+        .luck-feature::after {
+            content:''; position:absolute; top:0; bottom:0; left:-45%; width:35%;
+            background:linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+            transform:skewX(-18deg); animation: luckShine 3.8s ease-in-out infinite;
+        }
+        .luck-feature:hover { transform:translateY(-3px) scale(1.015); border-color:rgba(6,182,212,.55); box-shadow:0 12px 34px rgba(6,182,212,.20), inset 0 0 26px rgba(59,130,246,.07); }
+        .luck-feature img {
+            position:relative; z-index:1; width:56px; height:56px; flex:0 0 56px; object-fit:cover;
+            border-radius:16px; border:2px solid rgba(255,255,255,.24);
+            box-shadow:0 0 0 4px rgba(6,182,212,.07), 0 8px 18px rgba(0,0,0,.28);
+            animation: luckIconPulse 2.2s ease-in-out infinite;
+        }
+        .luck-feature-text { position:relative; z-index:1; display:flex; flex-direction:column; gap:4px; flex:1; }
+        .luck-feature-title { font-size:.9rem; font-weight:800; }
+        .luck-feature-sub { font-size:.63rem; color:var(--text-muted); }
+        .luck-feature-arrow { position:relative; z-index:1; width:30px; height:30px; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.08); color:var(--primary); }
+        @keyframes luckFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+        @keyframes luckGlow { 0%,100%{opacity:.45;transform:scale(.9)} 50%{opacity:.9;transform:scale(1.15)} }
+        @keyframes luckShine { 0%,55%{left:-45%} 80%,100%{left:120%} }
+        @keyframes luckIconPulse { 0%,100%{transform:scale(1);box-shadow:0 0 0 4px rgba(6,182,212,.07),0 8px 18px rgba(0,0,0,.28)} 50%{transform:scale(1.04);box-shadow:0 0 0 7px rgba(6,182,212,.10),0 8px 22px rgba(0,0,0,.32)} }
+        @media (max-width:767px){ .luck-feature-wrap{margin:8px auto 2px;} .luck-feature{width:100%;min-height:72px;padding:8px 13px;gap:12px;} .luck-feature img{width:52px;height:52px;flex-basis:52px;} .luck-feature-title{font-size:.82rem;} .luck-feature-sub{font-size:.58rem;} }
+
+        /* صفحة عجلة الحظ داخل الموقع */
+        #luckPage {
+            display:none; position:fixed; inset:0; z-index:210; background:var(--bg-deep);
+            flex-direction:column; overflow:hidden;
+        }
+        #luckPage.open { display:flex; animation:fadeIn .25s ease; }
+        .luck-page-header {
+            height:62px; flex-shrink:0; display:flex; align-items:center; gap:10px;
+            padding:10px 14px; background:rgba(9,13,22,.92); border-bottom:1px solid var(--surface-border);
+            backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+        }
+        .luck-back-btn {
+            border:1px solid var(--surface-border); background:var(--surface); color:#fff;
+            width:40px; height:40px; border-radius:12px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+            font-size:1rem; transition:all .2s;
+        }
+        .luck-back-btn:hover { background:var(--primary); border-color:transparent; transform:translateX(3px); }
+        .luck-page-title { font-size:.95rem; font-weight:800; color:#fff; }
+        .luck-page-frame { width:100%; height:calc(100vh - 62px); border:0; background:#090d16; }
+ 
 
         .slider-container { max-width: 900px; margin: 18px auto 8px; padding: 0 20px; width: 100%; position: relative; }
         .slider { 
@@ -438,12 +501,23 @@
             <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()">
                 <i class="fas fa-pound-sign"></i> EGP
             </button>
-            
+
             <img id="mainLogoImg" src="" alt="Logo" class="main-logo" style="display:none;" loading="lazy">
 
             <div class="spacer"></div>
         </div>
     </nav>
+
+    <div class="luck-feature-wrap">
+        <a href="#luck" class="luck-feature" onclick="openLuckPage(event)" aria-label="فتح عجلة الحظ">
+            <img src="https://e.top4top.io/p_3913ditnr0.png" alt="عجلة الحظ" loading="lazy">
+            <div class="luck-feature-text">
+                <div class="luck-feature-title">🎡 عجلة الحظ</div>
+                <div class="luck-feature-sub">جرّب حظك واكتشف المفاجأة</div>
+            </div>
+            <div class="luck-feature-arrow"><i class="fas fa-chevron-left"></i></div>
+        </a>
+    </div>
 
     <div class="slider-container" id="sliderContainer" style="display:none;">
         <div class="slider" id="sliderWrapper"></div>
@@ -464,6 +538,15 @@
     </div>
 
     <div id="bottomDock" class="bottom-nav-dock" style="display:none;"></div>
+
+    <!-- صفحة عجلة الحظ: الرابط الحقيقي مخفي عن واجهة المستخدم عبر رابط نسبي داخلي -->
+    <div id="luckPage" aria-hidden="true">
+        <div class="luck-page-header">
+            <button class="luck-back-btn" onclick="closeLuckPage()" aria-label="رجوع"><i class="fas fa-arrow-right"></i></button>
+            <div class="luck-page-title">عجلة الحظ</div>
+        </div>
+        <iframe id="luckFrame" class="luck-page-frame" title="عجلة الحظ" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
 
     <div id="recoveryPage">
         <div class="recovery-card">
@@ -1134,6 +1217,25 @@
 
         initLiveDiscounts();
 
+        // رابط الوجهة محفوظ داخل JavaScript ومُرمّز Base64 بدل عرضه كرابط مباشر في HTML.
+        const luckTarget = atob('aHR0cHM6Ly9tb2hhYnRvcDFwLWFmay5naXRodWIuaW8vbHVjay0v');
+        function openLuckPage(e) {
+            if (e) e.preventDefault();
+            const page = document.getElementById('luckPage');
+            const frame = document.getElementById('luckFrame');
+            if (frame.getAttribute('src') !== luckTarget) frame.src = luckTarget;
+            page.classList.add('open'); page.setAttribute('aria-hidden','false');
+            document.body.style.overflow='hidden';
+            history.pushState({ luck: true }, '');
+        }
+        function closeLuckPage(fromHistory=false) {
+            const page = document.getElementById('luckPage');
+            if (!page.classList.contains('open')) return;
+            if (!fromHistory) { history.back(); return; }
+            page.classList.remove('open'); page.setAttribute('aria-hidden','true');
+            document.body.style.overflow='';
+        }
+
         function openRecovery() {
             document.getElementById('recoveryPage').classList.add('open');
             document.body.style.overflow = 'hidden';
@@ -1147,6 +1249,10 @@
         }
 
         window.addEventListener('popstate', function(e) {
+            if (document.getElementById('luckPage').classList.contains('open')) {
+                closeLuckPage(true);
+                return;
+            }
             if (document.getElementById('recoveryPage').classList.contains('open')) {
                 document.getElementById('recoveryPage').classList.remove('open');
                 document.body.style.overflow = '';
