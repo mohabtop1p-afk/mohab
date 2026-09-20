@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preload" as="image" href="https://g.top4top.io/p_39146kcfj0.png">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -41,16 +42,9 @@
             user-select: none;
         }
 
-        img {
-            background: linear-gradient(90deg, var(--surface) 0%, var(--surface-hover) 50%, var(--surface) 100%);
-            background-size: 200% 100%;
-            animation: loadingSkeleton 1.5s infinite linear;
-            will-change: background-position;
-        }
-        @keyframes loadingSkeleton {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
+        /* تحميل أخف للصور: بدون حركة Skeleton على كل صور الموقع */
+        img { background-color: var(--surface); }
+        img[loading="lazy"] { content-visibility: auto; }
         
         nav { 
             position: sticky; top: 0; z-index: 50; 
@@ -74,19 +68,277 @@
         }
         .main-logo:hover { transform: scale(1.02) translateZ(0); }
         
-        .currency-toggle { 
-            background: rgba(6, 182, 212, 0.1); 
-            border: 1px solid rgba(6, 182, 212, 0.3); color: var(--primary); 
-            padding: 7px 14px; border-radius: 20px; cursor: pointer; 
-            font-weight: 700; font-size: 0.85rem; transition: var(--transition-smooth); 
-            display: flex; align-items: center; gap: 6px;
+        /* زر العملة - تصميم حديث وصغير مع علم دائري */
+        .currency-toggle {
+            width: 174px;
+            min-height: 54px;
+            padding: 6px 10px;
+            border-radius: 18px;
+            cursor: pointer;
+            font-family: inherit;
+            color: #fff;
+            background: linear-gradient(135deg, rgba(6,182,212,.14), rgba(59,130,246,.10));
+            border: 1px solid rgba(6,182,212,.38);
+            box-shadow: 0 5px 18px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.05);
+            transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             will-change: transform;
+            overflow: hidden;
         }
-        .currency-toggle:hover { 
-            background: var(--primary); color: #fff; border-color: transparent; 
-            box-shadow: 0 4px 12px var(--primary-glow); transform: translateY(-2px);
+        .currency-toggle:hover {
+            transform: translateY(-2px);
+            border-color: rgba(6,182,212,.75);
+            box-shadow: 0 8px 22px rgba(6,182,212,.16), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        .currency-flag {
+            width: 32px;
+            height: 32px;
+            flex: 0 0 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            border: 2px solid rgba(255,255,255,.20);
+            box-shadow: 0 2px 8px rgba(0,0,0,.30);
+        }
+        .currency-toggle-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            line-height: 1.1;
+            text-align: right;
+        }
+        .currency-toggle-title {
+            font-size: .72rem;
+            font-weight: 800;
+            color: #fff;
+            white-space: nowrap;
+        }
+        .currency-toggle-hint {
+            margin-top: 4px;
+            font-size: .55rem;
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+        .currency-toggle-arrow {
+            width: 25px;
+            height: 25px;
+            flex: 0 0 25px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,.07);
+            color: var(--primary);
+            font-size: .72rem;
         }
         .spacer { width: 75px; }
+
+        @media (max-width: 767px) {
+            .currency-toggle {
+                width: 150px;
+                min-height: 50px;
+                padding: 5px 8px;
+                border-radius: 17px;
+                gap: 7px;
+            }
+            .currency-flag {
+                width: 29px;
+                height: 29px;
+                flex-basis: 29px;
+            }
+            .currency-toggle-title { font-size: .64rem; }
+            .currency-toggle-hint { font-size: .50rem; margin-top: 3px; }
+            .currency-toggle-arrow {
+                width: 23px;
+                height: 23px;
+                flex-basis: 23px;
+                font-size: .65rem;
+            }
+            .spacer { width: 45px; }
+        }
+
+        /* ===== شريط علوي متوازن: اللوجو في منتصف الشاشة تماماً ===== */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            min-height: 82px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(9, 13, 22, 0.90);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--surface-border);
+            box-shadow: 0 4px 15px rgba(0,0,0,.28);
+        }
+
+        .nav-content {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            min-height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* اللوجو مستقل عن زر العملة حتى يظل في منتصف الشاشة الحقيقي */
+        .main-logo {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: auto;
+            height: 56px;
+            max-width: 150px;
+            object-fit: contain;
+            border-radius: 12px;
+            transform: translate(-50%, -50%) translateZ(0);
+            transition: transform .22s ease;
+            will-change: transform;
+            z-index: 2;
+        }
+        .main-logo:hover {
+            transform: translate(-50%, -50%) scale(1.02) translateZ(0);
+        }
+
+        /* زر العملة: أصغر وأهدأ بصرياً مع وضوح النص والعلم */
+        .currency-toggle {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 3;
+            width: 148px;
+            min-height: 50px;
+            height: 50px;
+            padding: 5px 8px;
+            margin: 0;
+            border-radius: 16px;
+            cursor: pointer;
+            font-family: inherit;
+            color: #fff;
+            background: linear-gradient(135deg, rgba(6,182,212,.13), rgba(59,130,246,.08));
+            border: 1px solid rgba(6,182,212,.42);
+            box-shadow: 0 4px 14px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.05);
+            transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            overflow: hidden;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .currency-toggle:hover {
+            transform: translateY(calc(-50% - 1px));
+            border-color: rgba(6,182,212,.72);
+            box-shadow: 0 7px 18px rgba(6,182,212,.13), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        .currency-toggle:active {
+            transform: translateY(-50%) scale(.98);
+        }
+
+        .currency-flag {
+            width: 28px;
+            height: 28px;
+            flex: 0 0 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            border: 1.5px solid rgba(255,255,255,.22);
+            box-shadow: 0 2px 7px rgba(0,0,0,.28);
+        }
+        .currency-toggle-main {
+            min-width: 0;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            line-height: 1.05;
+            text-align: right;
+            overflow: hidden;
+        }
+        .currency-toggle-title {
+            display: block;
+            max-width: 100%;
+            font-size: .62rem;
+            font-weight: 800;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .currency-toggle-hint {
+            display: block;
+            margin-top: 3px;
+            font-size: .48rem;
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+        .currency-toggle-arrow {
+            width: 22px;
+            height: 22px;
+            flex: 0 0 22px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,.065);
+            color: var(--primary);
+            font-size: .62rem;
+        }
+        .spacer { display: none; }
+
+        @media (max-width: 767px) {
+            nav {
+                min-height: 76px;
+                padding: 8px 12px;
+            }
+            .nav-content {
+                min-height: 60px;
+            }
+            .main-logo {
+                height: 52px;
+                max-width: 128px;
+            }
+            .currency-toggle {
+                width: 142px;
+                min-height: 48px;
+                height: 48px;
+                right: 0;
+                padding: 5px 7px;
+                border-radius: 15px;
+                gap: 5px;
+            }
+            .currency-flag {
+                width: 27px;
+                height: 27px;
+                flex-basis: 27px;
+            }
+            .currency-toggle-title { font-size: .59rem; }
+            .currency-toggle-hint { font-size: .46rem; margin-top: 3px; }
+            .currency-toggle-arrow {
+                width: 21px;
+                height: 21px;
+                flex-basis: 21px;
+                font-size: .58rem;
+            }
+        }
+
+        @media (max-width: 390px) {
+            nav { padding-left: 8px; padding-right: 8px; }
+            .currency-toggle { width: 136px; }
+            .main-logo { height: 49px; max-width: 118px; }
+            .currency-toggle-title { font-size: .56rem; }
+        }
 
         /* بطاقة عجلة الحظ - خارج الشريط العلوي */
         .luck-feature-wrap {
@@ -225,11 +477,55 @@
             text-align: center; cursor: pointer; transition: transform 0.2s, background 0.2s, border-color 0.2s; 
             display: flex; flex-direction: column; align-items: center; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            will-change: transform;
         }
         .game-card:hover { transform: translateY(-4px) translateZ(0); background: var(--surface-hover); border-color: rgba(6, 182, 212, 0.3); box-shadow: 0 8px 18px rgba(0,0,0,0.2); }
-        .game-card img { width: 75px; height: 75px; border-radius: 16px; object-fit: cover; margin-bottom: 10px; border: 2px solid transparent; transition: transform 0.2s, border-color 0.2s; will-change: transform; }
-        .game-card:hover img { border-color: var(--primary); transform: scale(1.04); }
+        /* إطار لوجو الألعاب - يُطبق تلقائياً على كل لعبة */
+        .game-logo-frame {
+            position: relative;
+            width: 75px;
+            height: 75px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 75px;
+            overflow: visible;
+        }
+
+        /* الإطار مضبوط على مقاس اللوجو بدون بروز زائد */
+        .game-logo-frame::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            background: url('https://g.top4top.io/p_39146kcfj0.png') center / 100% 100% no-repeat;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 100% 100%;
+            pointer-events: none;
+        }
+
+        /* تصغير اللوجو داخل فتحة الإطار حتى لا يخرج منه نهائياً */
+        .game-logo-frame img {
+            width: 61px;
+            height: 61px;
+            border-radius: 13px;
+            object-fit: contain;
+            margin: 0;
+            border: 0;
+            display: block;
+            position: relative;
+            z-index: 1;
+            flex: 0 0 61px;
+        }
+
+        @media (max-width: 767px) {
+            .game-logo-frame {
+                width: 75px;
+                height: 75px;
+                flex-basis: 75px;
+            }
+        }
         .game-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e2e8f0; }
         .btn-view { background: rgba(255, 255, 255, 0.02); color: var(--text-muted); border: 1px solid var(--surface-border); padding: 7px 0; width: 100%; border-radius: 12px; font-size: 0.78rem; font-weight: 700; transition: all 0.2s; }
         .game-card:hover .btn-view { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; border-color: transparent; box-shadow: 0 4px 10px var(--primary-glow); }
@@ -492,14 +788,259 @@
         .recovery-desc { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 25px; }
         .telegram-btn { background: #229ed9; color: #fff; width: 100%; border: none; padding: 14px; border-radius: 14px; font-size: 1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s, background 0.2s; text-decoration: none; box-shadow: 0 4px 12px rgba(34, 158, 217, 0.2); will-change: transform; }
         .telegram-btn:hover { background: #1d8ac0; transform: translateY(-2px) translateZ(0); box-shadow: 0 6px 15px rgba(34, 158, 217, 0.3); }
+
+        /* الإطار الجديد: تحميل مبكر وبدون تغيير مقاس اللوجو أو بطاقات الألعاب */
+        .game-logo-frame::before {
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 100% 100%;
+        }
+    
+        /* إصلاح عرض اسم العملة في الشريط العلوي فقط — بدون تغيير أي بيانات أو قاعدة بيانات */
+        .currency-toggle-main {
+            flex: 1 1 auto;
+            min-width: 0;
+            max-width: 100%;
+            align-items: center;
+            overflow: visible;
+        }
+
+        .currency-toggle-title {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            font-size: .60rem;
+            line-height: 1.35;
+            font-weight: 800;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            text-align: center;
+            overflow-wrap: normal;
+            word-break: normal;
+        }
+
+        .currency-toggle-hint {
+            font-size: .46rem;
+            line-height: 1.2;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        @media (max-width: 767px) {
+            .currency-toggle-main {
+                flex: 1 1 0;
+            }
+
+            .currency-toggle-title {
+                font-size: .57rem;
+                line-height: 1.35;
+                white-space: normal;
+            }
+
+            .currency-toggle-hint {
+                font-size: .45rem;
+                margin-top: 2px;
+            }
+        }
+
+        @media (max-width: 390px) {
+            .currency-toggle-title {
+                font-size: .54rem;
+            }
+
+            .currency-toggle-hint {
+                font-size: .43rem;
+            }
+        }
+
+    
+        /* ===== تحسين الاستجابة لجميع الشاشات بدون المساس بالبيانات أو قاعدة البيانات ===== */
+        html {
+            font-size: 16px;
+        }
+
+        .nav-content,
+        .luck-feature-wrap,
+        .slider-container,
+        .search-container,
+        .container {
+            width: 100%;
+            max-width: 1280px;
+        }
+
+        .main-logo {
+            max-width: clamp(118px, 12vw, 230px);
+            height: clamp(49px, 6vw, 82px);
+        }
+
+        .currency-toggle {
+            width: clamp(136px, 19vw, 220px);
+            min-height: clamp(48px, 5vw, 64px);
+            height: auto;
+            padding: clamp(5px, .7vw, 10px);
+        }
+
+        .currency-flag {
+            width: clamp(27px, 3vw, 38px);
+            height: clamp(27px, 3vw, 38px);
+            flex-basis: clamp(27px, 3vw, 38px);
+        }
+
+        .currency-toggle-title {
+            font-size: clamp(.54rem, .85vw, .82rem);
+        }
+
+        .currency-toggle-hint {
+            font-size: clamp(.43rem, .62vw, .62rem);
+        }
+
+        .currency-toggle-arrow {
+            width: clamp(21px, 2.5vw, 30px);
+            height: clamp(21px, 2.5vw, 30px);
+            flex-basis: clamp(21px, 2.5vw, 30px);
+            font-size: clamp(.58rem, .8vw, .8rem);
+        }
+
+        .slider-container,
+        .search-container {
+            margin-top: clamp(12px, 2vw, 24px);
+        }
+
+        .container {
+            padding-left: clamp(12px, 2.5vw, 30px);
+            padding-right: clamp(12px, 2.5vw, 30px);
+        }
+
+        .games-grid {
+            grid-template-columns: repeat(auto-fit, minmax(clamp(145px, 18vw, 245px), 1fr));
+            gap: clamp(12px, 1.6vw, 24px);
+        }
+
+        .game-card {
+            padding: clamp(12px, 1.6vw, 24px);
+            border-radius: clamp(16px, 1.8vw, 24px);
+        }
+
+        .game-logo-frame {
+            width: clamp(75px, 9vw, 125px);
+            height: clamp(75px, 9vw, 125px);
+            flex-basis: clamp(75px, 9vw, 125px);
+            margin-bottom: clamp(8px, 1vw, 14px);
+        }
+
+        .game-logo-frame img {
+            width: calc(clamp(75px, 9vw, 125px) - 14px);
+            height: calc(clamp(75px, 9vw, 125px) - 14px);
+            flex-basis: calc(clamp(75px, 9vw, 125px) - 14px);
+            border-radius: clamp(12px, 1.2vw, 18px);
+        }
+
+        .game-card h3 {
+            font-size: clamp(.82rem, 1.25vw, 1.15rem);
+            margin-bottom: clamp(8px, 1vw, 14px);
+        }
+
+        .btn-view {
+            font-size: clamp(.72rem, 1vw, .95rem);
+            padding: clamp(7px, .9vw, 12px) 0;
+            border-radius: clamp(10px, 1vw, 15px);
+        }
+
+        .luck-feature {
+            width: min(100%, 520px);
+            min-height: clamp(72px, 9vw, 110px);
+            padding: clamp(8px, 1.2vw, 16px);
+            gap: clamp(10px, 1.5vw, 18px);
+        }
+
+        .luck-feature img {
+            width: clamp(52px, 7vw, 84px);
+            height: clamp(52px, 7vw, 84px);
+            flex-basis: clamp(52px, 7vw, 84px);
+        }
+
+        .luck-feature-title {
+            font-size: clamp(.82rem, 1.35vw, 1.15rem);
+        }
+
+        .luck-feature-sub {
+            font-size: clamp(.58rem, .9vw, .78rem);
+        }
+
+        .luck-feature-arrow {
+            width: clamp(30px, 3.5vw, 42px);
+            height: clamp(30px, 3.5vw, 42px);
+        }
+
+        .bottom-nav-dock {
+            width: min(95%, 760px);
+            padding: clamp(8px, 1vw, 14px);
+            border-radius: clamp(24px, 2.5vw, 34px);
+        }
+
+        .dock-icon-wrapper {
+            width: clamp(36px, 4vw, 52px);
+            height: clamp(36px, 4vw, 52px);
+            border-radius: clamp(12px, 1.2vw, 17px);
+            font-size: clamp(1.05rem, 1.8vw, 1.45rem);
+        }
+
+        .dock-item span {
+            font-size: clamp(.62rem, .9vw, .82rem);
+        }
+
+        @media (min-width: 768px) {
+            nav {
+                min-height: clamp(82px, 8vw, 108px);
+                padding: clamp(10px, 1.3vw, 18px) clamp(16px, 2.5vw, 32px);
+            }
+
+            .nav-content {
+                min-height: clamp(62px, 6vw, 86px);
+            }
+
+            .games-grid {
+                grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            }
+
+            .slider {
+                max-height: min(520px, 42vw);
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .games-grid {
+                grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            }
+        }
+
+        @media (max-width: 390px) {
+            .games-grid {
+                gap: 10px;
+            }
+
+            .game-card {
+                padding: 10px 8px;
+            }
+        }
+
     </style>
 </head>
 <body>
 
     <nav>
         <div class="nav-content">
-            <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()">
-                <i class="fas fa-pound-sign"></i> EGP
+            <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()" aria-label="تغيير العملة">
+                <img id="currencyFlag" class="currency-flag"
+                     src="https://a.top4top.io/p_3914owpxp0.jpg"
+                     alt="علم مصر"
+                     onerror="this.style.display='none'">
+                <span class="currency-toggle-main">
+                    <span id="currencyTitle" class="currency-toggle-title">الأسعار بالجنيه المصري</span>
+                    <span class="currency-toggle-hint">اضغط للتغيير</span>
+                </span>
+                <span class="currency-toggle-arrow"><i class="fas fa-exchange-alt"></i></span>
             </button>
 
             <img id="mainLogoImg" src="" alt="Logo" class="main-logo" style="display:none;" loading="lazy">
@@ -805,12 +1346,23 @@
 
         function toggleCurrency() {
             currentCurrency = currentCurrency === 'EGP' ? 'USD' : 'EGP';
+
             const btn = document.getElementById('currencyBtn');
-            if(currentCurrency === 'USD') {
-                btn.innerHTML = '<i class="fas fa-dollar-sign"></i> USD'; btn.style.background = 'var(--primary)'; btn.style.color = '#fff';
+            const flag = document.getElementById('currencyFlag');
+            const title = document.getElementById('currencyTitle');
+
+            if (currentCurrency === 'USD') {
+                flag.src = 'https://k.top4top.io/p_3914ild450.jpg';
+                flag.alt = 'علم الولايات المتحدة';
+                title.textContent = 'الأسعار بالدولار الأمريكي';
+                btn.setAttribute('aria-label', 'الأسعار بالدولار الأمريكي - اضغط للعودة للجنيه المصري');
             } else {
-                btn.innerHTML = '<i class="fas fa-pound-sign"></i> EGP'; btn.style.background = 'rgba(6, 182, 212, 0.1)'; btn.style.color = 'var(--primary)';
+                flag.src = 'https://a.top4top.io/p_3914owpxp0.jpg';
+                flag.alt = 'علم مصر';
+                title.textContent = 'الأسعار بالجنيه المصري';
+                btn.setAttribute('aria-label', 'الأسعار بالجنيه المصري - اضغط للتغيير للدولار');
             }
+
             if(document.getElementById('stepPrices').classList.contains('active') && currentPriceType) showPrices(currentPriceType);
             if(activeDiscountData) updateDiscountPriceUI();
         }
@@ -913,7 +1465,7 @@
             gamesArray.sort((a, b) => (a.order || 99) - (b.order || 99));
             if(gamesArray.length === 0) { grid.innerHTML = '<div class="empty-msg">لا توجد منتجات مضافة حالياً</div>'; return; }
             let htmlString = '';
-            gamesArray.forEach(g => { htmlString += `<div class="game-card" data-name="${g.name.toLowerCase()}" onclick="openGame('${g.key}')"><img src="${g.img}" alt="${g.name}" loading="lazy"><h3>${g.name}</h3><button class="btn-view">عرض الأسعار</button></div>`; });
+            gamesArray.forEach(g => { htmlString += `<div class="game-card" data-name="${g.name.toLowerCase()}" onclick="openGame('${g.key}')"><div class="game-logo-frame"><img src="${g.img}" alt="${g.name}" loading="lazy"></div><h3>${g.name}</h3><button class="btn-view">عرض الأسعار</button></div>`; });
             grid.innerHTML = htmlString;
         });
 
