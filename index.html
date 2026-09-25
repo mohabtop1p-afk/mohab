@@ -415,6 +415,31 @@
         .luck-page-frame { width:100%; height:calc(100vh - 62px); border:0; background:#090d16; }
  
 
+        /* نافذة طلب إضافة لعبة - يمكن التحكم بها من السيستم */
+        #gameRequestModal {
+            position:fixed; inset:0; z-index:260; display:none; align-items:center; justify-content:center;
+            padding:20px; background:rgba(3,7,18,.72); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+        }
+        #gameRequestModal.active { display:flex; animation:fadeIn .22s ease; }
+        .game-request-card {
+            width:min(430px,100%); background:linear-gradient(145deg,rgba(19,28,46,.98),rgba(9,13,22,.98));
+            border:1px solid rgba(6,182,212,.32); border-radius:24px; padding:24px;
+            box-shadow:0 25px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+        }
+        .game-request-icon { width:58px;height:58px;border-radius:18px;display:grid;place-items:center;margin:0 auto 14px;
+            background:linear-gradient(135deg,rgba(6,182,212,.22),rgba(59,130,246,.16));
+            border:1px solid rgba(6,182,212,.32);color:var(--primary);font-size:1.5rem; }
+        .game-request-card h3 { text-align:center;color:#fff;margin:0 0 8px;font-size:1.05rem; }
+        .game-request-card p { text-align:center;color:var(--text-muted);font-size:.76rem;line-height:1.8;margin:0 0 17px; }
+        .game-request-input { width:100%;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);
+            color:#fff;border-radius:15px;padding:14px 15px;outline:none;font-family:inherit;font-size:.9rem; }
+        .game-request-input:focus { border-color:var(--primary);box-shadow:0 0 0 3px rgba(6,182,212,.12); }
+        .game-request-actions { display:flex;gap:9px;margin-top:12px; }
+        .game-request-btn { flex:1;border:0;border-radius:13px;padding:12px;font-family:inherit;font-weight:800;cursor:pointer; }
+        .game-request-submit { background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff; }
+        .game-request-cancel { background:rgba(255,255,255,.06);color:#cbd5e1;border:1px solid rgba(255,255,255,.08); }
+        .game-request-message { min-height:20px;margin-top:10px;text-align:center;font-size:.72rem;color:var(--primary); }
+
         .slider-container { max-width: 900px; margin: 18px auto 8px; padding: 0 20px; width: 100%; position: relative; }
         .slider { 
             width: 100%; border-radius: 20px; overflow: hidden; position: relative; 
@@ -1047,7 +1072,7 @@
                 <img id="currencyFlag" class="currency-flag"
                      src="https://a.top4top.io/p_3914owpxp0.jpg"
                      alt="علم مصر"
-                     onerror="this.style.display='none'">
+                     onerror="handleCurrencyFlagError(this)">
                 <span class="currency-toggle-main">
                     <span id="currencyTitle" class="currency-toggle-title">الأسعار بالجنيه المصري</span>
                     <span class="currency-toggle-hint">اضغط للتغيير</span>
@@ -1081,6 +1106,20 @@
             </div>
             <div class="luck-feature-arrow"><i class="fas fa-chevron-left"></i></div>
         </a>
+    </div>
+
+    <div id="gameRequestModal" aria-hidden="true">
+        <div class="game-request-card" role="dialog" aria-modal="true" aria-labelledby="gameRequestTitle">
+            <div class="game-request-icon"><i class="fas fa-gamepad"></i></div>
+            <h3 id="gameRequestTitle">ما اللعبة التي تريد إضافتها؟</h3>
+            <p>اكتب اسم اللعبة التي تريد رؤيتها في المتجر، وسنقوم بتسجيل طلبك في النظام.</p>
+            <input id="gameRequestInput" class="game-request-input" type="text" maxlength="80" autocomplete="off" placeholder="مثال: Call of Duty Mobile">
+            <div class="game-request-actions">
+                <button class="game-request-btn game-request-submit" type="button" onclick="submitGameRequest()"><i class="fas fa-paper-plane"></i> إرسال الطلب</button>
+                <button class="game-request-btn game-request-cancel" type="button" onclick="closeGameRequest()">إغلاق</button>
+            </div>
+            <div id="gameRequestMessage" class="game-request-message"></div>
+        </div>
     </div>
 
     <div class="slider-container" id="sliderContainer" style="display:none;">
@@ -1355,6 +1394,18 @@
         });
         // --------------------------------------------------- //
 
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (gameRequestSettingsLoaded && gameRequestEnabled) openGameRequest();
+            }, 1150);
+        });
+        document.getElementById('gameRequestModal').addEventListener('click', function(e){
+            if (e.target === this) closeGameRequest();
+        });
+        document.getElementById('gameRequestInput').addEventListener('keydown', function(e){
+            if (e.key === 'Enter') submitGameRequest();
+        });
+
         db.ref('settings/discount_cooldown_hours').on('value', snap => {
             if (snap.exists()) systemCooldownHours = parseFloat(snap.val()) || 0;
         });
@@ -1374,6 +1425,20 @@
         });
 
         function pushModalState() { history.pushState({ modal: true }, ''); }
+
+        // حماية صور العملات: إذا تعذر تحميل صور Top4Top، استخدم أعلام SVG داخلية
+        // حتى لا تختفي أيقونة العملة من الهيدر نهائياً. لا يتم تغيير بيانات Firebase.
+        const CURRENCY_FLAG_FALLBACKS = {
+            EGP: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40"><rect width="60" height="40" fill="#fff"/><rect width="60" height="13.33" fill="#ce1126"/><rect y="26.67" width="60" height="13.33" fill="#000"/><circle cx="30" cy="20" r="5" fill="#d4af37"/></svg>`),
+            USD: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40"><rect width="60" height="40" fill="#fff"/><g fill="#b22234"><rect width="60" height="3.08"/><rect y="6.15" width="60" height="3.08"/><rect y="12.31" width="60" height="3.08"/><rect y="18.46" width="60" height="3.08"/><rect y="24.62" width="60" height="3.08"/><rect y="30.77" width="60" height="3.08"/><rect y="36.92" width="60" height="3.08"/></g><rect width="25" height="21.54" fill="#3c3b6e"/><g fill="#fff"><circle cx="4" cy="4" r="1"/><circle cx="10" cy="4" r="1"/><circle cx="16" cy="4" r="1"/><circle cx="22" cy="4" r="1"/><circle cx="7" cy="9" r="1"/><circle cx="13" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="4" cy="14" r="1"/><circle cx="10" cy="14" r="1"/><circle cx="16" cy="14" r="1"/><circle cx="22" cy="14" r="1"/><circle cx="7" cy="19" r="1"/><circle cx="13" cy="19" r="1"/><circle cx="19" cy="19" r="1"/></g></svg>`),
+        };
+        function handleCurrencyFlagError(img) {
+            if (!img || img.dataset.currencyFallback === '1') return;
+            img.dataset.currencyFallback = '1';
+            const isUSD = currentCurrency === 'USD';
+            img.src = CURRENCY_FLAG_FALLBACKS[isUSD ? 'USD' : 'EGP'];
+            img.style.display = 'block';
+        }
 
         function toggleCurrency() {
             currentCurrency = currentCurrency === 'EGP' ? 'USD' : 'EGP';
@@ -1398,16 +1463,79 @@
             if(activeDiscountData) updateDiscountPriceUI();
         }
 
-        db.ref('settings').on('value', snap => {
+        // ----- طلب اسم اللعبة عند الدخول (يتحكم به السيستم) ----- //
+        let gameRequestEnabled = true;
+        let gameRequestSettingsLoaded = false;
+        let gameRequestModalShown = false;
+
+        function openGameRequest() {
+            if (!gameRequestEnabled || gameRequestModalShown) return;
+            gameRequestModalShown = true;
+            const modal = document.getElementById('gameRequestModal');
+            const input = document.getElementById('gameRequestInput');
+            const msg = document.getElementById('gameRequestMessage');
+            if (!modal) return;
+            msg.textContent = '';
+            input.value = '';
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden','false');
+            void modal.offsetWidth;
+            modal.classList.add('active');
+            setTimeout(() => input && input.focus(), 100);
+        }
+
+        function closeGameRequest() {
+            const modal = document.getElementById('gameRequestModal');
+            if (!modal) return;
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden','true');
+            setTimeout(() => { if (!modal.classList.contains('active')) modal.style.display='none'; }, 220);
+        }
+
+        async function submitGameRequest() {
+            const input = document.getElementById('gameRequestInput');
+            const msg = document.getElementById('gameRequestMessage');
+            const btn = document.querySelector('.game-request-submit');
+            const gameName = (input.value || '').trim().replace(/\s+/g,' ');
+            if (!gameName) { msg.textContent='اكتب اسم اللعبة أولاً.'; return; }
+            if (gameName.length < 2) { msg.textContent='اسم اللعبة قصير جداً.'; return; }
+            btn.disabled = true; msg.textContent='جاري إرسال الطلب...';
+            try {
+                const ref = db.ref('gameRequests').push();
+                await ref.set({ gameName, createdAt: firebase.database.ServerValue.TIMESTAMP });
+                msg.textContent='تم إرسال طلبك بنجاح ❤️';
+                input.value='';
+                setTimeout(closeGameRequest, 850);
+            } catch(e) {
+                console.error('Game request:', e);
+                msg.textContent='تعذر إرسال الطلب حالياً. حاول مرة أخرى.';
+            } finally { btn.disabled=false; }
+        }
+
+        const gameRequestSettingsRef = db.ref('settings/gameRequest/enabled');
+        gameRequestSettingsRef.on('value', snap => {
+            gameRequestEnabled = !snap.exists() || snap.val() !== false;
+            gameRequestSettingsLoaded = true;
+        }, err => { console.error('Game request settings:', err); gameRequestSettingsLoaded = true; });
+
+        // كل جزء من الإعدادات يستمع لمساره فقط؛ لا نسحب settings بالكامل مع كل تغيير صورة.
+        // هذا يمنع صورة كبيرة/تغيير واحد في قسم من التأثير على باقي الإعدادات أو واجهة الموقع.
+        db.ref('settings/general').on('value', snap => {
             const data = snap.val() || {};
-            if(data.general && data.general.logo) { const logo = document.getElementById('mainLogoImg'); logo.src = data.general.logo; logo.style.display = 'block'; }
-            const banners = data.banners ? Object.values(data.banners) : [];
-            const isAuto = data.general ? (data.general.bannerAutoPlay !== false) : true;
-            const speed = data.general ? (data.general.bannerSpeed || 3) * 1000 : 3000;
-            initSlider(banners, isAuto, speed);
-            const socials = data.socials ? Object.values(data.socials) : [];
+            if (data.logo) { const logo = document.getElementById('mainLogoImg'); logo.src = data.logo; logo.style.display = 'block'; }
+        }, err => console.error('General settings:', err));
+
+        db.ref('settings/banners').on('value', snap => {
+            const banners = [];
+            snap.forEach(c => { if (typeof c.val() === 'string' && c.val()) banners.push(c.val()); });
+            initSlider(banners, true, 3000);
+        }, err => console.error('Banner settings:', err));
+
+        db.ref('settings/socials').on('value', snap => {
+            const socials = [];
+            snap.forEach(c => { const v = c.val() || {}; if (v.url || v.name) socials.push(v); });
             renderBottomDock(socials);
-        });
+        }, err => console.error('Social settings:', err));
 
         let sliderInterval; let totalSlides = 0; let globalSpeed = 3000;
         function initSlider(banners, isAuto, speed) {
