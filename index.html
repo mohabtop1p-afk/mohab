@@ -42,14 +42,12 @@
             user-select: none;
         }
 
-        /* تحسين تحميل الصور وتقليل العمل على المتصفح */
         img { background-color: var(--surface); }
         img { content-visibility: auto; }
         iframe { border: 0; }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
         }
-        /* صور الأيقونات الشفافة يجب أن تحتفظ بخلفيتها الشفافة */
         .price-item-icon { background: transparent !important; padding: 0 !important; border-radius: 0 !important; }
         .game-logo-frame img { background: transparent; }
         img[loading="lazy" decoding="async"] { content-visibility: auto; }
@@ -76,7 +74,6 @@
         }
         .main-logo:hover { transform: scale(1.02) translateZ(0); }
         
-        /* زر العملة - تصميم حديث وصغير مع علم دائري */
         .currency-toggle {
             width: 174px;
             min-height: 54px;
@@ -170,7 +167,6 @@
             .spacer { width: 45px; }
         }
 
-        /* ===== شريط علوي متوازن: اللوجو في منتصف الشاشة تماماً ===== */
         nav {
             position: sticky;
             top: 0;
@@ -197,7 +193,6 @@
             justify-content: center;
         }
 
-        /* اللوجو مستقل عن زر العملة حتى يظل في منتصف الشاشة الحقيقي */
         .main-logo {
             position: absolute;
             left: 50%;
@@ -216,7 +211,6 @@
             transform: translate(-50%, -50%) scale(1.02) translateZ(0);
         }
 
-        /* زر العملة: أصغر وأهدأ بصرياً مع وضوح النص والعلم */
         .currency-toggle {
             position: absolute;
             right: 0;
@@ -348,7 +342,6 @@
             .currency-toggle-title { font-size: .56rem; }
         }
 
-        /* بطاقة عجلة الحظ - خارج الشريط العلوي */
         .luck-feature-wrap {
             max-width: 900px; width: 100%; margin: 10px auto 4px; padding: 0 20px;
             display: flex; justify-content: center;
@@ -390,7 +383,6 @@
         @keyframes luckIconPulse { 0%,100%{transform:scale(1);box-shadow:0 0 0 4px rgba(6,182,212,.07),0 8px 18px rgba(0,0,0,.28)} 50%{transform:scale(1.04);box-shadow:0 0 0 7px rgba(6,182,212,.10),0 8px 22px rgba(0,0,0,.32)} }
         @media (max-width:767px){ .luck-feature-wrap{margin:8px auto 2px;} .luck-feature{width:100%;min-height:72px;padding:8px 13px;gap:12px;} .luck-feature img{width:52px;height:52px;flex-basis:52px;} .luck-feature-title{font-size:.82rem;} .luck-feature-sub{font-size:.58rem;} }
 
-        /* شات بوت المساعد الذكي: نفس تصميم عجلة الحظ مع ضبط الصورة داخل الإطار */
         .chatbot-feature img {
             object-fit: contain;
             padding: 3px;
@@ -402,7 +394,6 @@
         }
         #chatbotPage.open { display:flex; animation:fadeIn .25s ease; }
 
-        /* صفحة عجلة الحظ داخل الموقع */
         #luckPage {
             display:none; position:fixed; inset:0; z-index:210; background:var(--bg-deep);
             flex-direction:column; overflow:hidden;
@@ -421,20 +412,14 @@
         .luck-back-btn:hover { background:var(--primary); border-color:transparent; transform:translateX(3px); }
         .luck-page-title { font-size:.95rem; font-weight:800; color:#fff; }
         .luck-page-frame { width:100%; height:calc(100vh - 62px); border:0; background:#090d16; }
- 
 
-        /* صفحات خارجية مضافة من السيستم، تعرض داخل واجهة المتجر */
         #customExternalPage { display:none; position:fixed; inset:0; z-index:500; background:var(--bg-deep,#090d16); flex-direction:column; overflow:hidden; }
         #customExternalPage.open { display:flex; animation:fadeIn .2s ease; }
         .custom-external-header { min-height:60px; flex-shrink:0; display:flex; align-items:center; gap:12px; padding:10px 14px; background:rgba(9,13,22,.96); border-bottom:1px solid var(--surface-border,rgba(255,255,255,.1)); }
         .custom-external-close { width:40px; height:40px; flex-shrink:0; border:1px solid var(--surface-border,rgba(255,255,255,.14)); border-radius:12px; color:#fff; background:var(--surface,#131c2e); cursor:pointer; }
         #customExternalTitle { color:#fff; font-weight:800; font-size:.96rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         #customExternalFrame { display:block; width:100%; flex:1; min-height:0; border:0; background:#fff; }
-        .custom-external-help { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; color:#cbd5e1; background:#111827; border-bottom:1px solid rgba(255,255,255,.1); font-size:.78rem; line-height:1.5; }
-        .custom-external-help button { flex-shrink:0; border:0; border-radius:9px; padding:8px 10px; color:#fff; background:#0891b2; font:inherit; font-weight:800; cursor:pointer; }
-        .custom-external-help[hidden] { display:none; }
 
-        /* نافذة طلب إضافة لعبة - يمكن التحكم بها من السيستم */
         #gameRequestModal {
             position:fixed; inset:0; z-index:260; display:none; align-items:center; justify-content:center;
             padding:20px; background:rgba(3,7,18,.72); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
@@ -535,7 +520,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .game-card:hover { transform: translateY(-4px) translateZ(0); background: var(--surface-hover); border-color: rgba(6, 182, 212, 0.3); box-shadow: 0 8px 18px rgba(0,0,0,0.2); }
-        /* إطار لوجو الألعاب - يُطبق تلقائياً على كل لعبة */
         .game-logo-frame {
             position: relative;
             width: 75px;
@@ -548,7 +532,6 @@
             overflow: visible;
         }
 
-        /* الإطار مضبوط على مقاس اللوجو بدون بروز زائد */
         .game-logo-frame::before {
             content: "";
             position: absolute;
@@ -561,7 +544,6 @@
             pointer-events: none;
         }
 
-        /* تصغير اللوجو داخل فتحة الإطار حتى لا يخرج منه نهائياً */
         .game-logo-frame img {
             width: 61px;
             height: 61px;
@@ -627,9 +609,6 @@
         }
         .modal-overlay.active .modal-box { transform: translateY(0) scale(1) translateZ(0); }
 
-        /* ========================================================== */
-        /* تصميم إحترافي لنافذة الإشعار (صورة فقط) Ultra Modern Image Notification */
-        /* ========================================================== */
         .ultra-event-modal {
             position: relative;
             background: transparent;
@@ -691,7 +670,6 @@
             transform: scale(1.1);
         }
 
-        /* تحكم إشعار الدخول */
         .welcome-countdown {
             position: absolute;
             left: 14px;
@@ -716,8 +694,6 @@
         }
         .welcome-event-link { display: block; width: 100%; text-decoration: none; color: inherit; }
         .welcome-event-link img { cursor: pointer; }
-
-        /* ========================================================== */
 
         .modal-header { 
             display: flex; justify-content: space-between; align-items: center; 
@@ -769,7 +745,6 @@
         @keyframes subtleEdgeSheen { 0%,65%,100% { background-position:180% 0; } 35% { background-position:-80% 0; } }
         .price-item-icon { width:54px;height:54px;max-width:100%;object-fit:contain;object-position:center;border-radius:0;margin:0 auto 2px;display:block;background-color:transparent !important;background-image:none !important;padding:0;box-sizing:border-box;image-rendering:auto;mix-blend-mode:normal; }
         .price-card-content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:126px; gap:8px; width:100%; height:100%; padding:12px 8px; box-sizing:border-box; background:var(--surface); border-radius:14.5px; }
-        /* خلفية الأيقونة شفافة فعلياً؛ لا نضع لوناً خلف ملف PNG الشفاف */
         img.price-item-icon { background:transparent !important; background-color:transparent !important; background-image:none !important; border:0 !important; box-shadow:none; }
         .price-card-content:has(.price-item-icon) { grid-template-columns:1fr; }
         .item-details { justify-content:center; max-width:100%; display:flex; align-items:center; gap:8px; flex-wrap:wrap; word-break:break-word; }
@@ -844,14 +819,12 @@
         .telegram-btn { background: #229ed9; color: #fff; width: 100%; border: none; padding: 14px; border-radius: 14px; font-size: 1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s, background 0.2s; text-decoration: none; box-shadow: 0 4px 12px rgba(34, 158, 217, 0.2); will-change: transform; }
         .telegram-btn:hover { background: #1d8ac0; transform: translateY(-2px) translateZ(0); box-shadow: 0 6px 15px rgba(34, 158, 217, 0.3); }
 
-        /* الإطار الجديد: تحميل مبكر وبدون تغيير مقاس اللوجو أو بطاقات الألعاب */
         .game-logo-frame::before {
             background-repeat: no-repeat;
             background-position: center;
             background-size: 100% 100%;
         }
     
-        /* إصلاح عرض اسم العملة في الشريط العلوي فقط — بدون تغيير أي بيانات أو قاعدة بيانات */
         .currency-toggle-main {
             flex: 1 1 auto;
             min-width: 0;
@@ -909,8 +882,6 @@
             }
         }
 
-    
-        /* ===== تحسين الاستجابة لجميع الشاشات بدون المساس بالبيانات أو قاعدة البيانات ===== */
         html {
             font-size: 16px;
         }
@@ -1160,7 +1131,6 @@
 
     <div id="bottomDock" class="bottom-nav-dock" style="display:none;"></div>
 
-    <!-- صفحة عجلة الحظ: الرابط الحقيقي مخفي عن واجهة المستخدم عبر رابط نسبي داخلي -->
     <div id="luckPage" aria-hidden="true">
         <div class="luck-page-header">
             <button class="luck-back-btn" onclick="closeLuckPage()" aria-label="رجوع"><i class="fas fa-arrow-right"></i></button>
@@ -1199,7 +1169,6 @@
         <i class="fas fa-gift"></i>
     </div>
 
-    <!-- نافذة الإشعار (صورة فقط) بالتصميم الاحترافي الجذاب -->
     <div id="welcomeEventModal" class="modal-overlay" onclick="closeOnOutside(event)">
         <div class="ultra-event-modal">
             <button class="ultra-close-btn" onclick="closeWelcomeModal()">
@@ -1318,7 +1287,6 @@
         let formattedExpiryTextForWA = '';
         let systemCooldownHours = 24; 
 
-        // ----- إشعار الدخول القابل للتحكم من السيستم ----- //
         let eventTimerInterval;
         let welcomePopupSettings = {
             enabled: true,
@@ -1376,7 +1344,6 @@
             setTimeout(() => modal.style.display = 'none', 400);
         }
 
-        // الإعدادات الجديدة: الصورة، مدة الظهور، التفعيل، والرابط
         db.ref('settings/welcomePopup').on('value', snap => {
             welcomePopupLoaded = true;
             if (snap.exists()) {
@@ -1388,13 +1355,11 @@
                     link: data.link || ''
                 };
             } else {
-                // الحفاظ على السلوك القديم إذا لم يتم إعداد الإشعار من لوحة التحكم
                 welcomePopupSettings = { enabled: true, image: '', duration: 10, link: '' };
             }
             applyWelcomePopupSettings();
         });
 
-        // الصور القديمة الموجودة في settings/banners تظل متاحة كاحتياطي
         db.ref('settings/banners').limitToFirst(1).on('value', snap => {
             let firstImage = '';
             snap.forEach(c => {
@@ -1410,7 +1375,6 @@
                 else triggerWelcomeEventModal();
             }, 800);
         });
-        // --------------------------------------------------- //
 
         window.addEventListener('load', () => {
             setTimeout(() => {
@@ -1429,6 +1393,10 @@
         });
 
         window.addEventListener('popstate', function(e) {
+            if (document.getElementById('customExternalPage').classList.contains('open')) {
+                closeExternalPage(true);
+                return;
+            }
             if (document.getElementById('discountModal').classList.contains('active')) {
                 closeModal('discountModal', true);
             } else if (document.getElementById('gameModal').classList.contains('active')) {
@@ -1444,8 +1412,6 @@
 
         function pushModalState() { history.pushState({ modal: true }, ''); }
 
-        // حماية صور العملات: إذا تعذر تحميل صور Top4Top، استخدم أعلام SVG داخلية
-        // حتى لا تختفي أيقونة العملة من الهيدر نهائياً. لا يتم تغيير بيانات Firebase.
         const CURRENCY_FLAG_FALLBACKS = {
             EGP: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40"><rect width="60" height="40" fill="#fff"/><rect width="60" height="13.33" fill="#ce1126"/><rect y="26.67" width="60" height="13.33" fill="#000"/><circle cx="30" cy="20" r="5" fill="#d4af37"/></svg>`),
             USD: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40"><rect width="60" height="40" fill="#fff"/><g fill="#b22234"><rect width="60" height="3.08"/><rect y="6.15" width="60" height="3.08"/><rect y="12.31" width="60" height="3.08"/><rect y="18.46" width="60" height="3.08"/><rect y="24.62" width="60" height="3.08"/><rect y="30.77" width="60" height="3.08"/><rect y="36.92" width="60" height="3.08"/></g><rect width="25" height="21.54" fill="#3c3b6e"/><g fill="#fff"><circle cx="4" cy="4" r="1"/><circle cx="10" cy="4" r="1"/><circle cx="16" cy="4" r="1"/><circle cx="22" cy="4" r="1"/><circle cx="7" cy="9" r="1"/><circle cx="13" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="4" cy="14" r="1"/><circle cx="10" cy="14" r="1"/><circle cx="16" cy="14" r="1"/><circle cx="22" cy="14" r="1"/><circle cx="7" cy="19" r="1"/><circle cx="13" cy="19" r="1"/><circle cx="19" cy="19" r="1"/></g></svg>`),
@@ -1481,7 +1447,6 @@
             if(activeDiscountData) updateDiscountPriceUI();
         }
 
-        // ----- طلب اسم اللعبة عند الدخول (يتحكم به السيستم) ----- //
         let gameRequestEnabled = true;
         let gameRequestSettingsLoaded = false;
         let gameRequestModalShown = false;
@@ -1536,8 +1501,6 @@
             gameRequestSettingsLoaded = true;
         }, err => { console.error('Game request settings:', err); gameRequestSettingsLoaded = true; });
 
-        // كل جزء من الإعدادات يستمع لمساره فقط؛ لا نسحب settings بالكامل مع كل تغيير صورة.
-        // هذا يمنع صورة كبيرة/تغيير واحد في قسم من التأثير على باقي الإعدادات أو واجهة الموقع.
         db.ref('settings/general').on('value', snap => {
             const data = snap.val() || {};
             if (data.logo) { const logo = document.getElementById('mainLogoImg'); logo.src = data.logo; logo.style.display = 'block'; }
@@ -1656,7 +1619,6 @@
         function decodeExternalTarget(item) {
             if (!item) return '';
             let target = '';
-            // Support both new Base64 values and older plain URL fields.
             try {
                 if (item.external_url_b64) {
                     const raw = atob(String(item.external_url_b64).replace(/\s/g, ''));
@@ -1672,7 +1634,6 @@
             } catch (_) { return ''; }
         }
 
-        /* تعرض الصفحة داخل إطار المتجر. إذا منع الموقع التضمين، نوضح السبب دون فتح نافذة خارجية. */
         let currentExternalTarget = '';
         function openExternalPageUrl(target, title) {
             let parsed;
@@ -1681,9 +1642,7 @@
             currentExternalTarget = parsed.href;
             const page = document.getElementById('customExternalPage');
             const frame = document.getElementById('customExternalFrame');
-            const help = document.getElementById('customExternalHelp');
             document.getElementById('customExternalTitle').textContent = title || 'صفحة';
-            help.hidden = false;
             frame.src = 'about:blank';
             page.classList.add('open');
             page.setAttribute('aria-hidden','false');
@@ -1691,7 +1650,6 @@
             frame.src = currentExternalTarget;
             if (!(location.hash === '#external-page')) history.pushState({ customExternalPage: true }, '', location.pathname + location.search + '#external-page');
         }
-
 
         function openExternalItem(id) {
             const item = globalGames[id];
@@ -1704,13 +1662,13 @@
             openExternalPageUrl(decodeExternalTarget(method), method.name || 'صفحة');
         }
 
-        function closeExternalPage() {
+        function closeExternalPage(fromHistory = false) {
             const page = document.getElementById('customExternalPage');
-            if (!page) return;
+            if (!page || !page.classList.contains('open')) return;
+            if (!fromHistory) { history.back(); return; }
             page.classList.remove('open');
             page.setAttribute('aria-hidden','true');
             document.getElementById('customExternalFrame').src = 'about:blank';
-            document.getElementById('customExternalHelp').hidden = true;
             currentExternalTarget = '';
             document.body.style.overflow = '';
             if (location.hash === '#external-page') history.replaceState({}, '', location.pathname + location.search);
@@ -2024,7 +1982,6 @@
 
         initLiveDiscounts();
 
-        // رابط الوجهة محفوظ داخل JavaScript ومُرمّز Base64 بدل عرضه كرابط مباشر في HTML.
         const luckTarget = atob('aHR0cHM6Ly9tb2hhYnRvcDFwLWFmay5naXRodWIuaW8vbHVjay0v');
         function openLuckPage(e) {
             if (e) e.preventDefault();
@@ -2043,7 +2000,6 @@
             document.body.style.overflow='';
         }
 
-        // رابط شات بوت المساعد الذكي مُرمّز Base64 ولا يظهر كرابط مباشر داخل HTML.
         const chatbotTarget = atob('aHR0cHM6Ly9tb2hhYnRvcDFwLWFmay5naXRodWIuaW8vTWFoYWItQ2hhdC0v');
         function openChatbotPage(e) {
             if (e) e.preventDefault();
@@ -2094,9 +2050,6 @@
             <button class="custom-external-close" type="button" onclick="closeExternalPage()" aria-label="رجوع"><i class="fas fa-arrow-right"></i></button>
             <div id="customExternalTitle">الصفحة</div>
         </header>
-        <div id="customExternalHelp" class="custom-external-help" hidden>
-            <span>لو الصفحة لم تظهر، فقد يمنع الموقع الخارجي عرضه داخل مواقع أخرى. جرّب رابطًا يسمح بالتضمين داخل المواقع.</span>
-        </div>
         <iframe id="customExternalFrame" title="صفحة داخل المتجر" src="about:blank" referrerpolicy="strict-origin-when-cross-origin" allow="payment *; clipboard-read; clipboard-write; fullscreen" loading="lazy"></iframe>
     </section>
 
