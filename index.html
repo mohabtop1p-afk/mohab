@@ -1856,6 +1856,33 @@
             catch(e){ input.select(); try{document.execCommand('copy');}catch(_){} document.getElementById('walletStatus').textContent='بيانات التحويل محددة؛ انسخها.'; }
         }
         function walletUpdateDepositCurrency() {}
+        // Fast browser-side image compression: no extra service or library required.
+        async function walletCompressReceipt(file) {
+            if (!file || !file.type || !file.type.startsWith('image/')) throw new Error('الملف المختار ليس صورة صالحة.');
+            // Keep small images as-is; compress larger images using a canvas.
+            if (file.size <= 350 * 1024) return file;
+            const image = await new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('تعذر قراءة الصورة. جرّب صورة أخرى بصيغة JPG أو PNG.')); };
+                img.src = url;
+            });
+            const maxSide = 1600;
+            const scale = Math.min(1, maxSide / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+            canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+            const ctx = canvas.getContext('2d', { alpha: false });
+            if (!ctx) throw new Error('ميزة ضغط الصور غير متاحة في هذا المتصفح.');
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            const blob = await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('فشل ضغط الصورة.')), 'image/jpeg', 0.76));
+            // Do not replace the original if compression made it larger.
+            if (blob.size >= file.size) return file;
+            const base = (file.name || 'receipt').replace(/\.[^.]+$/, '') || 'receipt';
+            return new File([blob], base + '_compressed.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+        }
         async function walletSubmitDeposit() {
             const status=document.getElementById('walletStatus');
             const btn=document.getElementById('walletSubmitBtn');
@@ -1867,17 +1894,22 @@
             const currency=document.getElementById('walletDepositCurrency').value;
             if(!Number.isFinite(amount)||amount<=0||amount>10000000){status.textContent='اكتب مبلغاً صحيحاً أكبر من صفر.';return;}
             if(!sender){status.textContent='اكتب الرقم أو المعرّف الذي حوّلت منه.';return;}
-            if(!file||!file.type.startsWith('image/')||file.size>5*1024*1024){status.textContent='ارفع صورة إيصال واضحة بحجم لا يتجاوز 5 ميجابايت.';return;}
+            if(!file||!file.type.startsWith('image/')||file.size>15*1024*1024){status.textContent='اختر صورة إيصال واضحة بحجم أصلي لا يتجاوز 15 ميجابايت؛ سيتم ضغطها تلقائيًا قبل الرفع.';return;}
             if(!walletMethods[walletMethod]){status.textContent='اختر طريقة إيداع صحيحة.';return;}
             if(!firebase.storage){status.textContent='خدمة رفع الإيصالات غير مفعّلة في إعدادات Firebase.';return;}
             btn.disabled=true; btn.textContent='جاري تجهيز طلب الإيداع…'; status.textContent='جاري إنشاء كود الطلب وحفظ بياناتك…';
-            let ref=null, receiptTask=null, stage='تهيئة الطلب';
+            let ref=null, receiptTask=null, stage='ضغط صورة الإيصال';
+            let uploadFile=file;
             const timeout = (promise, ms, label) => Promise.race([promise, new Promise((_, reject)=>setTimeout(()=>reject(new Error(label+' استغرق وقتاً طويلاً. تحقق من اتصال الإنترنت وإعدادات Firebase ثم حاول مرة أخرى.')),ms))]);
             try {
+                status.textContent='جاري ضغط صورة الإيصال لتسريع الرفع…';
+                uploadFile=await timeout(walletCompressReceipt(file),20000,'ضغط صورة الإيصال');
+                const savedPercent=file.size?Math.max(0,Math.round((1-uploadFile.size/file.size)*100)):0;
+                status.textContent=`تم تجهيز الصورة${savedPercent>0?' وتوفير '+savedPercent+'% من حجمها':''}. جاري إنشاء الطلب…`;
                 ref=db.ref('wallet_deposits').push();
                 const code='MHW-'+ref.key.slice(-8).toUpperCase();
                 const amountUsd=currency==='USD'?amount:amount/walletFxRate;
-                const safeName=(file.name||'receipt.jpg').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80);
+                const safeName=(uploadFile.name||'receipt.jpg').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80);
                 const createdAt=firebase.database.ServerValue.TIMESTAMP;
                 const baseData={
                     code, requestId:ref.key, uid:walletUser.uid, email:walletUser.email||'',
@@ -1886,7 +1918,7 @@
                     transferTarget:walletMethods[walletMethod].target, sender, transactionReference,
                     amount, currency, fxRateAtRequest:walletFxRate,
                     amountUsd:Math.round(amountUsd*10000)/10000, receiptName:file.name||safeName,
-                    receiptSize:file.size, receiptContentType:file.type, status:'uploading_receipt',
+                    receiptSize:uploadFile.size, originalReceiptSize:file.size, receiptCompressed:uploadFile.size<file.size, receiptContentType:uploadFile.type, status:'uploading_receipt',
                     createdAt, clientCreatedAt:Date.now(), userAgent:navigator.userAgent, source:'MOHAB_STORE_MAIN_SITE'
                 };
                 stage='حفظ بيانات الطلب';
@@ -1894,11 +1926,11 @@
                 status.textContent=`تم إنشاء الطلب ${code}. جاري رفع صورة الإيصال…`;
                 btn.textContent='جاري رفع الإيصال…';
                 const receiptRef=firebase.storage().ref(`wallet_receipts/${walletUser.uid}/${ref.key}/${Date.now()}_${safeName}`);
-                receiptTask=receiptRef.put(file);
+                receiptTask=receiptRef.put(uploadFile, { contentType: uploadFile.type || 'image/jpeg' });
                 await new Promise((resolve,reject)=>{
                     let settled=false;
                     const finish=(fn,value)=>{if(settled)return;settled=true;clearTimeout(timer);fn(value);};
-                    const timer=setTimeout(()=>{try{receiptTask.cancel();}catch(_){} finish(reject,new Error('انتهت مهلة رفع الإيصال بعد 60 ثانية. تحقق من اتصال الإنترنت وإعدادات Firebase Storage.'));},60000);
+                    const timer=setTimeout(()=>{try{receiptTask.cancel();}catch(_){} finish(reject,new Error('انتهت مهلة رفع الإيصال بعد 60 ثانية. تحقق من اتصال الإنترنت وصلاحيات التخزين.'));},60000);
                     receiptTask.on('state_changed',snap=>{
                         const pct=snap.totalBytes?Math.round(snap.bytesTransferred/snap.totalBytes*100):0;
                         status.textContent=`كود الطلب ${code} — جاري رفع الإيصال ${pct}%`;
