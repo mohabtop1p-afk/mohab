@@ -12,6 +12,8 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <style>
         :root {
@@ -1051,12 +1053,33 @@
             }
         }
 
+    
+        .wallet-nav-btn{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:4;display:flex;align-items:center;gap:7px;padding:6px 9px;min-height:46px;border:1px solid rgba(6,182,212,.38);border-radius:14px;background:linear-gradient(135deg,rgba(6,182,212,.14),rgba(59,130,246,.12));color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+        .wallet-nav-btn img,.wallet-nav-btn>i{width:29px;height:29px;object-fit:contain;border-radius:8px}
+        .wallet-nav-btn span{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+        .wallet-nav-btn small{font-size:.55rem;color:var(--text-muted);font-weight:700}.wallet-nav-btn b{font-size:.68rem;direction:ltr;white-space:nowrap}
+        #walletPage{display:none;position:fixed;inset:0;z-index:600;background:rgba(3,7,18,.82);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:14px}
+        #walletPage.open{display:flex;animation:fadeIn .2s ease}
+        .wallet-card{width:min(520px,100%);max-height:92vh;overflow:auto;background:linear-gradient(150deg,#131c2e,#090d16);border:1px solid rgba(6,182,212,.3);border-radius:24px;padding:20px;box-shadow:0 25px 70px #0009}
+        .wallet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.wallet-head h2{font-size:1.05rem}.wallet-balance{padding:18px;border-radius:18px;background:linear-gradient(120deg,rgba(6,182,212,.17),rgba(59,130,246,.13));border:1px solid rgba(6,182,212,.25);margin-bottom:18px}
+        .wallet-balance small{color:var(--text-muted)}.wallet-balance strong{display:block;font-size:1.65rem;margin-top:8px;direction:ltr;text-align:right}
+        .wallet-tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}.wallet-tab{padding:11px;border-radius:12px;background:var(--surface);border:1px solid var(--surface-border);color:#fff;font-family:inherit;font-weight:800;cursor:pointer}.wallet-tab.active{border-color:var(--primary);background:rgba(6,182,212,.13)}
+        .wallet-field{display:flex;flex-direction:column;gap:7px;margin:11px 0}.wallet-field label{font-size:.78rem;color:#cbd5e1;font-weight:700}.wallet-field input,.wallet-field select{width:100%;background:#0b1220;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:12px;outline:none;font:inherit;font-size:.84rem}.wallet-field input:focus,.wallet-field select:focus{border-color:var(--primary)}
+        .wallet-methods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.wallet-method{padding:11px 8px;border:1px solid var(--surface-border);border-radius:12px;background:var(--surface);color:#fff;cursor:pointer;font:inherit;font-size:.76rem}.wallet-method.active{border-color:var(--primary);background:rgba(6,182,212,.12)}
+        .wallet-primary{width:100%;padding:13px;border:0;border-radius:13px;background:linear-gradient(135deg,var(--primary),var(--accent));color:white;font:inherit;font-weight:800;cursor:pointer;margin-top:10px}.wallet-muted{font-size:.72rem;color:var(--text-muted);line-height:1.8;margin:10px 0}.wallet-status{font-size:.78rem;line-height:1.8;margin-top:10px;color:var(--primary);overflow-wrap:anywhere}.wallet-history{margin-top:18px}.wallet-history h3{font-size:.88rem;margin-bottom:10px}.wallet-row{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--surface-border);font-size:.75rem}.wallet-row small{display:block;color:var(--text-muted);margin-top:4px}.wallet-hidden{display:none!important}
+        @media(max-width:390px){.wallet-nav-btn{padding:5px 6px;gap:4px;min-height:42px}.wallet-nav-btn img,.wallet-nav-btn>i{width:24px;height:24px}.wallet-nav-btn b{font-size:.58rem}.wallet-nav-btn small{font-size:.5rem}.wallet-card{padding:15px}}
+
     </style>
 </head>
 <body>
 
     <nav>
         <div class="nav-content">
+            <button id="walletOpenBtn" class="wallet-nav-btn" onclick="openWallet()" aria-label="المحفظة">
+                <img src="https://g.top4top.io/p_3940ozgp60.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block'">
+                <i class="fas fa-wallet" style="display:none"></i>
+                <span><small>رصيدك</small><b id="walletNavBalance">—</b></span>
+            </button>
             <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()" aria-label="تغيير العملة">
                 <img id="currencyFlag" class="currency-flag"
                      src="https://a.top4top.io/p_3914owpxp0.jpg"
@@ -1445,6 +1468,7 @@
 
             if(document.getElementById('stepPrices').classList.contains('active') && currentPriceType) showPrices(currentPriceType);
             if(activeDiscountData) updateDiscountPriceUI();
+            walletDisplayBalance();
         }
 
         let gameRequestEnabled = true;
@@ -1751,10 +1775,185 @@
 
         function openWhatsApp(element) {
             const phone = "201125808758";
-            const gameName = decodeURIComponent(element.getAttribute('data-game')); const packName = decodeURIComponent(element.getAttribute('data-pack')); const price = decodeURIComponent(element.getAttribute('data-price')); const method = decodeURIComponent(element.getAttribute('data-method'));
-            const text = `مرحباً، أريد طلب شحن:\n🎮 اللعبة/المنتج: ${gameName}\n📦 الباقة: ${packName}\n💰 السعر: ${price}\n⚙️ طريقة الشحن: ${method}`;
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+            const gameName = decodeURIComponent(element.getAttribute('data-game') || '');
+            const packName = decodeURIComponent(element.getAttribute('data-pack') || '');
+            const price = decodeURIComponent(element.getAttribute('data-price') || '');
+            const method = decodeURIComponent(element.getAttribute('data-method') || '');
+            const launch = (paidCode='') => {
+                let text = `مرحباً، أريد طلب شحن:\n🎮 اللعبة/المنتج: ${gameName}\n📦 الباقة: ${packName}\n💰 السعر: ${price}\n⚙️ طريقة الشحن: ${method}`;
+                if (paidCode) text += `\n\n✅ الطلب مدفوع من محفظة MOHAB STORE\n🧾 كود الدفع: ${paidCode}`;
+                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+            };
+            if (!walletUser) { launch(); return; }
+            walletConfirmPurchase({gameName,packName,price,method}, launch);
         }
+
+        // محفظة المستخدم: Firebase Authentication + Realtime Database + Storage.
+        // يعتمد الاعتماد المالي النهائي على Firebase Rules/Cloud Functions موثوقة من جهة الخادم.
+        let walletUser = null, walletBalanceUsd = 0, walletMethod = 'vodafone', walletFxRate = 50;
+        let walletBalanceListener = null, walletHistoryListener = null;
+        const walletMethods = {
+            vodafone:{label:'فودافون كاش',target:'01019614169',kind:'phone'},
+            etisalat:{label:'اتصالات كاش',target:'01125808758',kind:'phone'},
+            orange:{label:'أورنج كاش',target:'01278206939',kind:'phone'},
+            binance:{label:'Binance Pay',target:'1231533425',kind:'id'}
+        };
+        function walletMoney(n,currency=currentCurrency) {
+            const amount = currency === 'USD' ? Number(n||0) : Number(n||0) * walletFxRate;
+            return `${amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ${currency}`;
+        }
+        function walletDisplayBalance() {
+            const amount = currentCurrency === 'USD' ? walletBalanceUsd : walletBalanceUsd * walletFxRate;
+            const label = `${amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ${currentCurrency}`;
+            const nav = document.getElementById('walletNavBalance');
+            const main = document.getElementById('walletBalanceMain');
+            if(nav) nav.textContent = label;
+            if(main) main.textContent = label;
+        }
+        function openWallet() {
+            document.getElementById('walletPage').classList.add('open');
+            document.getElementById('walletPage').setAttribute('aria-hidden','false');
+            document.body.style.overflow='hidden';
+            if(walletUser) walletShowTools();
+        }
+        function closeWallet() {
+            document.getElementById('walletPage').classList.remove('open');
+            document.getElementById('walletPage').setAttribute('aria-hidden','true');
+            document.body.style.overflow='';
+        }
+        function walletShowTab(tab) {
+            document.getElementById('walletDepositPane').classList.toggle('wallet-hidden',tab!=='deposit');
+            document.getElementById('walletHistoryPane').classList.toggle('wallet-hidden',tab!=='history');
+            document.getElementById('walletDepositTab').classList.toggle('active',tab==='deposit');
+            document.getElementById('walletHistoryTab').classList.toggle('active',tab==='history');
+        }
+        function walletShowTools() {
+            document.getElementById('walletLoginArea').classList.add('wallet-hidden');
+            document.getElementById('walletTools').classList.remove('wallet-hidden');
+            document.getElementById('walletUserLabel').textContent=walletUser.email || walletUser.displayName || 'تم تسجيل الدخول';
+            document.getElementById('walletStatus').textContent='';
+        }
+        async function walletGoogleLogin() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await firebase.auth().signInWithPopup(provider);
+            } catch(e) {
+                document.getElementById('walletStatus').textContent = 'تعذر تسجيل الدخول. جرّب مرة أخرى أو فعّل Google من Firebase Authentication.';
+            }
+        }
+        async function walletGoogleLogout() { try { await firebase.auth().signOut(); } catch(e) {} }
+        function walletSelectMethod(button) {
+            walletMethod=button.dataset.method;
+            document.querySelectorAll('.wallet-method').forEach(b=>b.classList.toggle('active',b===button));
+            const m=walletMethods[walletMethod];
+            document.getElementById('walletTransferTarget').value=m.target;
+            document.getElementById('walletTransferLabel').textContent=m.kind==='id'?'حوّل إلى معرّف Binance Pay التالي':'حوّل إلى الرقم التالي';
+            document.querySelector('#walletTransferTarget').nextElementSibling.textContent=m.kind==='id'?'نسخ المعرّف':'نسخ الرقم';
+        }
+        async function walletCopyTarget() {
+            const input=document.getElementById('walletTransferTarget');
+            try { await navigator.clipboard.writeText(input.value); document.getElementById('walletStatus').textContent='تم نسخ بيانات التحويل.'; }
+            catch(e){ input.select(); try{document.execCommand('copy');}catch(_){} document.getElementById('walletStatus').textContent='بيانات التحويل محددة؛ انسخها.'; }
+        }
+        function walletUpdateDepositCurrency() {}
+        async function walletSubmitDeposit() {
+            const status=document.getElementById('walletStatus');
+            if(!walletUser){status.textContent='سجّل الدخول بجوجل أولاً.';return;}
+            const amount=Number(document.getElementById('walletDepositAmount').value);
+            const sender=document.getElementById('walletSender').value.trim();
+            const file=document.getElementById('walletReceipt').files[0];
+            const currency=document.getElementById('walletDepositCurrency').value;
+            if(!Number.isFinite(amount)||amount<=0||amount>10000000){status.textContent='اكتب مبلغاً صحيحاً.';return;}
+            if(!sender){status.textContent='اكتب الرقم أو المعرّف الذي حوّلت منه.';return;}
+            if(!file||!file.type.startsWith('image/')||file.size>5*1024*1024){status.textContent='ارفع صورة إيصال واضحة بحجم لا يتجاوز 5 ميجابايت.';return;}
+            const btn=document.getElementById('walletSubmitBtn'); btn.disabled=true; btn.textContent='جارٍ إرسال الطلب…';
+            try {
+                const ref=db.ref('wallet_deposits').push();
+                const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80);
+                const receiptRef=firebase.storage().ref(`wallet_receipts/${walletUser.uid}/${ref.key}/${Date.now()}_${safeName}`);
+                await receiptRef.put(file);
+                const receiptUrl=await receiptRef.getDownloadURL();
+                const amountUsd=currency==='USD'?amount:amount/walletFxRate;
+                await ref.set({
+                    code:'MHW-'+ref.key.slice(-8).toUpperCase(),uid:walletUser.uid,email:walletUser.email||'',
+                    displayName:walletUser.displayName||'',method:walletMethod,methodName:walletMethods[walletMethod].label,
+                    transferTarget:walletMethods[walletMethod].target,sender:sender,amount:amount,currency:currency,
+                    amountUsd:Math.round(amountUsd*10000)/10000,receiptUrl:receiptUrl,status:'pending',
+                    createdAt:firebase.database.ServerValue.TIMESTAMP
+                });
+                status.textContent=`تم إرسال طلب الإيداع للمراجعة. كود الطلب: MHW-${ref.key.slice(-8).toUpperCase()}`;
+                document.getElementById('walletDepositAmount').value='';document.getElementById('walletSender').value='';document.getElementById('walletReceipt').value='';
+                walletShowTab('history');
+            } catch(e) {
+                status.textContent='لم يتم إرسال الطلب. تحقق من إعدادات Firebase Storage/Database والصلاحيات ثم أعد المحاولة.';
+            } finally {btn.disabled=false;btn.textContent='إرسال طلب الإيداع للمراجعة';}
+        }
+        function walletListenHistory() {
+            if(!walletUser)return;
+            if(walletHistoryListener) db.ref('wallet_deposits').off('value',walletHistoryListener);
+            walletHistoryListener=snap=>{
+                const list=document.getElementById('walletHistoryList');list.innerHTML='';
+                let found=false;
+                snap.forEach(child=>{
+                    const d=child.val()||{};if(d.uid!==walletUser.uid)return;found=true;
+                    const row=document.createElement('div');row.className='wallet-row';
+                    const left=document.createElement('div');left.textContent=d.methodName||'إيداع';
+                    const sub=document.createElement('small');sub.textContent=`${d.code||child.key} · ${d.createdAt?new Date(d.createdAt).toLocaleString('ar-EG'):'—'}`;left.appendChild(sub);
+                    const right=document.createElement('div');right.style.textAlign='left';
+                    const amt=document.createElement('b');amt.textContent=`${Number(d.amount||0).toFixed(2)} ${d.currency||'EGP'}`;right.appendChild(amt);
+                    const st=document.createElement('small');st.textContent=({pending:'قيد المراجعة',approved:'تمت الموافقة',rejected:'مرفوض'})[d.status]||'قيد المراجعة';right.appendChild(st);
+                    row.append(left,right);list.prepend(row);
+                });
+                if(!found)list.textContent='لا توجد طلبات إيداع حتى الآن.';
+            };
+            db.ref('wallet_deposits').on('value',walletHistoryListener);
+        }
+        async function walletConfirmPurchase(order, launch) {
+            const priceText=String(order.price||'');
+            const match=priceText.replace(/,/g,'').match(/\d+(?:\.\d+)?/);
+            const amount=match?Number(match[0]):NaN;
+            if(!Number.isFinite(amount)||amount<=0){alert('تعذر تحديد سعر الطلب. تواصل مع الدعم لإتمام الطلب.');return;}
+            const currency=/\$|USD/i.test(priceText)?'USD':(/جنيه|EGP|ج\.م|جنيه مصري/i.test(priceText)?'EGP':currentCurrency);
+            const costUsd=currency==='USD'?amount:amount/walletFxRate;
+            const displayCost=currentCurrency==='USD'?costUsd:costUsd*walletFxRate;
+            if(!confirm(`سيتم خصم ${displayCost.toFixed(2)} ${currentCurrency} من محفظتك عند تأكيد الطلب، ثم فتح واتساب. هل تريد المتابعة؟`))return;
+            try {
+                const balanceRef=db.ref(`wallet_users/${walletUser.uid}/balanceUsd`);
+                const result=await balanceRef.transaction(current=>{
+                    const balance=Number(current||0);
+                    if(balance+0.0000001<costUsd)return;
+                    return Math.round((balance-costUsd)*10000)/10000;
+                });
+                if(!result.committed){alert('رصيدك غير كافٍ أو تعذر تأكيد الخصم. لم يتم فتح واتساب.');return;}
+                const code='MWP-'+Date.now().toString(36).toUpperCase();
+                await db.ref(`wallet_orders/${walletUser.uid}/${code}`).set({
+                    code,uid:walletUser.uid,email:walletUser.email||'',game:order.gameName,pack:order.packName,
+                    price:order.price,method:order.method,costUsd,currency,status:'paid',
+                    createdAt:firebase.database.ServerValue.TIMESTAMP
+                });
+                walletBalanceUsd=Number(result.snapshot.val()||0);walletDisplayBalance();
+                launch(code);
+            } catch(e) { alert('تعذر إتمام الدفع. لم يتم فتح واتساب؛ يرجى المحاولة لاحقاً.'); }
+        }
+        firebase.auth().onAuthStateChanged(user=>{
+            walletUser=user||null;
+            if(walletBalanceListener){const oldUid=walletBalanceListener.uid;db.ref(`wallet_users/${oldUid}/balanceUsd`).off('value',walletBalanceListener.fn);walletBalanceListener=null;}
+            if(walletHistoryListener){db.ref('wallet_deposits').off('value',walletHistoryListener);walletHistoryListener=null;}
+            if(!user){
+                walletBalanceUsd=0;document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
+                document.getElementById('walletTools').classList.add('wallet-hidden');
+                document.getElementById('walletUserLabel').textContent='سجّل الدخول بجوجل لتفعيل المحفظة.';
+                walletDisplayBalance();return;
+            }
+            walletShowTools();
+            const fn=snap=>{walletBalanceUsd=Number((snap.val()||{}).balanceUsd||0);walletDisplayBalance();};
+            walletBalanceListener={uid:user.uid,fn};
+            db.ref(`wallet_users/${user.uid}`).on('value',fn);
+            walletListenHistory();
+        });
+        db.ref('wallet_settings/usdToEgp').on('value',snap=>{
+            const n=Number(snap.val());if(Number.isFinite(n)&&n>0)walletFxRate=n;walletDisplayBalance();
+        });
 
         function goBack(fromHistory = false) {
             if(!fromHistory) { history.back(); return; } 
@@ -2045,6 +2244,35 @@
             }
         });
     </script>
+
+    <section id="walletPage" aria-hidden="true" role="dialog" aria-modal="true" aria-label="محفظة مهاب ستور">
+      <div class="wallet-card">
+        <div class="wallet-head"><h2><i class="fas fa-wallet" style="color:var(--primary)"></i> محفظة MOHAB STORE</h2><button class="close-modal" onclick="closeWallet()" aria-label="إغلاق"><i class="fas fa-times"></i></button></div>
+        <div class="wallet-balance"><small>الرصيد المتاح</small><strong id="walletBalanceMain">0.00 USD</strong><div class="wallet-muted" id="walletUserLabel">سجّل الدخول بجوجل لتفعيل المحفظة.</div></div>
+        <div id="walletLoginArea"><button class="wallet-primary" onclick="walletGoogleLogin()"><i class="fab fa-google"></i> تسجيل الدخول باستخدام Google</button></div>
+        <div id="walletTools" class="wallet-hidden">
+          <div class="wallet-tabs"><button class="wallet-tab active" id="walletDepositTab" onclick="walletShowTab('deposit')">إيداع رصيد</button><button class="wallet-tab" id="walletHistoryTab" onclick="walletShowTab('history')">طلباتي</button></div>
+          <div id="walletDepositPane">
+            <div class="wallet-field"><label>اختر طريقة الإيداع</label><div class="wallet-methods">
+              <button class="wallet-method active" data-method="vodafone" onclick="walletSelectMethod(this)">فودافون كاش</button>
+              <button class="wallet-method" data-method="etisalat" onclick="walletSelectMethod(this)">اتصالات كاش</button>
+              <button class="wallet-method" data-method="orange" onclick="walletSelectMethod(this)">أورنج كاش</button>
+              <button class="wallet-method" data-method="binance" onclick="walletSelectMethod(this)">Binance Pay</button>
+            </div></div>
+            <div class="wallet-field"><label id="walletTransferLabel">حوّل إلى الرقم التالي</label><div style="display:flex;gap:8px"><input id="walletTransferTarget" readonly value="01019614169"><button class="wallet-tab" style="white-space:nowrap" onclick="walletCopyTarget()">نسخ الرقم</button></div></div>
+            <div class="wallet-field"><label>عملة الإيداع</label><select id="walletDepositCurrency" onchange="walletUpdateDepositCurrency()"><option value="EGP">جنيه مصري (EGP)</option><option value="USD">دولار أمريكي (USD)</option></select></div>
+            <div class="wallet-field"><label>المبلغ الذي حوّلته</label><input id="walletDepositAmount" type="number" min="1" step="0.01" placeholder="اكتب المبلغ"></div>
+            <div class="wallet-field"><label>رقم الهاتف/معرّف المحوّل</label><input id="walletSender" maxlength="80" placeholder="الرقم الذي حوّلت منه أو معرّفك"></div>
+            <div class="wallet-field"><label>صورة إيصال التحويل</label><input id="walletReceipt" type="file" accept="image/*"></div>
+            <p class="wallet-muted">لن يُضاف أي رصيد قبل مراجعة الإيصال والموافقة عليه من الإدارة. احتفظ بكود الطلب للمتابعة.</p>
+            <button class="wallet-primary" id="walletSubmitBtn" onclick="walletSubmitDeposit()">إرسال طلب الإيداع للمراجعة</button>
+          </div>
+          <div id="walletHistoryPane" class="wallet-hidden"><div class="wallet-history"><h3>سجل طلباتك</h3><div id="walletHistoryList" class="wallet-muted">جارٍ تحميل الطلبات…</div></div></div>
+          <div class="wallet-status" id="walletStatus" role="status"></div>
+          <button class="wallet-tab" style="width:100%;margin-top:12px" onclick="walletGoogleLogout()">تسجيل الخروج</button>
+        </div>
+      </div>
+    </section>
     <section id="customExternalPage" aria-hidden="true">
         <header class="custom-external-header">
             <button class="custom-external-close" type="button" onclick="closeExternalPage()" aria-label="رجوع"><i class="fas fa-arrow-right"></i></button>
