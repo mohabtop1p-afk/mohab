@@ -1784,8 +1784,9 @@
                 if (paidCode) text += `\n\n✅ الطلب مدفوع من محفظة MOHAB STORE\n🧾 كود الدفع: ${paidCode}`;
                 window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
             };
+            const order={gameName,packName,price,method};
             if (!walletUser) { launch(); return; }
-            walletConfirmPurchase({gameName,packName,price,method}, launch);
+            walletChooseOrderMode(order, launch);
         }
 
         // محفظة المستخدم: Firebase Authentication + Realtime Database + Storage.
@@ -2002,6 +2003,43 @@
             document.head.appendChild(st);
         })();
 
+        async function walletChooseOrderMode(order, launch) {
+            const mode=await walletShowChoiceNotice('اختار طريقة الطلب',`الباقة: ${order.packName}\nالسعر: ${order.price}\n\nتقدر تدفع من رصيد المحفظة، أو ترسل طلب واتساب غير مدفوع وتكمل الدفع مع الدعم.`, 'متابعة');
+            if(mode==='paid') return walletConfirmPurchase(order, launch);
+            if(mode==='whatsapp') {
+                const code='MWU-'+Date.now().toString(36).toUpperCase();
+                try {
+                    await db.ref(`wallet_orders/${walletUser.uid}/${code}`).set({code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,price:order.price,method:order.method,status:'pending_payment',paymentType:'whatsapp',createdAt:firebase.database.ServerValue.TIMESTAMP});
+                    walletListenOrders();
+                    let msg=`مرحباً، أريد طلب شحن غير مدفوع من MOHAB STORE\n🎮 اللعبة/المنتج: ${order.gameName}\n📦 الباقة: ${order.packName}\n💰 السعر: ${order.price}\n⚙️ طريقة الشحن: ${order.method}\n🧾 كود الطلب: ${code}\n⏳ الحالة: بانتظار الدفع عبر واتساب`;
+                    launchWhatsAppText(msg);
+                    await walletShowNotice('تم تسجيل طلبك',`تم تسجيل الطلب بالكود ${code}. تقدر تتابع حالته من المحفظة، ولن يبدأ الشحن إلا بعد تأكيد الدفع.`, 'success');
+                } catch(e) { console.error(e); walletShowNotice('تعذر تسجيل الطلب','لم يتم حفظ الطلب. حاول مرة أخرى.', 'warning'); }
+            }
+        }
+        function launchWhatsAppText(text){window.open(`https://wa.me/201125808758?text=${encodeURIComponent(text)}`,'_blank');}
+        function walletShowChoiceNotice(title,message,okText) {
+            return new Promise(resolve=>{
+                const overlay=document.getElementById('walletCustomNotice');
+                if(!overlay){resolve(null);return;}
+                overlay.querySelector('.wallet-notice-title').textContent=title;
+                overlay.querySelector('.wallet-notice-message').textContent=message;
+                const actions=overlay.querySelector('.wallet-notice-actions');
+                actions.innerHTML='<button class="wallet-notice-ok">الدفع من المحفظة</button><button class="wallet-notice-cancel">طلب واتساب غير مدفوع</button><button class="wallet-notice-cancel" data-cancel="1">إلغاء</button>';
+                overlay.style.display='flex';
+                const finish=v=>{overlay.style.display='none';actions.innerHTML='<button class="wallet-notice-ok">حسنًا</button><button class="wallet-notice-cancel">إلغاء</button>';resolve(v);};
+                actions.children[0].onclick=()=>finish('paid'); actions.children[1].onclick=()=>finish('whatsapp'); actions.children[2].onclick=()=>finish(null);
+            });
+        }
+        let walletOrdersListener=null;
+        function walletListenOrders(){
+            if(!walletUser)return;
+            if(walletOrdersListener)db.ref(`wallet_orders/${walletUser.uid}`).off('value',walletOrdersListener);
+            walletOrdersListener=snap=>{const list=document.getElementById('walletOrderHistoryList');if(!list)return;const arr=[];snap.forEach(c=>arr.push({...c.val(),key:c.key}));arr.sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));list.innerHTML=arr.length?arr.map(o=>`<div class="wallet-row"><div><b>${walletEscape(o.game||'منتج')} — ${walletEscape(o.pack||'باقة')}</b><small>${walletEscape(o.code||o.key)} · ${walletEscape(o.price||'')}</small></div><div style="text-align:left"><b>${({'pending_payment':'بانتظار الدفع','paid':'تم الدفع','processing':'قيد الشحن','shipped':'تم الشحن','rejected':'مرفوض','cancelled':'ملغي'}[o.status]||o.status||'قيد المراجعة')}</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></div>`).join(''):'لا توجد طلبات شحن حتى الآن.';};
+            db.ref(`wallet_orders/${walletUser.uid}`).on('value',walletOrdersListener);
+        }
+        function walletEscape(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
         async function walletConfirmPurchase(order, launch) {
             const priceText=String(order.price||'');
             const match=priceText.replace(/,/g,'').match(/\d+(?:\.\d+)?/);
@@ -2022,7 +2060,7 @@
                 const code='MWP-'+Date.now().toString(36).toUpperCase();
                 await db.ref(`wallet_orders/${walletUser.uid}/${code}`).set({
                     code,uid:walletUser.uid,email:walletUser.email||'',game:order.gameName,pack:order.packName,
-                    price:order.price,method:order.method,costUsd,currency,status:'paid',
+                    price:order.price,method:order.method,costUsd,currency,status:'paid',paymentType:'wallet',
                     createdAt:firebase.database.ServerValue.TIMESTAMP
                 });
                 walletBalanceUsd=Number(result.snapshot.val()||0);walletDisplayBalance();
@@ -2044,6 +2082,7 @@
             walletBalanceListener={uid:user.uid,fn};
             db.ref(`wallet_users/${user.uid}`).on('value',fn);
             walletListenHistory();
+            walletListenOrders();
         });
         db.ref('wallet_settings/usdToEgp').on('value',snap=>{
             const n=Number(snap.val());if(Number.isFinite(n)&&n>0)walletFxRate=n;walletDisplayBalance();
@@ -2343,7 +2382,7 @@
       <div class="wallet-card">
         <div class="wallet-head"><h2><i class="fas fa-wallet" style="color:var(--primary)"></i> محفظة MOHAB STORE</h2><button class="close-modal" onclick="closeWallet()" aria-label="إغلاق"><i class="fas fa-times"></i></button></div>
         <div class="wallet-balance"><small>الرصيد المتاح</small><strong id="walletBalanceMain">0.00 USD</strong><div class="wallet-muted" id="walletUserLabel">سجّل الدخول بجوجل لتفعيل المحفظة.</div></div>
-        <div id="walletLoginArea"><button class="wallet-primary" onclick="walletGoogleLogin()"><i class="fab fa-google"></i> تسجيل الدخول باستخدام Google</button></div>
+        <div id="walletLoginArea"><div class="wallet-history" style="margin:12px 0 16px;line-height:1.9"><h3>إزاي تستخدم محفظة MOHAB STORE؟</h3><p>• استخدم الموقع وتصفّح الأسعار بشكل عادي بدون تسجيل دخول.</p><p>• سجّل الدخول لمتابعة طلباتك وحالة الشحن ورصيدك.</p><p>• الطلب المدفوع من المحفظة يتم خصم قيمته عند التأكيد، وبعدها تتابع حالة الشحن من «طلباتي».</p><p>• تقدر تبعت طلب واتساب غير مدفوع؛ هيتسجل للمراجعة لو سجلت الدخول، والدفع بيكون عبر واتساب. الطلب غير المدفوع لا يضمن بدء الشحن قبل تأكيد الدفع.</p><p>• الإيداعات تظل معلقة حتى مراجعة الإدارة، ولا يُضاف الرصيد قبل الموافقة.</p></div><button class="wallet-primary" onclick="walletGoogleLogin()"><i class="fab fa-google"></i> تسجيل الدخول باستخدام Google</button></div>
         <div id="walletTools" class="wallet-hidden">
           <div class="wallet-tabs"><button class="wallet-tab active" id="walletDepositTab" onclick="walletShowTab('deposit')">إيداع رصيد</button><button class="wallet-tab" id="walletHistoryTab" onclick="walletShowTab('history')">طلباتي</button></div>
           <div id="walletDepositPane">
@@ -2362,7 +2401,7 @@
             <p class="wallet-muted">لن يُضاف أي رصيد قبل مراجعة الإيصال والموافقة عليه من الإدارة. احتفظ بكود الطلب للمتابعة.</p>
             <button class="wallet-primary" id="walletSubmitBtn" onclick="walletSubmitDeposit()">إرسال طلب الإيداع للمراجعة</button>
           </div>
-          <div id="walletHistoryPane" class="wallet-hidden"><div class="wallet-history"><h3>سجل طلباتك</h3><div id="walletHistoryList" class="wallet-muted">جارٍ تحميل الطلبات…</div></div></div>
+          <div id="walletHistoryPane" class="wallet-hidden"><div class="wallet-history"><h3>طلبات الإيداع</h3><div id="walletHistoryList" class="wallet-muted">جارٍ تحميل الطلبات…</div></div><div class="wallet-history" style="margin-top:14px"><h3>طلبات الشحن والشراء</h3><div id="walletOrderHistoryList" class="wallet-muted">جارٍ تحميل طلبات الشحن…</div></div></div>
           <div class="wallet-status" id="walletStatus" role="status"></div>
           <button class="wallet-tab" style="width:100%;margin-top:12px" onclick="walletGoogleLogout()">تسجيل الخروج</button>
         </div>
