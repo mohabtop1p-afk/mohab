@@ -1858,34 +1858,71 @@
         function walletUpdateDepositCurrency() {}
         async function walletSubmitDeposit() {
             const status=document.getElementById('walletStatus');
+            const btn=document.getElementById('walletSubmitBtn');
             if(!walletUser){status.textContent='سجّل الدخول بجوجل أولاً.';return;}
             const amount=Number(document.getElementById('walletDepositAmount').value);
             const sender=document.getElementById('walletSender').value.trim();
+            const transactionReference=(document.getElementById('walletTransactionReference').value||'').trim();
             const file=document.getElementById('walletReceipt').files[0];
             const currency=document.getElementById('walletDepositCurrency').value;
-            if(!Number.isFinite(amount)||amount<=0||amount>10000000){status.textContent='اكتب مبلغاً صحيحاً.';return;}
+            if(!Number.isFinite(amount)||amount<=0||amount>10000000){status.textContent='اكتب مبلغاً صحيحاً أكبر من صفر.';return;}
             if(!sender){status.textContent='اكتب الرقم أو المعرّف الذي حوّلت منه.';return;}
             if(!file||!file.type.startsWith('image/')||file.size>5*1024*1024){status.textContent='ارفع صورة إيصال واضحة بحجم لا يتجاوز 5 ميجابايت.';return;}
-            const btn=document.getElementById('walletSubmitBtn'); btn.disabled=true; btn.textContent='جارٍ إرسال الطلب…';
+            if(!walletMethods[walletMethod]){status.textContent='اختر طريقة إيداع صحيحة.';return;}
+            if(!firebase.storage){status.textContent='خدمة رفع الإيصالات غير مفعّلة في إعدادات Firebase.';return;}
+            btn.disabled=true; btn.textContent='جاري تجهيز طلب الإيداع…'; status.textContent='جاري إنشاء كود الطلب وحفظ بياناتك…';
+            let ref=null, receiptTask=null, stage='تهيئة الطلب';
+            const timeout = (promise, ms, label) => Promise.race([promise, new Promise((_, reject)=>setTimeout(()=>reject(new Error(label+' استغرق وقتاً طويلاً. تحقق من اتصال الإنترنت وإعدادات Firebase ثم حاول مرة أخرى.')),ms))]);
             try {
-                const ref=db.ref('wallet_deposits').push();
-                const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80);
-                const receiptRef=firebase.storage().ref(`wallet_receipts/${walletUser.uid}/${ref.key}/${Date.now()}_${safeName}`);
-                await receiptRef.put(file);
-                const receiptUrl=await receiptRef.getDownloadURL();
+                ref=db.ref('wallet_deposits').push();
+                const code='MHW-'+ref.key.slice(-8).toUpperCase();
                 const amountUsd=currency==='USD'?amount:amount/walletFxRate;
-                await ref.set({
-                    code:'MHW-'+ref.key.slice(-8).toUpperCase(),uid:walletUser.uid,email:walletUser.email||'',
-                    displayName:walletUser.displayName||'',method:walletMethod,methodName:walletMethods[walletMethod].label,
-                    transferTarget:walletMethods[walletMethod].target,sender:sender,amount:amount,currency:currency,
-                    amountUsd:Math.round(amountUsd*10000)/10000,receiptUrl:receiptUrl,status:'pending',
-                    createdAt:firebase.database.ServerValue.TIMESTAMP
+                const safeName=(file.name||'receipt.jpg').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80);
+                const createdAt=firebase.database.ServerValue.TIMESTAMP;
+                const baseData={
+                    code, requestId:ref.key, uid:walletUser.uid, email:walletUser.email||'',
+                    displayName:walletUser.displayName||'', userPhone:walletUser.phoneNumber||'',
+                    userPhotoURL:walletUser.photoURL||'', method:walletMethod, methodName:walletMethods[walletMethod].label,
+                    transferTarget:walletMethods[walletMethod].target, sender, transactionReference,
+                    amount, currency, fxRateAtRequest:walletFxRate,
+                    amountUsd:Math.round(amountUsd*10000)/10000, receiptName:file.name||safeName,
+                    receiptSize:file.size, receiptContentType:file.type, status:'uploading_receipt',
+                    createdAt, clientCreatedAt:Date.now(), userAgent:navigator.userAgent, source:'MOHAB_STORE_MAIN_SITE'
+                };
+                stage='حفظ بيانات الطلب';
+                await timeout(ref.set(baseData),20000,'حفظ بيانات الطلب');
+                status.textContent=`تم إنشاء الطلب ${code}. جاري رفع صورة الإيصال…`;
+                btn.textContent='جاري رفع الإيصال…';
+                const receiptRef=firebase.storage().ref(`wallet_receipts/${walletUser.uid}/${ref.key}/${Date.now()}_${safeName}`);
+                receiptTask=receiptRef.put(file);
+                await new Promise((resolve,reject)=>{
+                    let settled=false;
+                    const finish=(fn,value)=>{if(settled)return;settled=true;clearTimeout(timer);fn(value);};
+                    const timer=setTimeout(()=>{try{receiptTask.cancel();}catch(_){} finish(reject,new Error('انتهت مهلة رفع الإيصال بعد 60 ثانية. تحقق من اتصال الإنترنت وإعدادات Firebase Storage.'));},60000);
+                    receiptTask.on('state_changed',snap=>{
+                        const pct=snap.totalBytes?Math.round(snap.bytesTransferred/snap.totalBytes*100):0;
+                        status.textContent=`كود الطلب ${code} — جاري رفع الإيصال ${pct}%`;
+                    },err=>finish(reject,err),()=>finish(resolve));
                 });
-                status.textContent=`تم إرسال طلب الإيداع للمراجعة. كود الطلب: MHW-${ref.key.slice(-8).toUpperCase()}`;
-                document.getElementById('walletDepositAmount').value='';document.getElementById('walletSender').value='';document.getElementById('walletReceipt').value='';
+                stage='استخراج رابط الإيصال';
+                const receiptUrl=await timeout(receiptTask.snapshot.ref.getDownloadURL(),15000,'استخراج رابط الإيصال');
+                stage='تأكيد الطلب في قاعدة البيانات';
+                await timeout(ref.update({receiptUrl,status:'pending',receiptUploadedAt:firebase.database.ServerValue.TIMESTAMP,uploadError:null}),20000,'تأكيد الطلب');
+                status.textContent=`تم إرسال طلب الإيداع بنجاح. كود الطلب: ${code} — الطلب الآن قيد المراجعة.`;
+                document.getElementById('walletDepositAmount').value='';
+                document.getElementById('walletSender').value='';
+                document.getElementById('walletTransactionReference').value='';
+                document.getElementById('walletReceipt').value='';
                 walletShowTab('history');
             } catch(e) {
-                status.textContent='لم يتم إرسال الطلب. تحقق من إعدادات Firebase Storage/Database والصلاحيات ثم أعد المحاولة.';
+                console.error('Wallet deposit submission failed at stage:',stage,e);
+                const code=ref&&ref.key?'MHW-'+ref.key.slice(-8).toUpperCase():'';
+                const errorCode=e&&e.code?` (${e.code})`:'';
+                const detail=(e&&e.message?e.message:'خطأ غير معروف').slice(0,220);
+                if(ref){
+                    try { await ref.update({status:'upload_failed',uploadError:detail,errorCode:e&&e.code||'',failedStage:stage,failedAt:firebase.database.ServerValue.TIMESTAMP}); } catch(updateErr){console.error('Could not update failed deposit status:',updateErr);}
+                }
+                status.textContent=`تعذر إكمال الإيداع أثناء: ${stage}.${errorCode} ${detail}${code?' كود الطلب: '+code:''}`;
             } finally {btn.disabled=false;btn.textContent='إرسال طلب الإيداع للمراجعة';}
         }
         function walletListenHistory() {
@@ -1901,7 +1938,7 @@
                     const sub=document.createElement('small');sub.textContent=`${d.code||child.key} · ${d.createdAt?new Date(d.createdAt).toLocaleString('ar-EG'):'—'}`;left.appendChild(sub);
                     const right=document.createElement('div');right.style.textAlign='left';
                     const amt=document.createElement('b');amt.textContent=`${Number(d.amount||0).toFixed(2)} ${d.currency||'EGP'}`;right.appendChild(amt);
-                    const st=document.createElement('small');st.textContent=({pending:'قيد المراجعة',approved:'تمت الموافقة',rejected:'مرفوض'})[d.status]||'قيد المراجعة';right.appendChild(st);
+                    const st=document.createElement('small');st.textContent=({pending:'قيد المراجعة',approved:'تمت الموافقة',rejected:'مرفوض',uploading_receipt:'جاري رفع الإيصال',upload_failed:'تعذر رفع الإيصال — تواصل مع الدعم'}[d.status])||'قيد المراجعة';right.appendChild(st);
                     row.append(left,right);list.prepend(row);
                 });
                 if(!found)list.textContent='لا توجد طلبات إيداع حتى الآن.';
@@ -2263,6 +2300,7 @@
             <div class="wallet-field"><label>عملة الإيداع</label><select id="walletDepositCurrency" onchange="walletUpdateDepositCurrency()"><option value="EGP">جنيه مصري (EGP)</option><option value="USD">دولار أمريكي (USD)</option></select></div>
             <div class="wallet-field"><label>المبلغ الذي حوّلته</label><input id="walletDepositAmount" type="number" min="1" step="0.01" placeholder="اكتب المبلغ"></div>
             <div class="wallet-field"><label>رقم الهاتف/معرّف المحوّل</label><input id="walletSender" maxlength="80" placeholder="الرقم الذي حوّلت منه أو معرّفك"></div>
+            <div class="wallet-field"><label>رقم العملية (اختياري)</label><input id="walletTransactionReference" maxlength="100" placeholder="رقم العملية الظاهر في تطبيق الدفع إن وجد"></div>
             <div class="wallet-field"><label>صورة إيصال التحويل</label><input id="walletReceipt" type="file" accept="image/*"></div>
             <p class="wallet-muted">لن يُضاف أي رصيد قبل مراجعة الإيصال والموافقة عليه من الإدارة. احتفظ بكود الطلب للمتابعة.</p>
             <button class="wallet-primary" id="walletSubmitBtn" onclick="walletSubmitDeposit()">إرسال طلب الإيداع للمراجعة</button>
