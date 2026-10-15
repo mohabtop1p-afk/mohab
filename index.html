@@ -1896,7 +1896,6 @@
             if(!sender){status.textContent='اكتب الرقم أو المعرّف الذي حوّلت منه.';return;}
             if(!file||!file.type.startsWith('image/')||file.size>15*1024*1024){status.textContent='اختر صورة إيصال واضحة بحجم أصلي لا يتجاوز 15 ميجابايت؛ سيتم ضغطها تلقائيًا قبل الرفع.';return;}
             if(!walletMethods[walletMethod]){status.textContent='اختر طريقة إيداع صحيحة.';return;}
-            if(!firebase.storage){status.textContent='خدمة رفع الإيصالات غير مفعّلة في إعدادات Firebase.';return;}
             btn.disabled=true; btn.textContent='جاري تجهيز طلب الإيداع…'; status.textContent='جاري إنشاء كود الطلب وحفظ بياناتك…';
             let ref=null, receiptTask=null, stage='ضغط صورة الإيصال';
             let uploadFile=file;
@@ -1923,23 +1922,21 @@
                 };
                 stage='حفظ بيانات الطلب';
                 await timeout(ref.set(baseData),20000,'حفظ بيانات الطلب');
-                status.textContent=`تم إنشاء الطلب ${code}. جاري رفع صورة الإيصال…`;
-                btn.textContent='جاري رفع الإيصال…';
-                const receiptRef=firebase.storage().ref(`wallet_receipts/${walletUser.uid}/${ref.key}/${Date.now()}_${safeName}`);
-                receiptTask=receiptRef.put(uploadFile, { contentType: uploadFile.type || 'image/jpeg' });
-                await new Promise((resolve,reject)=>{
-                    let settled=false;
-                    const finish=(fn,value)=>{if(settled)return;settled=true;clearTimeout(timer);fn(value);};
-                    const timer=setTimeout(()=>{try{receiptTask.cancel();}catch(_){} finish(reject,new Error('انتهت مهلة رفع الإيصال بعد 60 ثانية. تحقق من اتصال الإنترنت وصلاحيات التخزين.'));},60000);
-                    receiptTask.on('state_changed',snap=>{
-                        const pct=snap.totalBytes?Math.round(snap.bytesTransferred/snap.totalBytes*100):0;
-                        status.textContent=`كود الطلب ${code} — جاري رفع الإيصال ${pct}%`;
-                    },err=>finish(reject,err),()=>finish(resolve));
-                });
-                stage='استخراج رابط الإيصال';
-                const receiptUrl=await timeout(receiptTask.snapshot.ref.getDownloadURL(),15000,'استخراج رابط الإيصال');
-                stage='تأكيد الطلب في قاعدة البيانات';
-                await timeout(ref.update({receiptUrl,status:'pending',receiptUploadedAt:firebase.database.ServerValue.TIMESTAMP,uploadError:null}),20000,'تأكيد الطلب');
+                status.textContent=`تم إنشاء الطلب ${code}. جاري تجهيز الإيصال للحفظ…`;
+                btn.textContent='جاري حفظ الإيصال…';
+                // Fallback: store a compressed, small receipt directly in Realtime Database.
+                // This avoids Firebase Storage, which can hang when Storage rules/bucket are misconfigured.
+                stage='تحويل الإيصال إلى صورة مضغوطة';
+                const receiptDataUrl = await timeout(new Promise((resolve,reject)=>{
+                    const reader=new FileReader();
+                    reader.onload=()=>resolve(String(reader.result||''));
+                    reader.onerror=()=>reject(new Error('تعذر قراءة صورة الإيصال من الجهاز.'));
+                    reader.readAsDataURL(uploadFile);
+                }),20000,'قراءة صورة الإيصال');
+                if(!receiptDataUrl.startsWith('data:image/')) throw new Error('صيغة صورة الإيصال غير مدعومة.');
+                if(uploadFile.size > 380*1024 || receiptDataUrl.length > 520*1024) throw new Error('حجم الإيصال بعد الضغط ما زال كبيرًا. اختر صورة أصغر أو التقط لقطة شاشة للإيصال.');
+                stage='حفظ الإيصال وبيانات الطلب';
+                await timeout(ref.update({receiptDataUrl, receiptStorage:'realtime_database', receiptUploadedAt:firebase.database.ServerValue.TIMESTAMP, receiptSize:uploadFile.size, receiptContentType:uploadFile.type||'image/jpeg', status:'pending', uploadError:null}),30000,'حفظ الإيصال في قاعدة البيانات');
                 status.textContent=`تم إرسال طلب الإيداع بنجاح. كود الطلب: ${code} — الطلب الآن قيد المراجعة.`;
                 document.getElementById('walletDepositAmount').value='';
                 document.getElementById('walletSender').value='';
@@ -1977,6 +1974,34 @@
             };
             db.ref('wallet_deposits').on('value',walletHistoryListener);
         }
+
+        function walletShowNotice(title, message, type='info', confirmMode=false) {
+            return new Promise(resolve=>{
+                let overlay=document.getElementById('walletCustomNotice');
+                if(!overlay){
+                    overlay=document.createElement('div'); overlay.id='walletCustomNotice';
+                    overlay.innerHTML=`<div class="wallet-notice-card" role="dialog" aria-modal="true"><div class="wallet-notice-icon">✦</div><h3 class="wallet-notice-title"></h3><p class="wallet-notice-message"></p><div class="wallet-notice-actions"><button class="wallet-notice-cancel" type="button">إلغاء</button><button class="wallet-notice-ok" type="button">حسنًا</button></div></div>`;
+                    document.body.appendChild(overlay);
+                }
+                const card=overlay.querySelector('.wallet-notice-card');
+                overlay.querySelector('.wallet-notice-title').textContent=title;
+                overlay.querySelector('.wallet-notice-message').textContent=message;
+                overlay.querySelector('.wallet-notice-icon').textContent=type==='success'?'✓':type==='warning'?'!':'✦';
+                overlay.querySelector('.wallet-notice-cancel').style.display=confirmMode?'':'none';
+                overlay.querySelector('.wallet-notice-ok').textContent=confirmMode?'تأكيد الطلب':'حسنًا';
+                overlay.style.display='flex';
+                const finish=value=>{overlay.style.display='none'; overlay.querySelector('.wallet-notice-ok').onclick=null; overlay.querySelector('.wallet-notice-cancel').onclick=null; resolve(value);};
+                overlay.querySelector('.wallet-notice-ok').onclick=()=>finish(true);
+                overlay.querySelector('.wallet-notice-cancel').onclick=()=>finish(false);
+                overlay.onclick=e=>{if(e.target===overlay)finish(false);};
+            });
+        }
+        (function walletNoticeStyles(){
+            if(document.getElementById('walletNoticeStyles'))return;
+            const st=document.createElement('style');st.id='walletNoticeStyles';st.textContent=`#walletCustomNotice{position:fixed;inset:0;z-index:999999;background:rgba(2,8,20,.72);backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;padding:22px;direction:rtl} .wallet-notice-card{width:min(100%,390px);background:linear-gradient(145deg,#151f33,#0c1322);border:1px solid rgba(6,182,212,.45);border-radius:24px;padding:26px 22px;box-shadow:0 24px 80px #0008;text-align:center;color:#f8fafc;font-family:inherit;animation:walletNoticeIn .18s ease-out}.wallet-notice-icon{width:58px;height:58px;margin:0 auto 14px;border-radius:18px;background:linear-gradient(135deg,#06b6d4,#3b82f6);display:grid;place-items:center;font-size:30px;font-weight:900;color:white}.wallet-notice-title{font-size:21px;margin:0 0 10px}.wallet-notice-message{font-size:15px;line-height:1.9;color:#cbd5e1;margin:0 0 22px;white-space:pre-line}.wallet-notice-actions{display:flex;gap:10px}.wallet-notice-actions button{flex:1;border:0;border-radius:13px;padding:13px 10px;font:inherit;font-weight:800;cursor:pointer}.wallet-notice-ok{color:#fff;background:linear-gradient(110deg,#06b6d4,#3b82f6)}.wallet-notice-cancel{color:#e2e8f0;background:#202b40;border:1px solid #344258!important}@keyframes walletNoticeIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}`;
+            document.head.appendChild(st);
+        })();
+
         async function walletConfirmPurchase(order, launch) {
             const priceText=String(order.price||'');
             const match=priceText.replace(/,/g,'').match(/\d+(?:\.\d+)?/);
@@ -1985,7 +2010,7 @@
             const currency=/\$|USD/i.test(priceText)?'USD':(/جنيه|EGP|ج\.م|جنيه مصري/i.test(priceText)?'EGP':currentCurrency);
             const costUsd=currency==='USD'?amount:amount/walletFxRate;
             const displayCost=currentCurrency==='USD'?costUsd:costUsd*walletFxRate;
-            if(!confirm(`سيتم خصم ${displayCost.toFixed(2)} ${currentCurrency} من محفظتك عند تأكيد الطلب، ثم فتح واتساب. هل تريد المتابعة؟`))return;
+            if(!await walletShowNotice('تأكيد شراء الباقة',`سيتم خصم ${displayCost.toFixed(2)} ${currentCurrency} من محفظتك عند تأكيد الطلب، ثم فتح واتساب. هل تريد المتابعة؟`,'warning',true))return;
             try {
                 const balanceRef=db.ref(`wallet_users/${walletUser.uid}/balanceUsd`);
                 const result=await balanceRef.transaction(current=>{
@@ -1993,7 +2018,7 @@
                     if(balance+0.0000001<costUsd)return;
                     return Math.round((balance-costUsd)*10000)/10000;
                 });
-                if(!result.committed){alert('رصيدك غير كافٍ أو تعذر تأكيد الخصم. لم يتم فتح واتساب.');return;}
+                if(!result.committed){await walletShowNotice('تعذر إتمام الطلب','رصيدك غير كافٍ أو تعذر تأكيد الخصم. لم يتم فتح واتساب.','warning');return;}
                 const code='MWP-'+Date.now().toString(36).toUpperCase();
                 await db.ref(`wallet_orders/${walletUser.uid}/${code}`).set({
                     code,uid:walletUser.uid,email:walletUser.email||'',game:order.gameName,pack:order.packName,
@@ -2002,7 +2027,7 @@
                 });
                 walletBalanceUsd=Number(result.snapshot.val()||0);walletDisplayBalance();
                 launch(code);
-            } catch(e) { alert('تعذر إتمام الدفع. لم يتم فتح واتساب؛ يرجى المحاولة لاحقاً.'); }
+            } catch(e) { console.error(e); await walletShowNotice('حدث خطأ','تعذر إتمام الدفع. لم يتم فتح واتساب؛ يرجى المحاولة لاحقًا.','warning'); }
         }
         firebase.auth().onAuthStateChanged(user=>{
             walletUser=user||null;
