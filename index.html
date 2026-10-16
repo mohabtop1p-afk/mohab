@@ -1670,12 +1670,14 @@
             const page = document.getElementById('customExternalPage');
             const frame = document.getElementById('customExternalFrame');
             document.getElementById('customExternalTitle').textContent = title || 'صفحة';
-            frame.src = 'about:blank';
-            page.classList.add('open');
-            page.setAttribute('aria-hidden','false');
-            document.body.style.overflow = 'hidden';
-            frame.src = currentExternalTarget;
-            if (!(location.hash === '#external-page')) history.pushState({ customExternalPage: true }, '', location.pathname + location.search + '#external-page');
+            // Many top-up providers block iframe embedding (X-Frame-Options/CSP), leaving a blank page.
+            // Open the provider directly in a new tab so the store remains available and users can return normally.
+            const opened = window.open(currentExternalTarget, '_blank', 'noopener,noreferrer');
+            if (!opened) {
+                // If popups are blocked, navigate directly rather than showing a misleading blank iframe.
+                window.location.href = currentExternalTarget;
+            }
+            return;
         }
 
         function openExternalItem(id) {
@@ -1868,7 +1870,7 @@
             const box=document.getElementById('walletDepositRateInfo'); if(!box)return;
             const usd=currency==='USD'?amount:amount/(Number(walletFxRate)||1);
             const egp=currency==='USD'?amount*(Number(walletFxRate)||1):amount;
-            box.innerHTML=`سعر الدولار في مهاب ستور اليوم: <b>${Number(walletFxRate).toLocaleString('ar-EG')} جنيه</b><br>${amount>0?`المبلغ يعادل تقريبًا <b>${(currency==='USD'?egp:usd).toLocaleString('en-US',{maximumFractionDigits:2})} ${currency==='USD'?'جنيه مصري':'دولار أمريكي'}</b>`:'اكتب المبلغ لمعرفة قيمته بالعملة الأخرى.'}`;
+            box.className='wallet-muted wallet-rate-card';box.innerHTML=`<span class="wallet-rate-icon"><i class="fas fa-arrow-right-arrow-left"></i></span><div class="wallet-rate-content"><div class="wallet-rate-title">سعر الدولار في MOHAB STORE اليوم</div><div class="wallet-rate-value">1 USD = ${Number(walletFxRate).toLocaleString('ar-EG',{maximumFractionDigits:4})} جنيه</div><div class="wallet-rate-note">${amount>0?`قيمة المبلغ بالعملة الأخرى تقريبًا: <b>${(currency==='USD'?egp:usd).toLocaleString('en-US',{maximumFractionDigits:2})} ${currency==='USD'?'EGP':'USD'}</b>`:'اكتب المبلغ لمعرفة قيمته بالعملة الأخرى.'}</div></div>`;
         }
         // Fast browser-side image compression: no extra service or library required.
         async function walletCompressReceipt(file) {
@@ -2012,7 +2014,7 @@
         }
         (function walletNoticeStyles(){
             if(document.getElementById('walletNoticeStyles'))return;
-            const st=document.createElement('style');st.id='walletNoticeStyles';st.textContent=`#walletCustomNotice{position:fixed;inset:0;z-index:999999;background:rgba(2,8,20,.72);backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;padding:22px;direction:rtl} .wallet-notice-card{width:min(100%,390px);background:linear-gradient(145deg,#151f33,#0c1322);border:1px solid rgba(6,182,212,.45);border-radius:24px;padding:26px 22px;box-shadow:0 24px 80px #0008;text-align:center;color:#f8fafc;font-family:inherit;animation:walletNoticeIn .18s ease-out}.wallet-notice-icon{width:58px;height:58px;margin:0 auto 14px;border-radius:18px;background:linear-gradient(135deg,#06b6d4,#3b82f6);display:grid;place-items:center;font-size:30px;font-weight:900;color:white}.wallet-notice-title{font-size:21px;margin:0 0 10px}.wallet-notice-message{font-size:15px;line-height:1.9;color:#cbd5e1;margin:0 0 22px;white-space:pre-line}.wallet-notice-actions{display:flex;gap:10px}.wallet-notice-actions button{flex:1;border:0;border-radius:13px;padding:13px 10px;font:inherit;font-weight:800;cursor:pointer}.wallet-notice-ok{color:#fff;background:linear-gradient(110deg,#06b6d4,#3b82f6)}.wallet-notice-cancel{color:#e2e8f0;background:#202b40;border:1px solid #344258!important}@keyframes walletNoticeIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}`;
+            const st=document.createElement('style');st.id='walletNoticeStyles';st.textContent=`#walletCustomNotice{position:fixed;inset:0;z-index:999999;background:rgba(2,8,20,.78);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:18px;direction:rtl} .wallet-notice-card{width:min(100%,420px);background:radial-gradient(circle at 50% 0,rgba(6,182,212,.14),transparent 42%),linear-gradient(145deg,#151f33,#0a111f);border:1px solid rgba(6,182,212,.48);border-radius:26px;padding:25px 20px 20px;box-shadow:0 28px 90px #000a;text-align:center;color:#f8fafc;font-family:inherit;animation:walletNoticeIn .18s ease-out}.wallet-notice-icon{width:58px;height:58px;margin:0 auto 14px;border-radius:19px;background:linear-gradient(135deg,#06b6d4,#3b82f6);display:grid;place-items:center;font-size:30px;font-weight:900;color:white;box-shadow:0 8px 28px #06b6d42b}.wallet-notice-title{font-size:21px;line-height:1.5;margin:0 0 10px}.wallet-notice-message{font-size:14px;line-height:1.9;color:#cbd5e1;margin:0 0 20px;white-space:pre-line}.wallet-notice-actions{display:grid;grid-template-columns:1fr;gap:9px}.wallet-notice-actions button{width:100%;min-height:46px;border:0;border-radius:14px;padding:12px 10px;font:inherit;font-size:14px;font-weight:850;cursor:pointer;transition:transform .15s,filter .15s}.wallet-notice-actions button:active{transform:scale(.985)}.wallet-notice-ok{color:#fff;background:linear-gradient(110deg,#06b6d4,#3b82f6);box-shadow:0 7px 20px #0284c733}.wallet-notice-cancel{color:#e2e8f0;background:#1b273b;border:1px solid #344258!important}.wallet-notice-actions button[data-cancel="1"]{background:transparent;border-color:rgba(148,163,184,.2)!important;color:#94a3b8}.wallet-notice-actions button:focus-visible,.wallet-close:focus-visible{outline:2px solid #67e8f9;outline-offset:2px}@keyframes walletNoticeIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}`;
             document.head.appendChild(st);
         })();
 
@@ -2043,7 +2045,7 @@
                 overlay.querySelector('.wallet-notice-title').textContent=title;
                 overlay.querySelector('.wallet-notice-message').textContent=message;
                 const actions=overlay.querySelector('.wallet-notice-actions');
-                actions.innerHTML='<button class="wallet-notice-ok">الدفع من المحفظة</button><button class="wallet-notice-cancel">طلب واتساب غير مدفوع</button><button class="wallet-notice-cancel" data-cancel="1">إلغاء</button>';
+                overlay.querySelector('.wallet-notice-icon').textContent='🛒';actions.innerHTML='<button type="button" class="wallet-notice-ok"><i class="fas fa-wallet"></i> الدفع من المحفظة</button><button type="button" class="wallet-notice-cancel"><i class="fab fa-whatsapp"></i> طلب واتساب غير مدفوع</button><button type="button" class="wallet-notice-cancel" data-cancel="1">إلغاء</button>';
                 overlay.style.display='flex';
                 const finish=v=>{overlay.style.display='none';actions.innerHTML='<button class="wallet-notice-ok">حسنًا</button><button class="wallet-notice-cancel">إلغاء</button>';resolve(v);};
                 actions.children[0].onclick=()=>finish('paid'); actions.children[1].onclick=()=>finish('whatsapp'); actions.children[2].onclick=()=>finish(null);
@@ -2408,7 +2410,20 @@
         <div id="walletOrderPageList" class="wallet-history"><div class="wallet-muted">سجّل الدخول لعرض طلباتك.</div></div>
       </div>
     </section>
-    <style>.wallet-orders-page{display:none;position:fixed;inset:0;z-index:610;background:rgba(3,7,18,.86);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:14px}.wallet-orders-page.open{display:flex;animation:fadeIn .18s ease}.wallet-orders-nav{align-items:center;justify-content:center;gap:8px}.wallet-orders-nav>i{font-size:22px;color:#06b6d4}</style>
+    <style>.wallet-orders-page{display:none;position:fixed;inset:0;z-index:610;background:rgba(3,7,18,.86);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:14px}.wallet-orders-page.open{display:flex;animation:fadeIn .18s ease}.wallet-orders-nav{align-items:center;justify-content:center;gap:8px}.wallet-orders-nav>i{font-size:22px;color:#06b6d4}
+        .wallet-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding-bottom:16px;margin-bottom:8px;border-bottom:1px solid rgba(148,163,184,.16)}
+        .wallet-card-head h2{font-size:1.2rem;line-height:1.5;margin:0;color:#f8fafc}
+        .wallet-card-head p{margin:4px 0 0;color:#94a3b8;font-size:.8rem;line-height:1.7}
+        .wallet-close{flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;border:1px solid rgba(148,163,184,.22);border-radius:13px;background:rgba(148,163,184,.1);color:#e2e8f0;font-size:25px;line-height:1;cursor:pointer}
+        .wallet-orders-page .wallet-card{padding:clamp(17px,4vw,26px);border-radius:26px;background:radial-gradient(circle at top right,rgba(6,182,212,.12),transparent 38%),linear-gradient(150deg,#121c30,#080e19);border:1px solid rgba(6,182,212,.42)}
+        .wallet-orders-page .wallet-row{padding:15px 0;gap:12px;align-items:center;line-height:1.7}
+        .wallet-orders-page .wallet-row>div{min-width:0;flex:1}.wallet-orders-page .wallet-row b{display:block;overflow-wrap:anywhere}.wallet-orders-page .wallet-row small{overflow-wrap:anywhere}
+        .wallet-orders-page .wallet-row>div:last-child{text-align:left;max-width:48%}
+        .wallet-rate-card{display:flex;align-items:center;gap:12px;padding:14px 15px;border-radius:17px;border:1px solid rgba(6,182,212,.32);background:linear-gradient(135deg,rgba(6,182,212,.13),rgba(59,130,246,.09));box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+        .wallet-rate-icon{width:43px;height:43px;flex:0 0 43px;border-radius:14px;display:grid;place-items:center;color:#67e8f9;background:rgba(6,182,212,.15);font-size:19px}
+        .wallet-rate-content{min-width:0;flex:1}.wallet-rate-title{font-size:.75rem;color:#a5f3fc;font-weight:800}.wallet-rate-value{font-size:1.2rem;font-weight:900;color:#fff;margin-top:3px}.wallet-rate-note{font-size:.68rem;color:#94a3b8;line-height:1.6;margin-top:3px}
+        @media(max-width:420px){.wallet-orders-page{padding:10px}.wallet-orders-page .wallet-card{max-height:84vh}.wallet-orders-page .wallet-row{align-items:flex-start}.wallet-orders-page .wallet-row>div:last-child{max-width:46%}.wallet-card-head h2{font-size:1.05rem}}
+        </style>
     <section id="walletPage" aria-hidden="true" role="dialog" aria-modal="true" aria-label="محفظة مهاب ستور">
       <div class="wallet-card">
         <div class="wallet-head"><h2><i class="fas fa-wallet" style="color:var(--primary)"></i> محفظة MOHAB STORE</h2><button class="close-modal" onclick="closeWallet()" aria-label="إغلاق"><i class="fas fa-times"></i></button></div>
