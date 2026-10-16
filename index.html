@@ -2463,6 +2463,10 @@
         <div id="walletTools" class="wallet-hidden">
           <div class="wallet-tabs"><button class="wallet-tab active" id="walletDepositTab" onclick="walletShowTab('deposit')">إيداع رصيد</button><button class="wallet-tab" id="walletHistoryTab" onclick="walletShowTab('history')">طلباتي</button></div>
           <div id="walletDepositPane">
+            <div role="note" aria-label="تنبيه مهم بخصوص الإيداع" style="margin:0 0 16px;padding:13px 15px;border:1px solid rgba(245,158,11,.55);border-right:4px solid #f59e0b;border-radius:13px;background:rgba(120,75,8,.16);color:#fde68a;line-height:1.9;font-size:.92rem">
+              <strong style="display:block;margin-bottom:4px;color:#fbbf24"><i class="fas fa-triangle-exclamation"></i> تنبيه مهم قبل الإيداع</strong>
+              بعد اعتماد الإيداع وإضافة الرصيد إلى محفظتك، لا يمكن سحب الرصيد نقدًا أو استرداده؛ ويمكنك استخدامه لشراء المنتجات والخدمات داخل MOHAB STORE. تأكد من المبلغ وبيانات التحويل قبل إرسال الطلب. يظل طلب الإيداع قيد المراجعة حتى موافقة الإدارة.
+            </div>
             <div class="wallet-field"><label>اختر طريقة الإيداع</label><div class="wallet-methods" id="walletMethodsContainer"><div class="wallet-muted">جاري تحميل طرق الإيداع…</div></div></div>
             <div class="wallet-field"><label id="walletTransferLabel">حوّل إلى الرقم التالي</label><div style="display:flex;gap:8px"><input id="walletTransferTarget" readonly value="01019614169"><button class="wallet-tab" style="white-space:nowrap" onclick="walletCopyTarget()">نسخ الرقم</button></div></div>
             <div class="wallet-field"><label>عملة الإيداع</label><select id="walletDepositCurrency" onchange="walletUpdateDepositCurrency()"><option value="EGP">جنيه مصري (EGP)</option><option value="USD">دولار أمريكي (USD)</option></select></div>
