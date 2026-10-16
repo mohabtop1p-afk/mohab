@@ -1055,6 +1055,10 @@
 
     
         .wallet-nav-btn{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:4;display:flex;align-items:center;gap:7px;padding:6px 9px;min-height:46px;border:1px solid rgba(6,182,212,.38);border-radius:14px;background:linear-gradient(135deg,rgba(6,182,212,.14),rgba(59,130,246,.12));color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+        /* Keep "My Orders" beside the wallet, leaving the centered logo and currency switch clear. */
+        #walletOrdersOpenBtn.wallet-orders-nav{left:clamp(154px,27vw,220px);right:auto;top:50%;transform:translateY(-50%);width:auto;max-width:calc(100% - 310px);min-height:46px;padding:6px 9px}
+        #walletOrdersOpenBtn.wallet-orders-nav span{white-space:nowrap}
+        @media(max-width:390px){#walletOrdersOpenBtn.wallet-orders-nav{left:145px;max-width:calc(100% - 285px);padding:5px 7px;gap:5px}.wallet-nav-btn{padding:5px 7px;gap:5px}.wallet-nav-btn b{font-size:.62rem}}
         .wallet-nav-btn img,.wallet-nav-btn>i{width:29px;height:29px;object-fit:contain;border-radius:8px}
         .wallet-nav-btn span{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
         .wallet-nav-btn small{font-size:.55rem;color:var(--text-muted);font-weight:700}.wallet-nav-btn b{font-size:.68rem;direction:ltr;white-space:nowrap}
@@ -1080,7 +1084,7 @@
                 <i class="fas fa-wallet" style="display:none"></i>
                 <span><small>رصيدك</small><b id="walletNavBalance">—</b></span>
             </button>
-            <button id="walletOrdersOpenBtn" class="wallet-nav-btn wallet-orders-nav" onclick="openWalletOrdersPage()" aria-label="طلباتي" style="display:none;position:relative">
+            <button id="walletOrdersOpenBtn" class="wallet-nav-btn wallet-orders-nav" onclick="openWalletOrdersPage()" aria-label="طلباتي" style="display:none">
                 <i class="fas fa-box-open"></i><span><small>طلباتي</small><b id="walletOrdersNavCount">0 طلب</b></span><em id="walletOrdersBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:99px;min-width:19px;height:19px;line-height:19px;font-size:11px;font-style:normal;font-weight:900;text-align:center;padding:0 4px">0</em>
             </button>
             <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()" aria-label="تغيير العملة">
@@ -1792,9 +1796,9 @@
                 else window.location.href=url;
             };
             if (!walletUser) { launch(); return; }
-            // Open a tab directly inside the click event so mobile browsers do not block WhatsApp after async confirmation.
-            window._mohabOrderTab=window.open('about:blank','_blank');
-            walletChooseOrderMode(order, launch).catch(e=>{console.error(e);if(window._mohabOrderTab&&!window._mohabOrderTab.closed)window._mohabOrderTab.close();});
+            // Show the order confirmation directly on the store; do not open a blank/external tab first.
+            window._mohabOrderTab=null;
+            walletChooseOrderMode(order, launch).catch(e=>{console.error(e);});
         }
 
         // محفظة المستخدم: Firebase Authentication + Realtime Database + Storage.
