@@ -1055,10 +1055,6 @@
 
     
         .wallet-nav-btn{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:4;display:flex;align-items:center;gap:7px;padding:6px 9px;min-height:46px;border:1px solid rgba(6,182,212,.38);border-radius:14px;background:linear-gradient(135deg,rgba(6,182,212,.14),rgba(59,130,246,.12));color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,.2)}
-        /* Keep "My Orders" beside the wallet, leaving the centered logo and currency switch clear. */
-        #walletOrdersOpenBtn.wallet-orders-nav{left:clamp(154px,27vw,220px);right:auto;top:50%;transform:translateY(-50%);width:auto;max-width:calc(100% - 310px);min-height:46px;padding:6px 9px}
-        #walletOrdersOpenBtn.wallet-orders-nav span{white-space:nowrap}
-        @media(max-width:390px){#walletOrdersOpenBtn.wallet-orders-nav{left:145px;max-width:calc(100% - 285px);padding:5px 7px;gap:5px}.wallet-nav-btn{padding:5px 7px;gap:5px}.wallet-nav-btn b{font-size:.62rem}}
         .wallet-nav-btn img,.wallet-nav-btn>i{width:29px;height:29px;object-fit:contain;border-radius:8px}
         .wallet-nav-btn span{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
         .wallet-nav-btn small{font-size:.55rem;color:var(--text-muted);font-weight:700}.wallet-nav-btn b{font-size:.68rem;direction:ltr;white-space:nowrap}
@@ -1084,7 +1080,7 @@
                 <i class="fas fa-wallet" style="display:none"></i>
                 <span><small>رصيدك</small><b id="walletNavBalance">—</b></span>
             </button>
-            <button id="walletOrdersOpenBtn" class="wallet-nav-btn wallet-orders-nav" onclick="openWalletOrdersPage()" aria-label="طلباتي" style="display:none">
+            <button id="walletOrdersOpenBtn" class="wallet-nav-btn wallet-orders-nav" onclick="openWalletOrdersPage()" aria-label="طلباتي" style="display:none;position:relative!important;visibility:hidden;width:0;height:0;padding:0;margin:0;overflow:hidden">
                 <i class="fas fa-box-open"></i><span><small>طلباتي</small><b id="walletOrdersNavCount">0 طلب</b></span><em id="walletOrdersBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:99px;min-width:19px;height:19px;line-height:19px;font-size:11px;font-style:normal;font-weight:900;text-align:center;padding:0 4px">0</em>
             </button>
             <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()" aria-label="تغيير العملة">
@@ -1619,6 +1615,8 @@
                 <span>قناة التليجرام</span>
             </a>`;
 
+            htmlString += `<button class="dock-item" onclick="openWalletOrdersPage()" style="background:none;border:none;font-family:inherit;cursor:pointer;" id="walletOrdersDockBtn"><div class="dock-icon-wrapper" style="position:relative"><i class="fas fa-box-open"></i><em id="walletOrdersDockBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:99px;min-width:18px;height:18px;line-height:18px;font-size:10px;font-style:normal;font-weight:900;text-align:center;padding:0 3px">0</em></div><span>طلباتي</span></button>`;
+
             htmlString += `<button class="dock-item" onclick="openRecovery()" style="background:none;border:none;font-family:inherit;cursor:pointer;" id="recoveryDockBtn">
                 <div class="dock-icon-wrapper">
                     <i class="fas fa-shield-alt"></i>
@@ -1796,21 +1794,30 @@
                 else window.location.href=url;
             };
             if (!walletUser) { launch(); return; }
-            // Show the order confirmation directly on the store; do not open a blank/external tab first.
-            window._mohabOrderTab=null;
-            walletChooseOrderMode(order, launch).catch(e=>{console.error(e);});
+            // Open a tab directly inside the click event so mobile browsers do not block WhatsApp after async confirmation.
+            window._mohabOrderTab=window.open('about:blank','_blank');
+            walletChooseOrderMode(order, launch).catch(e=>{console.error(e);if(window._mohabOrderTab&&!window._mohabOrderTab.closed)window._mohabOrderTab.close();});
         }
 
         // محفظة المستخدم: Firebase Authentication + Realtime Database + Storage.
         // يعتمد الاعتماد المالي النهائي على Firebase Rules/Cloud Functions موثوقة من جهة الخادم.
         let walletUser = null, walletBalanceUsd = 0, walletMethod = 'vodafone', walletFxRate = 50;
         let walletBalanceListener = null, walletHistoryListener = null;
-        const walletMethods = {
-            vodafone:{label:'فودافون كاش',target:'01019614169',kind:'phone'},
-            etisalat:{label:'اتصالات كاش',target:'01125808758',kind:'phone'},
-            orange:{label:'أورنج كاش',target:'01278206939',kind:'phone'},
-            binance:{label:'Binance Pay',target:'1231533425',kind:'id'}
+        let walletMethods = {
+            vodafone:{label:'فودافون كاش',target:'01019614169',kind:'phone',logo:'',enabled:true},
+            etisalat:{label:'اتصالات كاش',target:'01125808758',kind:'phone',logo:'',enabled:true},
+            orange:{label:'أورنج كاش',target:'01278206939',kind:'phone',logo:'',enabled:true},
+            binance:{label:'Binance Pay',target:'1231533425',kind:'id',logo:'',enabled:true}
         };
+        function walletRenderMethods(){
+            const box=document.getElementById('walletMethodsContainer'); if(!box)return;
+            const entries=Object.entries(walletMethods).filter(([,m])=>m&&m.enabled!==false);
+            if(!entries.length){box.innerHTML='<div class="wallet-muted">لا توجد طرق إيداع متاحة حاليًا. تواصل مع الدعم.</div>';return;}
+            if(!walletMethods[walletMethod]||walletMethods[walletMethod].enabled===false)walletMethod=entries[0][0];
+            box.innerHTML=entries.map(([key,m])=>`<button type="button" class="wallet-method ${key===walletMethod?'active':''}" data-method="${walletEscape(key)}" onclick="walletSelectMethod(this)">${m.logo?`<img src="${walletEscape(m.logo)}" alt="" style="width:30px;height:30px;object-fit:contain;display:block;margin:0 auto 6px" onerror="this.style.display='none'">`:''}<strong>${walletEscape(m.label||key)}</strong></button>`).join('');
+            walletSelectMethod(box.querySelector(`[data-method="${CSS.escape(walletMethod)}"]`)||box.querySelector('.wallet-method'));
+        }
+        db.ref('wallet_settings/depositMethods').on('value',snap=>{const v=snap.val();if(v&&typeof v==='object'&&Object.keys(v).length)walletMethods=v;walletRenderMethods();});
         function walletMoney(n,currency=currentCurrency) {
             const amount = currency === 'USD' ? Number(n||0) : Number(n||0) * walletFxRate;
             return `${amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ${currency}`;
@@ -1858,9 +1865,9 @@
         function walletSelectMethod(button) {
             walletMethod=button.dataset.method;
             document.querySelectorAll('.wallet-method').forEach(b=>b.classList.toggle('active',b===button));
-            const m=walletMethods[walletMethod];
-            document.getElementById('walletTransferTarget').value=m.target;
-            document.getElementById('walletTransferLabel').textContent=m.kind==='id'?'حوّل إلى معرّف Binance Pay التالي':'حوّل إلى الرقم التالي';
+            const m=walletMethods[walletMethod]; if(!m)return;
+            document.getElementById('walletTransferTarget').value=m.target||'';
+            document.getElementById('walletTransferLabel').textContent=m.kind==='id'?'حوّل إلى المعرّف التالي':'حوّل إلى الرقم التالي';
             document.querySelector('#walletTransferTarget').nextElementSibling.textContent=m.kind==='id'?'نسخ المعرّف':'نسخ الرقم';
         }
         async function walletCopyTarget() {
@@ -2064,7 +2071,7 @@
         function walletListenOrders(){
             if(!walletUser)return;
             if(walletOrdersListener)db.ref(`wallet_orders/${walletUser.uid}`).off('value',walletOrdersListener);
-            walletOrdersListener=snap=>{const list=document.getElementById('walletOrderPageList');const legacy=document.getElementById('walletOrderHistoryList');const arr=[];snap.forEach(c=>arr.push({...c.val(),key:c.key}));arr.sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));const active=arr.filter(o=>!['shipped','rejected','cancelled'].includes(o.status)).length;const count=document.getElementById('walletOrdersNavCount');const badge=document.getElementById('walletOrdersBadge');const nav=document.getElementById('walletOrdersOpenBtn');if(count)count.textContent=arr.length+' طلب';if(badge){badge.textContent=String(active);badge.style.display=active?'block':'none';}if(nav)nav.style.display=walletUser?'flex':'none';const html=arr.length?arr.map(o=>`<div class="wallet-row"><div><b>${walletEscape(o.game||'منتج')} — ${walletEscape(o.pack||'باقة')}</b><small>${walletEscape(o.code||o.key)} · ${walletEscape(o.price||'')}</small></div><div style="text-align:left"><b>${({'pending_payment':'بانتظار الدفع','paid':'تم الدفع — بانتظار الشحن','processing':'قيد الشحن','shipped':'تم الشحن','rejected':'مرفوض','cancelled':'ملغي'}[o.status]||o.status||'قيد المراجعة')}</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></div>`).join(''):'لا توجد طلبات شحن حتى الآن.';if(list)list.innerHTML=html;if(legacy)legacy.innerHTML=html;};
+            walletOrdersListener=snap=>{const list=document.getElementById('walletOrderPageList');const legacy=document.getElementById('walletOrderHistoryList');const arr=[];snap.forEach(c=>arr.push({...c.val(),key:c.key}));arr.sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));const active=arr.filter(o=>!['shipped','rejected','cancelled'].includes(o.status)).length;const count=document.getElementById('walletOrdersNavCount');const badge=document.getElementById('walletOrdersBadge');const nav=document.getElementById('walletOrdersOpenBtn');if(count)count.textContent=arr.length+' طلب';if(badge){badge.textContent=String(active);badge.style.display=active?'block':'none';}const dockBadge=document.getElementById('walletOrdersDockBadge');if(dockBadge){dockBadge.textContent=String(active);dockBadge.style.display=active?'block':'none';}const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display=walletUser?'flex':'none';if(nav)nav.style.display='none';const html=arr.length?arr.map(o=>`<div class="wallet-row"><div><b>${walletEscape(o.game||'منتج')} — ${walletEscape(o.pack||'باقة')}</b><small>${walletEscape(o.code||o.key)} · ${walletEscape(o.price||'')}</small></div><div style="text-align:left"><b>${({'pending_payment':'بانتظار الدفع','paid':'تم الدفع — بانتظار الشحن','processing':'قيد الشحن','shipped':'تم الشحن','rejected':'مرفوض','cancelled':'ملغي'}[o.status]||o.status||'قيد المراجعة')}</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></div>`).join(''):'لا توجد طلبات شحن حتى الآن.';if(list)list.innerHTML=html;if(legacy)legacy.innerHTML=html;};
             db.ref(`wallet_orders/${walletUser.uid}`).on('value',walletOrdersListener);
         }
         function walletEscape(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -2101,12 +2108,13 @@
             if(walletBalanceListener){const oldUid=walletBalanceListener.uid;db.ref(`wallet_users/${oldUid}/balanceUsd`).off('value',walletBalanceListener.fn);walletBalanceListener=null;}
             if(walletHistoryListener){db.ref('wallet_deposits').off('value',walletHistoryListener);walletHistoryListener=null;}
             if(!user){
-                walletBalanceUsd=0;document.getElementById('walletOrdersOpenBtn').style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
+                walletBalanceUsd=0;document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
                 document.getElementById('walletTools').classList.add('wallet-hidden');
                 document.getElementById('walletUserLabel').textContent='سجّل الدخول بجوجل لتفعيل المحفظة.';
                 walletDisplayBalance();return;
             }
             walletShowTools();
+            db.ref(`wallet_users/${user.uid}`).update({email:user.email||'',displayName:user.displayName||'',photoURL:user.photoURL||'',uid:user.uid,updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(e=>console.warn('تعذر تحديث بيانات المحفظة',e));
             const fn=snap=>{walletBalanceUsd=Number((snap.val()||{}).balanceUsd||0);walletDisplayBalance();};
             walletBalanceListener={uid:user.uid,fn};
             db.ref(`wallet_users/${user.uid}`).on('value',fn);
@@ -2436,12 +2444,7 @@
         <div id="walletTools" class="wallet-hidden">
           <div class="wallet-tabs"><button class="wallet-tab active" id="walletDepositTab" onclick="walletShowTab('deposit')">إيداع رصيد</button><button class="wallet-tab" id="walletHistoryTab" onclick="walletShowTab('history')">طلباتي</button></div>
           <div id="walletDepositPane">
-            <div class="wallet-field"><label>اختر طريقة الإيداع</label><div class="wallet-methods">
-              <button class="wallet-method active" data-method="vodafone" onclick="walletSelectMethod(this)">فودافون كاش</button>
-              <button class="wallet-method" data-method="etisalat" onclick="walletSelectMethod(this)">اتصالات كاش</button>
-              <button class="wallet-method" data-method="orange" onclick="walletSelectMethod(this)">أورنج كاش</button>
-              <button class="wallet-method" data-method="binance" onclick="walletSelectMethod(this)">Binance Pay</button>
-            </div></div>
+            <div class="wallet-field"><label>اختر طريقة الإيداع</label><div class="wallet-methods" id="walletMethodsContainer"><div class="wallet-muted">جاري تحميل طرق الإيداع…</div></div></div>
             <div class="wallet-field"><label id="walletTransferLabel">حوّل إلى الرقم التالي</label><div style="display:flex;gap:8px"><input id="walletTransferTarget" readonly value="01019614169"><button class="wallet-tab" style="white-space:nowrap" onclick="walletCopyTarget()">نسخ الرقم</button></div></div>
             <div class="wallet-field"><label>عملة الإيداع</label><select id="walletDepositCurrency" onchange="walletUpdateDepositCurrency()"><option value="EGP">جنيه مصري (EGP)</option><option value="USD">دولار أمريكي (USD)</option></select></div>
             <div class="wallet-field"><label>المبلغ الذي حوّلته</label><input id="walletDepositAmount" type="number" min="1" step="0.01" placeholder="اكتب المبلغ" oninput="walletUpdateDepositCurrency()"><div id="walletDepositRateInfo" class="wallet-muted" style="margin-top:8px;line-height:1.8">سعر الدولار في مهاب ستور اليوم: جاري التحميل…</div></div>
