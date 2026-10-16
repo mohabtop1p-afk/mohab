@@ -1790,18 +1790,16 @@
                 let text = `مرحباً، أريد طلب شحن:\n🎮 اللعبة/المنتج: ${gameName}\n📦 الباقة: ${packName}\n💰 السعر: ${price}\n⚙️ طريقة الشحن: ${method}`;
                 if (paidCode) text += `\n\n✅ الطلب مدفوع من محفظة MOHAB STORE\n🧾 كود الدفع: ${paidCode}`;
                 const url=`https://wa.me/201125808758?text=${encodeURIComponent(text)}`;
-                if(window._mohabOrderTab && !window._mohabOrderTab.closed){window._mohabOrderTab.location.href=url;window._mohabOrderTab=null;}
-                else window.location.href=url;
+                window.location.href=url;
             };
             if (!walletUser) { launch(); return; }
-            // Open a tab directly inside the click event so mobile browsers do not block WhatsApp after async confirmation.
-            window._mohabOrderTab=window.open('about:blank','_blank');
-            walletChooseOrderMode(order, launch).catch(e=>{console.error(e);if(window._mohabOrderTab&&!window._mohabOrderTab.closed)window._mohabOrderTab.close();});
+            // Keep the customer on this page until they confirm. No about:blank tab is created.
+            walletChooseOrderMode(order, launch).catch(e=>{console.error(e);});
         }
 
         // محفظة المستخدم: Firebase Authentication + Realtime Database + Storage.
         // يعتمد الاعتماد المالي النهائي على Firebase Rules/Cloud Functions موثوقة من جهة الخادم.
-        let walletUser = null, walletBalanceUsd = 0, walletMethod = 'vodafone', walletFxRate = 50;
+        let walletUser = null, walletBalanceUsd = 0, walletBalanceEgp = 0, walletMethod = 'vodafone', walletFxRate = 50;
         let walletBalanceListener = null, walletHistoryListener = null;
         let walletMethods = {
             vodafone:{label:'فودافون كاش',target:'01019614169',kind:'phone',logo:'',enabled:true},
@@ -1823,23 +1821,26 @@
             return `${amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ${currency}`;
         }
         function walletDisplayBalance() {
-            const amount = currentCurrency === 'USD' ? walletBalanceUsd : walletBalanceUsd * walletFxRate;
+            const amount = currentCurrency === 'USD' ? (walletFxRate > 0 ? walletBalanceEgp / walletFxRate : 0) : walletBalanceEgp;
             const label = `${amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ${currentCurrency}`;
             const nav = document.getElementById('walletNavBalance');
             const main = document.getElementById('walletBalanceMain');
             if(nav) nav.textContent = label;
             if(main) main.textContent = label;
         }
+        let walletPageHistoryPushed=false, walletOrdersHistoryPushed=false;
         function openWallet() {
+            if(!walletPageHistoryPushed){history.pushState({mohabWallet:true},'','#wallet');walletPageHistoryPushed=true;}
             document.getElementById('walletPage').classList.add('open');
             document.getElementById('walletPage').setAttribute('aria-hidden','false');
             document.body.style.overflow='hidden';
             if(walletUser) walletShowTools();
         }
-        function closeWallet() {
+        function closeWallet(fromPopState=false) {
             document.getElementById('walletPage').classList.remove('open');
             document.getElementById('walletPage').setAttribute('aria-hidden','true');
             document.body.style.overflow='';
+            if(walletPageHistoryPushed){walletPageHistoryPushed=false;if(!fromPopState && history.state && history.state.mohabWallet) history.back();}
         }
         function walletShowTab(tab) {
             document.getElementById('walletDepositPane').classList.toggle('wallet-hidden',tab!=='deposit');
@@ -1943,7 +1944,9 @@
                     userPhotoURL:walletUser.photoURL||'', method:walletMethod, methodName:walletMethods[walletMethod].label,
                     transferTarget:walletMethods[walletMethod].target, sender, transactionReference,
                     amount, currency, fxRateAtRequest:walletFxRate,
-                    amountUsd:Math.round(amountUsd*10000)/10000, receiptName:file.name||safeName,
+                    amountUsd:Math.round(amountUsd*10000)/10000,
+                    amountEgp:Math.round((currency==='USD'?amount*walletFxRate:amount)*100)/100,
+                    receiptName:file.name||safeName,
                     receiptSize:uploadFile.size, originalReceiptSize:file.size, receiptCompressed:uploadFile.size<file.size, receiptContentType:uploadFile.type, status:'uploading_receipt',
                     createdAt, clientCreatedAt:Date.now(), userAgent:navigator.userAgent, source:'MOHAB_STORE_MAIN_SITE'
                 };
@@ -2062,17 +2065,22 @@
                 actions.children[0].onclick=()=>finish('paid'); actions.children[1].onclick=()=>finish('whatsapp'); actions.children[2].onclick=()=>finish(null);
             });
         }
-        let walletOrdersListener=null;
+        let walletOrdersListener=null, walletAdminAdjustmentsListener=null;
         function openWalletOrdersPage(){
             if(!walletUser){openWallet();return;}
             const page=document.getElementById('walletOrdersPage');if(page){page.classList.add('open');page.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
         }
-        function closeWalletOrdersPage(){const page=document.getElementById('walletOrdersPage');if(page){page.classList.remove('open');page.setAttribute('aria-hidden','true');}document.body.style.overflow='';}
+        function closeWalletOrdersPage(fromPopState=false){const page=document.getElementById('walletOrdersPage');if(page){page.classList.remove('open');page.setAttribute('aria-hidden','true');}document.body.style.overflow='';if(walletOrdersHistoryPushed){walletOrdersHistoryPushed=false;if(!fromPopState && history.state && history.state.mohabWalletOrders)history.back();}}
         function walletListenOrders(){
             if(!walletUser)return;
             if(walletOrdersListener)db.ref(`wallet_orders/${walletUser.uid}`).off('value',walletOrdersListener);
-            walletOrdersListener=snap=>{const list=document.getElementById('walletOrderPageList');const legacy=document.getElementById('walletOrderHistoryList');const arr=[];snap.forEach(c=>arr.push({...c.val(),key:c.key}));arr.sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));const active=arr.filter(o=>!['shipped','rejected','cancelled'].includes(o.status)).length;const count=document.getElementById('walletOrdersNavCount');const badge=document.getElementById('walletOrdersBadge');const nav=document.getElementById('walletOrdersOpenBtn');if(count)count.textContent=arr.length+' طلب';if(badge){badge.textContent=String(active);badge.style.display=active?'block':'none';}const dockBadge=document.getElementById('walletOrdersDockBadge');if(dockBadge){dockBadge.textContent=String(active);dockBadge.style.display=active?'block':'none';}const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display=walletUser?'flex':'none';if(nav)nav.style.display='none';const html=arr.length?arr.map(o=>`<div class="wallet-row"><div><b>${walletEscape(o.game||'منتج')} — ${walletEscape(o.pack||'باقة')}</b><small>${walletEscape(o.code||o.key)} · ${walletEscape(o.price||'')}</small></div><div style="text-align:left"><b>${({'pending_payment':'بانتظار الدفع','paid':'تم الدفع — بانتظار الشحن','processing':'قيد الشحن','shipped':'تم الشحن','rejected':'مرفوض','cancelled':'ملغي'}[o.status]||o.status||'قيد المراجعة')}</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></div>`).join(''):'لا توجد طلبات شحن حتى الآن.';if(list)list.innerHTML=html;if(legacy)legacy.innerHTML=html;};
+            let orderRows=[], adjustmentRows=[];
+            const renderCombined=()=>{const list=document.getElementById('walletOrderPageList');const legacy=document.getElementById('walletOrderHistoryList');const arr=[...orderRows,...adjustmentRows].sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));const active=orderRows.filter(o=>!['shipped','rejected','cancelled'].includes(o.status)).length;const count=document.getElementById('walletOrdersNavCount');const badge=document.getElementById('walletOrdersBadge');if(count)count.textContent=arr.length+' سجل';if(badge){badge.textContent=String(active);badge.style.display=active?'block':'none';}const dockBadge=document.getElementById('walletOrdersDockBadge');if(dockBadge){dockBadge.textContent=String(active);dockBadge.style.display=active?'block':'none';}const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display=walletUser?'flex':'none';const html=arr.length?arr.map(o=>o.recordType==='admin_adjustment'?`<div class="wallet-row"><div><b>${o.amountEgp>=0?'إيداع رصيد من الإدارة':'خصم رصيد من الإدارة'}</b><small>${walletEscape(o.reason||'تم تعديل الرصيد بواسطة الإدارة')} · ${walletEscape(o.code||'')}</small></div><div style="text-align:left"><b>${Number(o.amountEgp||0)>=0?'+':''}${Number(o.amountEgp||0).toFixed(2)} EGP</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></div>`:`<div class="wallet-row"><div><b>${walletEscape(o.game||'منتج')} — ${walletEscape(o.pack||'باقة')}</b><small>${walletEscape(o.code||o.key)} · ${walletEscape(o.price||'')}</small></div><div style="text-align:left"><b>${({'pending_payment':'بانتظار الدفع','paid':'تم الدفع — بانتظار الشحن','processing':'قيد الشحن','shipped':'تم الشحن','rejected':'مرفوض','cancelled':'ملغي'}[o.status]||o.status||'قيد المراجعة')}</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></div>`).join(''):'لا توجد طلبات أو تعديلات رصيد حتى الآن.';if(list)list.innerHTML=html;if(legacy)legacy.innerHTML=html;};
+            walletOrdersListener=snap=>{orderRows=[];snap.forEach(c=>orderRows.push({...c.val(),key:c.key}));renderCombined();};
             db.ref(`wallet_orders/${walletUser.uid}`).on('value',walletOrdersListener);
+            if(walletAdminAdjustmentsListener)db.ref('wallet_admin_adjustments').off('value',walletAdminAdjustmentsListener);
+            walletAdminAdjustmentsListener=snap=>{adjustmentRows=[];snap.forEach(c=>{const a=c.val()||{};if(a.uid===walletUser.uid)adjustmentRows.push({...a,key:c.key,recordType:'admin_adjustment',amountEgp:Number.isFinite(Number(a.amountEgp))?Number(a.amountEgp):Number(a.amount||0)*walletFxRate});});renderCombined();};
+            db.ref('wallet_admin_adjustments').on('value',walletAdminAdjustmentsListener);
         }
         function walletEscape(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -2086,43 +2094,50 @@
             const displayCost=currentCurrency==='USD'?costUsd:costUsd*walletFxRate;
             if(!await walletShowNotice('تأكيد شراء الباقة',`سيتم خصم ${displayCost.toFixed(2)} ${currentCurrency} من محفظتك عند تأكيد الطلب، ثم فتح واتساب. هل تريد المتابعة؟`,'warning',true))return;
             try {
-                const balanceRef=db.ref(`wallet_users/${walletUser.uid}/balanceUsd`);
+                const costEgp=Math.round(costUsd*walletFxRate*100)/100;
+                const balanceRef=db.ref(`wallet_users/${walletUser.uid}`);
                 const result=await balanceRef.transaction(current=>{
-                    const balance=Number(current||0);
-                    if(balance+0.0000001<costUsd)return;
-                    return Math.round((balance-costUsd)*10000)/10000;
+                    if(!current || typeof current!=='object') return;
+                    const balanceEgp=Number.isFinite(Number(current.balanceEgp))?Number(current.balanceEgp):Number(current.balanceUsd||0)*walletFxRate;
+                    if(balanceEgp+0.0000001<costEgp)return;
+                    current.balanceEgp=Math.round((balanceEgp-costEgp)*100)/100;
+                    current.balanceUsd=Math.round((current.balanceEgp/walletFxRate)*10000)/10000;
+                    current.updatedAt=Date.now();
+                    return current;
                 });
-                if(!result.committed){if(window._mohabOrderTab&&!window._mohabOrderTab.closed){window._mohabOrderTab.close();window._mohabOrderTab=null;}await walletShowNotice('تعذر إتمام الطلب','رصيدك غير كافٍ أو تعذر تأكيد الخصم. لم يتم فتح واتساب.','warning');return;}
+                if(!result.committed){await walletShowNotice('تعذر إتمام الطلب','رصيدك غير كافٍ أو تعذر تأكيد الخصم. لم يتم فتح واتساب.','warning');return;}
                 const code='MWP-'+Date.now().toString(36).toUpperCase();
                 await db.ref(`wallet_orders/${walletUser.uid}/${code}`).set({
                     code,uid:walletUser.uid,email:walletUser.email||'',game:order.gameName,pack:order.packName,
                     price:order.price,method:order.method,costUsd,currency,status:'paid',paymentType:'wallet',
                     createdAt:firebase.database.ServerValue.TIMESTAMP
                 });
-                walletBalanceUsd=Number(result.snapshot.val()||0);walletDisplayBalance();
+                const updatedWallet=result.snapshot.val()||{};walletBalanceEgp=Number(updatedWallet.balanceEgp||0);walletBalanceUsd=Number(updatedWallet.balanceUsd||0);walletDisplayBalance();
                 launch(code);
             } catch(e) { console.error(e);if(window._mohabOrderTab&&!window._mohabOrderTab.closed){window._mohabOrderTab.close();window._mohabOrderTab=null;} await walletShowNotice('حدث خطأ','تعذر إتمام الدفع. لم يتم فتح واتساب؛ يرجى المحاولة لاحقًا.','warning'); }
         }
         firebase.auth().onAuthStateChanged(user=>{
             walletUser=user||null;
-            if(walletBalanceListener){const oldUid=walletBalanceListener.uid;db.ref(`wallet_users/${oldUid}/balanceUsd`).off('value',walletBalanceListener.fn);walletBalanceListener=null;}
+            if(walletBalanceListener){const oldUid=walletBalanceListener.uid;db.ref(`wallet_users/${oldUid}`).off('value',walletBalanceListener.fn);walletBalanceListener=null;}
             if(walletHistoryListener){db.ref('wallet_deposits').off('value',walletHistoryListener);walletHistoryListener=null;}
             if(!user){
-                walletBalanceUsd=0;document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
+                walletBalanceUsd=0;walletBalanceEgp=0;document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
                 document.getElementById('walletTools').classList.add('wallet-hidden');
                 document.getElementById('walletUserLabel').textContent='سجّل الدخول بجوجل لتفعيل المحفظة.';
                 walletDisplayBalance();return;
             }
             walletShowTools();
             db.ref(`wallet_users/${user.uid}`).update({email:user.email||'',displayName:user.displayName||'',photoURL:user.photoURL||'',uid:user.uid,updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(e=>console.warn('تعذر تحديث بيانات المحفظة',e));
-            const fn=snap=>{walletBalanceUsd=Number((snap.val()||{}).balanceUsd||0);walletDisplayBalance();};
+            const fn=snap=>{const data=snap.val()||{};walletBalanceUsd=Number(data.balanceUsd||0);walletBalanceEgp=Number.isFinite(Number(data.balanceEgp))?Number(data.balanceEgp):walletBalanceUsd*walletFxRate;walletDisplayBalance();};
             walletBalanceListener={uid:user.uid,fn};
             db.ref(`wallet_users/${user.uid}`).on('value',fn);
             walletListenHistory();
             walletListenOrders();
         });
         db.ref('wallet_settings/usdToEgp').on('value',snap=>{
-            const n=Number(snap.val());if(Number.isFinite(n)&&n>0)walletFxRate=n;walletDisplayBalance();walletUpdateDepositCurrency();
+            const n=Number(snap.val());if(Number.isFinite(n)&&n>0)walletFxRate=n;
+            if(walletUser && walletBalanceEgp>=0) walletBalanceUsd=walletBalanceEgp/(walletFxRate||1);
+            walletDisplayBalance();walletUpdateDepositCurrency();
         });
         document.addEventListener('DOMContentLoaded',walletUpdateDepositCurrency);
 
@@ -2401,6 +2416,10 @@
         }
 
         window.addEventListener('popstate', function(e) {
+            const walletPage=document.getElementById('walletPage');
+            const ordersPage=document.getElementById('walletOrdersPage');
+            if(ordersPage && ordersPage.classList.contains('open')) { closeWalletOrdersPage(true); return; }
+            if(walletPage && walletPage.classList.contains('open')) { closeWallet(true); return; }
             if (document.getElementById('luckPage').classList.contains('open')) {
                 closeLuckPage(true);
                 return;
