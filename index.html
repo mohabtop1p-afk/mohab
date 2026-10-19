@@ -1672,13 +1672,16 @@
             const page = document.getElementById('customExternalPage');
             const frame = document.getElementById('customExternalFrame');
             document.getElementById('customExternalTitle').textContent = title || 'صفحة';
-            // Many top-up providers block iframe embedding (X-Frame-Options/CSP), leaving a blank page.
-            // Open the provider directly in a new tab so the store remains available and users can return normally.
-            const opened = window.open(currentExternalTarget, '_blank', 'noopener,noreferrer');
-            if (!opened) {
-                // If popups are blocked, navigate directly rather than showing a misleading blank iframe.
-                window.location.href = currentExternalTarget;
+            const isPrime = /prime|برايم|هدايا.?البرايم/i.test(String(title||'')+' '+parsed.href);
+            if (isPrime) {
+                page.classList.add('open'); page.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+                frame.src=currentExternalTarget;
+                if(!history.state || !history.state.mohabPrimePage)history.pushState({mohabPrimePage:true},'','#prime-gifts');
+                return;
             }
+            // الإبقاء على سلوك الروابط الخارجية الأخرى لتجنب المواقع التي تمنع التضمين داخل iframe.
+            const opened = window.open(currentExternalTarget, '_blank', 'noopener,noreferrer');
+            if (!opened) window.location.href = currentExternalTarget;
             return;
         }
 
@@ -1786,8 +1789,8 @@
             const price = decodeURIComponent(element.getAttribute('data-price') || '');
             const method = decodeURIComponent(element.getAttribute('data-method') || '');
             const order={gameName,packName,price,method};
-            const launch = (paidCode='') => {
-                let text = `مرحباً، أريد طلب شحن:\n🎮 اللعبة/المنتج: ${gameName}\n📦 الباقة: ${packName}\n💰 السعر: ${price}\n⚙️ طريقة الشحن: ${method}`;
+            const launch = (paidCode='', paidPrice='') => {
+                let text = `مرحباً، أريد طلب شحن:\n🎮 اللعبة/المنتج: ${gameName}\n📦 الباقة: ${packName}\n💰 السعر: ${paidPrice || price}\n⚙️ طريقة الشحن: ${method}`;
                 if (paidCode) text += `\n\n✅ الطلب مدفوع من محفظة MOHAB STORE\n🧾 كود الدفع: ${paidCode}`;
                 const url=`https://wa.me/201125808758?text=${encodeURIComponent(text)}`;
                 window.location.href=url;
@@ -1800,6 +1803,8 @@
         // محفظة المستخدم: Firebase Authentication + Realtime Database + Storage.
         // يعتمد الاعتماد المالي النهائي على Firebase Rules/Cloud Functions موثوقة من جهة الخادم.
         let walletUser = null, walletBalanceUsd = 0, walletBalanceEgp = 0, walletMethod = 'vodafone', walletFxRate = 50;
+        let walletDiscountSettings = {enabled:true, options:{5:{enabled:true,weight:45},6:{enabled:true,weight:25},7:{enabled:true,weight:15},8:{enabled:true,weight:8},9:{enabled:true,weight:5},10:{enabled:true,weight:2}}};
+        let walletNextDiscount = null;
         let walletBalanceListener = null, walletHistoryListener = null;
         let walletMethods = {
             vodafone:{label:'فودافون كاش',target:'01019614169',kind:'phone',logo:'',enabled:true},
@@ -1827,7 +1832,24 @@
             const main = document.getElementById('walletBalanceMain');
             if(nav) nav.textContent = label;
             if(main) main.textContent = label;
+            walletRenderNextDiscount();
         }
+        function walletRenderNextDiscount(){
+            const box=document.getElementById('walletNextDiscountBox'); if(!box)return;
+            const c=walletUser && walletNextDiscount && walletNextDiscount.status==='available' ? walletNextDiscount : null;
+            box.style.display=c?'flex':'none';
+            if(c){document.getElementById('walletNextDiscountPercent').textContent=`${Number(c.percent)||5}%`;document.getElementById('walletNextDiscountText').textContent='هيتطبق تلقائيًا على عملية الشراء القادمة من المحفظة، لمرة واحدة.';}
+        }
+        function walletChooseNextDiscount(){
+            const options=walletDiscountSettings&&walletDiscountSettings.options||{};
+            const enabled=Object.entries(options).map(([p,v])=>({percent:Number(p),weight:Math.max(0,Number(v&&v.weight)||0)})).filter(x=>options[x.percent]&&options[x.percent].enabled!==false&&x.percent>=5&&x.percent<=10&&x.weight>0);
+            if(walletDiscountSettings&&walletDiscountSettings.enabled===false)return null;
+            if(!enabled.length)return null;
+            const total=enabled.reduce((n,x)=>n+x.weight,0);let roll=Math.random()*total;
+            for(const x of enabled){roll-=x.weight;if(roll<=0)return {percent:x.percent,status:'available',earnedAt:Date.now()};}
+            return {percent:enabled[enabled.length-1].percent,status:'available',earnedAt:Date.now()};
+        }
+        db.ref('wallet_discount_settings').on('value',snap=>{const v=snap.val();if(v&&typeof v==='object')walletDiscountSettings=v;});
         let walletPageHistoryPushed=false, walletOrdersHistoryPushed=false;
         function openWallet() {
             if(!walletPageHistoryPushed){history.pushState({mohabWallet:true},'','#wallet');walletPageHistoryPushed=true;}
@@ -2118,20 +2140,33 @@
             const priceText=String(order.price||'');
             const match=priceText.replace(/,/g,'').match(/\d+(?:\.\d+)?/);
             const amount=match?Number(match[0]):NaN;
-            if(!Number.isFinite(amount)||amount<=0){alert('تعذر تحديد سعر الطلب. تواصل مع الدعم لإتمام الطلب.');return;}
+            if(!Number.isFinite(amount)||amount<=0){await walletShowNotice('تعذر تحديد السعر','تعذر تحديد سعر الطلب. تواصل مع الدعم لإتمام الطلب.','warning');return;}
             const currency=/\$|USD/i.test(priceText)?'USD':(/جنيه|EGP|ج\.م|جنيه مصري/i.test(priceText)?'EGP':currentCurrency);
-            const costUsd=currency==='USD'?amount:amount/walletFxRate;
-            const displayCost=currentCurrency==='USD'?costUsd:costUsd*walletFxRate;
-            if(!await walletShowNotice('تأكيد شراء الباقة',`سيتم خصم ${displayCost.toFixed(2)} ${currentCurrency} من محفظتك عند تأكيد الطلب، ثم فتح واتساب. هل تريد المتابعة؟`,'warning',true))return;
+            const baseUsd=currency==='USD'?amount:amount/walletFxRate;
+            const rate=Number(walletFxRate)||50;
+            const balanceRef=db.ref(`wallet_users/${walletUser.uid}`);
+            const walletSnap=await balanceRef.once('value');
+            const oldCoupon=(walletSnap.val()||{}).nextDiscount;
+            const couponOption=walletDiscountSettings&&walletDiscountSettings.options&&walletDiscountSettings.options[Number(oldCoupon&&oldCoupon.percent)];
+            const couponPercent=walletDiscountSettings.enabled!==false&&oldCoupon&&oldCoupon.status==='available'&&Number(oldCoupon.percent)>=5&&Number(oldCoupon.percent)<=10&&couponOption&&couponOption.enabled!==false&&Number(couponOption.weight)>0?Number(oldCoupon.percent):0;
+            const baseCostEgp=Math.round(baseUsd*rate*100)/100;
+            const discountEgp=Math.round(baseCostEgp*couponPercent)/100;
+            const finalCostEgp=Math.max(0,Math.round((baseCostEgp-discountEgp)*100)/100);
+            const finalCostUsd=Math.round((finalCostEgp/rate)*10000)/10000;
+            const shownAmount=currentCurrency==='USD'?finalCostUsd:finalCostEgp;
+            const oldCouponLine=couponPercent?`\n\n🎁 تم تطبيق خصمك ${couponPercent}% وتوفير ${(currentCurrency==='USD'?discountEgp/rate:discountEgp).toFixed(2)} ${currentCurrency}.`:'';
+            if(!await walletShowNotice('تأكيد شراء الباقة',`السعر قبل الخصم: ${(currentCurrency==='USD'?baseUsd:baseCostEgp).toFixed(2)} ${currentCurrency}${oldCouponLine}\nالمبلغ النهائي: ${shownAmount.toFixed(2)} ${currentCurrency}\nسيتم خصم المبلغ من المحفظة ثم فتح واتساب. هل تريد المتابعة؟`,'warning',true))return;
             try {
-                const costEgp=Math.round(costUsd*walletFxRate*100)/100;
-                const balanceRef=db.ref(`wallet_users/${walletUser.uid}`);
+                const nextCoupon=walletChooseNextDiscount();
                 const result=await balanceRef.transaction(current=>{
                     if(!current || typeof current!=='object') return;
-                    const balanceEgp=Number.isFinite(Number(current.balanceEgp))?Number(current.balanceEgp):Number(current.balanceUsd||0)*walletFxRate;
-                    if(balanceEgp+0.0000001<costEgp)return;
-                    current.balanceEgp=Math.round((balanceEgp-costEgp)*100)/100;
-                    current.balanceUsd=Math.round((current.balanceEgp/walletFxRate)*10000)/10000;
+                    const balanceEgp=Number.isFinite(Number(current.balanceEgp))?Number(current.balanceEgp):Number(current.balanceUsd||0)*rate;
+                    if(balanceEgp+0.0000001<finalCostEgp)return;
+                    current.balanceEgp=Math.round((balanceEgp-finalCostEgp)*100)/100;
+                    current.balanceUsd=Math.round((current.balanceEgp/rate)*10000)/10000;
+                    // استهلاك الخصم السابق وتوليد خصم جديد ضمن نفس معاملة الرصيد.
+                    current.lastDiscountUsed=couponPercent?{percent:couponPercent,usedAt:Date.now()}:current.lastDiscountUsed||null;
+                    current.nextDiscount=nextCoupon;
                     current.updatedAt=Date.now();
                     return current;
                 });
@@ -2139,26 +2174,29 @@
                 const code='MWP-'+Date.now().toString(36).toUpperCase();
                 await db.ref(`wallet_orders/${walletUser.uid}/${code}`).set({
                     code,uid:walletUser.uid,email:walletUser.email||'',game:order.gameName,pack:order.packName,
-                    price:order.price,method:order.method,costUsd,currency,status:'paid',paymentType:'wallet',
-                    createdAt:firebase.database.ServerValue.TIMESTAMP
+                    price:order.price,originalPrice:order.price,chargedAmountEgp:finalCostEgp,chargedAmountUsd:finalCostUsd,
+                    discountPercent:couponPercent,discountAmountEgp:discountEgp,currency,costUsd:finalCostUsd,
+                    method:order.method,status:'paid',paymentType:'wallet',createdAt:firebase.database.ServerValue.TIMESTAMP
                 });
-                const updatedWallet=result.snapshot.val()||{};walletBalanceEgp=Number(updatedWallet.balanceEgp||0);walletBalanceUsd=Number(updatedWallet.balanceUsd||0);walletDisplayBalance();
-                launch(code);
-            } catch(e) { console.error(e);if(window._mohabOrderTab&&!window._mohabOrderTab.closed){window._mohabOrderTab.close();window._mohabOrderTab=null;} await walletShowNotice('حدث خطأ','تعذر إتمام الدفع. لم يتم فتح واتساب؛ يرجى المحاولة لاحقًا.','warning'); }
+                const updatedWallet=result.snapshot.val()||{};walletBalanceEgp=Number(updatedWallet.balanceEgp||0);walletBalanceUsd=Number(updatedWallet.balanceUsd||0);walletNextDiscount=updatedWallet.nextDiscount||null;walletDisplayBalance();
+                const paidPrice=`${shownAmount.toFixed(2)} ${currentCurrency}${couponPercent?` (بعد خصم ${couponPercent}%)`:''}`;
+                await walletShowNotice(couponPercent?'تم تطبيق الخصم':'تم تأكيد الشراء',couponPercent?`تم خصم ${shownAmount.toFixed(2)} ${currentCurrency} من محفظتك، وتوفير ${ (currentCurrency==='USD'?discountEgp/rate:discountEgp).toFixed(2)} ${currentCurrency}.\n${nextCoupon?`خصمك الجديد للشراء القادم: ${nextCoupon.percent}%.`:'لا توجد خصومات متاحة حاليًا.'}`:`تم خصم ${shownAmount.toFixed(2)} ${currentCurrency} من محفظتك.${nextCoupon?`\n🎁 خصمك للشراء القادم: ${nextCoupon.percent}%.`:''}`,'success');
+                launch(code,paidPrice);
+            } catch(e) { console.error(e);if(window._mohabOrderTab&&!window._mohabOrderTab.closed){window._mohabOrderTab.close();window._mohabOrderTab=null;} await walletShowNotice('حدث خطأ','تعذر إتمام الدفع. يرجى المحاولة لاحقًا.','warning'); }
         }
         firebase.auth().onAuthStateChanged(user=>{
             walletUser=user||null;
             if(walletBalanceListener){const oldUid=walletBalanceListener.uid;db.ref(`wallet_users/${oldUid}`).off('value',walletBalanceListener.fn);walletBalanceListener=null;}
             if(walletHistoryListener){db.ref('wallet_deposits').off('value',walletHistoryListener);walletHistoryListener=null;}if(walletAdminHistoryListener){db.ref('wallet_admin_adjustments').off('value',walletAdminHistoryListener);walletAdminHistoryListener=null;}walletDepositHistoryRows=[];walletAdminHistoryRows=[];
             if(!user){
-                walletBalanceUsd=0;walletBalanceEgp=0;document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
+                walletBalanceUsd=0;walletBalanceEgp=0;walletNextDiscount=null;walletRenderNextDiscount();document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
                 document.getElementById('walletTools').classList.add('wallet-hidden');
                 document.getElementById('walletUserLabel').textContent='سجّل الدخول بجوجل لتفعيل المحفظة.';
                 walletDisplayBalance();return;
             }
             walletShowTools();
             db.ref(`wallet_users/${user.uid}`).update({email:user.email||'',displayName:user.displayName||'',photoURL:user.photoURL||'',uid:user.uid,updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(e=>console.warn('تعذر تحديث بيانات المحفظة',e));
-            const fn=snap=>{const data=snap.val()||{};walletBalanceUsd=Number(data.balanceUsd||0);walletBalanceEgp=Number.isFinite(Number(data.balanceEgp))?Number(data.balanceEgp):walletBalanceUsd*walletFxRate;walletDisplayBalance();};
+            const fn=snap=>{const data=snap.val()||{};walletBalanceUsd=Number(data.balanceUsd||0);walletBalanceEgp=Number.isFinite(Number(data.balanceEgp))?Number(data.balanceEgp):walletBalanceUsd*walletFxRate;walletNextDiscount=data.nextDiscount||null;walletDisplayBalance();};
             walletBalanceListener={uid:user.uid,fn};
             db.ref(`wallet_users/${user.uid}`).on('value',fn);
             walletListenHistory();
@@ -2480,6 +2518,7 @@
         .wallet-orders-page .wallet-row{padding:15px 0;gap:12px;align-items:center;line-height:1.7}
         .wallet-orders-page .wallet-row>div{min-width:0;flex:1}.wallet-orders-page .wallet-row b{display:block;overflow-wrap:anywhere}.wallet-orders-page .wallet-row small{overflow-wrap:anywhere}
         .wallet-orders-page .wallet-row>div:last-child{text-align:left;max-width:48%}
+        .wallet-next-discount{display:flex;align-items:center;gap:12px;padding:14px 15px;margin:-5px 0 18px;border-radius:18px;border:1px solid rgba(16,185,129,.42);background:linear-gradient(135deg,rgba(16,185,129,.13),rgba(6,182,212,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}.wallet-next-discount-icon{width:43px;height:43px;flex:0 0 43px;border-radius:14px;display:grid;place-items:center;color:#6ee7b7;background:rgba(16,185,129,.15);font-size:19px}.wallet-next-discount-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px}.wallet-next-discount-copy strong{font-size:.83rem;color:#d1fae5}.wallet-next-discount-copy span{font-size:.72rem;line-height:1.6;color:#cbd5e1}.wallet-next-discount>b{font-size:1.2rem;color:#6ee7b7;white-space:nowrap}
         .wallet-rate-card{display:flex;align-items:center;gap:12px;padding:14px 15px;border-radius:17px;border:1px solid rgba(6,182,212,.32);background:linear-gradient(135deg,rgba(6,182,212,.13),rgba(59,130,246,.09));box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
         .wallet-rate-icon{width:43px;height:43px;flex:0 0 43px;border-radius:14px;display:grid;place-items:center;color:#67e8f9;background:rgba(6,182,212,.15);font-size:19px}
         .wallet-rate-content{min-width:0;flex:1}.wallet-rate-title{font-size:.75rem;color:#a5f3fc;font-weight:800}.wallet-rate-value{font-size:1.2rem;font-weight:900;color:#fff;margin-top:3px}.wallet-rate-note{font-size:.68rem;color:#94a3b8;line-height:1.6;margin-top:3px}
@@ -2489,6 +2528,7 @@
       <div class="wallet-card">
         <div class="wallet-head"><h2><i class="fas fa-wallet" style="color:var(--primary)"></i> محفظة MOHAB STORE</h2><button class="close-modal" onclick="closeWallet()" aria-label="إغلاق"><i class="fas fa-times"></i></button></div>
         <div class="wallet-balance"><small>الرصيد المتاح</small><strong id="walletBalanceMain">0.00 USD</strong><div class="wallet-muted" id="walletUserLabel">سجّل الدخول بجوجل لتفعيل المحفظة.</div></div>
+        <div id="walletNextDiscountBox" class="wallet-next-discount" style="display:none" aria-live="polite"><div class="wallet-next-discount-icon"><i class="fas fa-gift"></i></div><div class="wallet-next-discount-copy"><strong>خصمك للشراء القادم</strong><span id="walletNextDiscountText">لديك خصم جاهز للاستخدام مرة واحدة.</span></div><b id="walletNextDiscountPercent">5%</b></div>
         <div id="walletLoginArea"><div class="wallet-history" style="margin:12px 0 16px;line-height:1.9"><h3>إزاي تستخدم محفظة MOHAB STORE؟</h3><p>• استخدم الموقع وتصفّح الأسعار بشكل عادي بدون تسجيل دخول.</p><p>• سجّل الدخول لمتابعة طلباتك وحالة الشحن ورصيدك.</p><p>• الطلب المدفوع من المحفظة يتم خصم قيمته عند التأكيد، وبعدها تتابع حالة الشحن من «طلباتي».</p><p>• تقدر تبعت طلب واتساب غير مدفوع؛ هيتسجل للمراجعة لو سجلت الدخول، والدفع بيكون عبر واتساب. الطلب غير المدفوع لا يضمن بدء الشحن قبل تأكيد الدفع.</p><p>• الإيداعات تظل معلقة حتى مراجعة الإدارة، ولا يُضاف الرصيد قبل الموافقة.</p></div><button class="wallet-primary" onclick="walletGoogleLogin()"><i class="fab fa-google"></i> تسجيل الدخول باستخدام Google</button></div>
         <div id="walletTools" class="wallet-hidden">
           <div class="wallet-tabs"><button class="wallet-tab active" id="walletDepositTab" onclick="walletShowTab('deposit')">إيداع رصيد</button><button class="wallet-tab" id="walletHistoryTab" onclick="walletShowTab('history')">سجل الإيداع</button></div>
