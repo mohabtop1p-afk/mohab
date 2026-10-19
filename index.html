@@ -51,7 +51,7 @@
             *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
         }
         .price-item-icon { background: transparent !important; padding: 0 !important; border-radius: 0 !important; }
-        .game-logo-frame img { background: transparent; }
+        .game-logo-frame img { background: transparent !important; background-color: transparent !important; background-image:none !important; object-fit:contain; }
         img[loading="lazy" decoding="async"] { content-visibility: auto; }
         
         nav { 
@@ -747,7 +747,7 @@
         @keyframes subtleEdgeSheen { 0%,65%,100% { background-position:180% 0; } 35% { background-position:-80% 0; } }
         .price-item-icon { width:54px;height:54px;max-width:100%;object-fit:contain;object-position:center;border-radius:0;margin:0 auto 2px;display:block;background-color:transparent !important;background-image:none !important;padding:0;box-sizing:border-box;image-rendering:auto;mix-blend-mode:normal; }
         .price-card-content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:126px; gap:8px; width:100%; height:100%; padding:12px 8px; box-sizing:border-box; background:var(--surface); border-radius:14.5px; }
-        img.price-item-icon { background:transparent !important; background-color:transparent !important; background-image:none !important; border:0 !important; box-shadow:none; }
+        img.price-item-icon { background:transparent !important; background-color:transparent !important; background-image:none !important; border:0 !important; box-shadow:none; padding:0 !important; object-fit:contain; mix-blend-mode:normal; }
         .price-card-content:has(.price-item-icon) { grid-template-columns:1fr; }
         .item-details { justify-content:center; max-width:100%; display:flex; align-items:center; gap:8px; flex-wrap:wrap; word-break:break-word; }
         .item-quantity,.item-type { overflow-wrap:anywhere; }
@@ -1141,6 +1141,11 @@
         <div class="slider" id="sliderWrapper"></div>
         <div class="slider-dots" id="sliderDots"></div>
     </div>
+
+    <section id="homeWalletCoupon" class="home-wallet-coupon" style="display:none" aria-live="polite">
+        <div class="home-wallet-coupon-art"><img src="https://e.top4top.io/p_3944lprkk1.jpg" alt="خصم MOHAB STORE" loading="lazy" decoding="async"></div>
+        <div class="home-wallet-coupon-info"><strong>خصمك الخاص جاهز!</strong><div>خصم <b id="homeWalletCouponPercent">5%</b> على قائمة الأسعار كلها عند الدفع من المحفظة.</div><div class="home-wallet-coupon-time">ينتهي الخصم خلال <b id="homeWalletCouponTimer">--:--:--</b></div><small>الخصم صالح مرة واحدة للحساب الحالي.</small></div>
+    </section>
 
     <div class="search-container">
         <div class="search-box">
@@ -1734,7 +1739,7 @@
                 hasAnyOption = true;
                 game.custom_methods.forEach((cm, index) => {
                     const methodName = String(cm.name || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-                    const iconHtml = cm.icon ? `<img src="${String(cm.icon).replace(/"/g,'&quot;')}" alt="" style="width:100%;height:100%;object-fit:contain;background:transparent" onerror="this.outerHTML='<i class=\"fas fa-bolt\"></i>'">` : '<i class="fas fa-bolt"></i>';
+                    const iconHtml = cm.icon ? `<img src="${String(cm.icon).replace(/"/g,'&quot;')}" alt="" style="width:100%;height:100%;object-fit:contain;background:transparent!important;background-color:transparent!important;background-image:none!important;mix-blend-mode:normal" onerror="this.outerHTML='<i class=\"fas fa-bolt\"></i>'">` : '<i class="fas fa-bolt"></i>';
                     const action = cm.type === 'external' ? `openExternalMethod(globalGames[currentGameId].custom_methods[${index}])` : `showPrices('custom_${index}')`;
                     htmlString += `<div class="option-card" onclick="${action}"><div class="option-icon">${iconHtml}</div><div><h4 style="color:#fff; font-size:0.95rem;">${methodName}</h4></div></div>`;
                 });
@@ -1766,6 +1771,11 @@
                     if(parts.length === 2) {
                         let name = parts[0].trim(); let rawVal = parts[1].trim(); let finalPrice = rawVal; let oldPriceHtml = '';
                         if(rawVal.includes('بدل')) { let priceParts = rawVal.split('بدل'); finalPrice = priceParts[0].trim(); let oldPrice = priceParts[1].trim(); oldPriceHtml = `<div class="discount-wrapper"><span class="discount-badge">خصم</span><span class="old-price">${oldPrice}</span></div>`; }
+                        let couponPriceHtml='';
+                        if(walletCouponIsActive(walletNextDiscount)){
+                            const pm=finalPrice.match(/[0-9][0-9,]*(?:\.[0-9]+)?/);
+                            if(pm){const originalNum=Number(pm[0].replace(/,/g,''));if(Number.isFinite(originalNum)&&originalNum>0){const discountedNum=Math.round(originalNum*(1-Number(walletNextDiscount.percent)/100)*100)/100;const formatted=discountedNum.toLocaleString('en-US',{minimumFractionDigits:/\.\d{2}/.test(pm[0])?2:0,maximumFractionDigits:2});const discountedPrice=finalPrice.replace(pm[0],formatted);couponPriceHtml=`<span class="coupon-price-old">${finalPrice}</span><span class="coupon-price-new">${discountedPrice}</span><span class="coupon-price-label">بعد خصم ${Number(walletNextDiscount.percent)}% للمحفظة</span>`;}}
+                        }
                         let quantityMatch = name.match(/[0-9,\.]+/); let quantity = quantityMatch ? quantityMatch[0] : ''; let itemName = name.replace(/[0-9,\.]+/, '').trim(); if (!itemName && !quantity) { itemName = name; }
                         let displayNameHtml = quantity ? `<span class="item-quantity">${quantity}</span> <span class="item-type">${itemName}</span>` : `<span class="item-quantity" style="font-size: 1rem;">${itemName}</span>`;
                         
@@ -1773,7 +1783,7 @@
                                         <div class="price-card-content">
                                             ${(game.package_icons && game.package_icons[name]) || game.price_icon ? `<img class="price-item-icon" src="${((game.package_icons && game.package_icons[name]) || game.price_icon)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">` : ''}
                                             <div class="item-details">${displayNameHtml}</div>
-                                            <div class="price-area">${oldPriceHtml}<div class="item-price-tag">${finalPrice}</div></div>
+                                            <div class="price-area">${oldPriceHtml}${couponPriceHtml ? couponPriceHtml : `<div class="item-price-tag">${finalPrice}</div>`}</div>
                                         </div>
                                        </div>`;
                     }
@@ -1834,11 +1844,16 @@
             if(main) main.textContent = label;
             walletRenderNextDiscount();
         }
+        function walletCouponIsActive(c){return !!(walletUser&&c&&c.status==='available'&&Number(c.percent)>=5&&Number(c.percent)<=10&&(!Number(c.expiresAt)||Number(c.expiresAt)>Date.now()));}
+        function walletFormatRemaining(ms){if(ms<=0)return 'انتهى';const total=Math.floor(ms/1000),d=Math.floor(total/86400),h=Math.floor((total%86400)/3600),m=Math.floor((total%3600)/60),sec=total%60;return (d?d+' يوم ':'')+[h,m,sec].map(n=>String(n).padStart(2,'0')).join(':');}
+        function walletUpdateCouponCountdown(){const c=walletNextDiscount;const active=walletCouponIsActive(c);const home=document.getElementById('homeWalletCoupon');if(home)home.style.display=active?'flex':'none';const timer=document.getElementById('homeWalletCouponTimer');if(active){const pct=Number(c.percent)||5;const hp=document.getElementById('homeWalletCouponPercent');if(hp)hp.textContent=pct+'%';if(timer)timer.textContent=Number(c.expiresAt)?walletFormatRemaining(Number(c.expiresAt)-Date.now()):'بدون مدة محددة';if(Number(c.expiresAt)&&Number(c.expiresAt)<=Date.now()){walletNextDiscount=null;walletRenderNextDiscount();}}}
+        setInterval(walletUpdateCouponCountdown,1000);
         function walletRenderNextDiscount(){
             const box=document.getElementById('walletNextDiscountBox'); if(!box)return;
-            const c=walletUser && walletNextDiscount && walletNextDiscount.status==='available' ? walletNextDiscount : null;
+            const c=walletCouponIsActive(walletNextDiscount) ? walletNextDiscount : null;
             box.style.display=c?'flex':'none';
-            if(c){document.getElementById('walletNextDiscountPercent').textContent=`${Number(c.percent)||5}%`;document.getElementById('walletNextDiscountText').textContent='هيتطبق تلقائيًا على عملية الشراء القادمة من المحفظة، لمرة واحدة.';}
+            if(c){document.getElementById('walletNextDiscountPercent').textContent=`${Number(c.percent)||5}%`;document.getElementById('walletNextDiscountText').textContent='هيتطبق تلقائيًا على قائمة الأسعار عند الدفع من المحفظة، لمرة واحدة.';}
+            walletUpdateCouponCountdown();
         }
         function walletChooseNextDiscount(){
             const options=walletDiscountSettings&&walletDiscountSettings.options||{};
@@ -1846,8 +1861,8 @@
             if(walletDiscountSettings&&walletDiscountSettings.enabled===false)return null;
             if(!enabled.length)return null;
             const total=enabled.reduce((n,x)=>n+x.weight,0);let roll=Math.random()*total;
-            for(const x of enabled){roll-=x.weight;if(roll<=0)return {percent:x.percent,status:'available',earnedAt:Date.now()};}
-            return {percent:enabled[enabled.length-1].percent,status:'available',earnedAt:Date.now()};
+            for(const x of enabled){roll-=x.weight;if(roll<=0){const earnedAt=Date.now(),hours=Math.max(1,Math.min(8760,Number(walletDiscountSettings.expiryHours)||24));return {percent:x.percent,status:'available',earnedAt,expiresAt:earnedAt+hours*3600000};}}
+            const earnedAt=Date.now(),hours=Math.max(1,Math.min(8760,Number(walletDiscountSettings.expiryHours)||24));return {percent:enabled[enabled.length-1].percent,status:'available',earnedAt,expiresAt:earnedAt+hours*3600000};
         }
         db.ref('wallet_discount_settings').on('value',snap=>{const v=snap.val();if(v&&typeof v==='object')walletDiscountSettings=v;});
         let walletPageHistoryPushed=false, walletOrdersHistoryPushed=false;
@@ -2148,7 +2163,7 @@
             const walletSnap=await balanceRef.once('value');
             const oldCoupon=(walletSnap.val()||{}).nextDiscount;
             const couponOption=walletDiscountSettings&&walletDiscountSettings.options&&walletDiscountSettings.options[Number(oldCoupon&&oldCoupon.percent)];
-            const couponPercent=walletDiscountSettings.enabled!==false&&oldCoupon&&oldCoupon.status==='available'&&Number(oldCoupon.percent)>=5&&Number(oldCoupon.percent)<=10&&couponOption&&couponOption.enabled!==false&&Number(couponOption.weight)>0?Number(oldCoupon.percent):0;
+            const couponPercent=walletDiscountSettings.enabled!==false&&walletCouponIsActive(oldCoupon)&&Number(oldCoupon.percent)>=5&&Number(oldCoupon.percent)<=10&&couponOption&&couponOption.enabled!==false&&Number(couponOption.weight)>0?Number(oldCoupon.percent):0;
             const baseCostEgp=Math.round(baseUsd*rate*100)/100;
             const discountEgp=Math.round(baseCostEgp*couponPercent)/100;
             const finalCostEgp=Math.max(0,Math.round((baseCostEgp-discountEgp)*100)/100);
@@ -2196,7 +2211,7 @@
             }
             walletShowTools();
             db.ref(`wallet_users/${user.uid}`).update({email:user.email||'',displayName:user.displayName||'',photoURL:user.photoURL||'',uid:user.uid,updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(e=>console.warn('تعذر تحديث بيانات المحفظة',e));
-            const fn=snap=>{const data=snap.val()||{};walletBalanceUsd=Number(data.balanceUsd||0);walletBalanceEgp=Number.isFinite(Number(data.balanceEgp))?Number(data.balanceEgp):walletBalanceUsd*walletFxRate;walletNextDiscount=data.nextDiscount||null;walletDisplayBalance();};
+            const fn=snap=>{const data=snap.val()||{};walletBalanceUsd=Number(data.balanceUsd||0);walletBalanceEgp=Number.isFinite(Number(data.balanceEgp))?Number(data.balanceEgp):walletBalanceUsd*walletFxRate;walletNextDiscount=data.nextDiscount||null;if(walletNextDiscount&&walletNextDiscount.status==='available'&&!Number(walletNextDiscount.expiresAt)){const earned=Number(walletNextDiscount.earnedAt)||Date.now();const hours=Math.max(1,Math.min(8760,Number(walletDiscountSettings&&walletDiscountSettings.expiryHours)||24));walletNextDiscount.expiresAt=earned+hours*3600000;db.ref(`wallet_users/${user.uid}/nextDiscount`).update({expiresAt:walletNextDiscount.expiresAt}).catch(()=>{});}walletDisplayBalance();};
             walletBalanceListener={uid:user.uid,fn};
             db.ref(`wallet_users/${user.uid}`).on('value',fn);
             walletListenHistory();
@@ -2518,7 +2533,9 @@
         .wallet-orders-page .wallet-row{padding:15px 0;gap:12px;align-items:center;line-height:1.7}
         .wallet-orders-page .wallet-row>div{min-width:0;flex:1}.wallet-orders-page .wallet-row b{display:block;overflow-wrap:anywhere}.wallet-orders-page .wallet-row small{overflow-wrap:anywhere}
         .wallet-orders-page .wallet-row>div:last-child{text-align:left;max-width:48%}
-        .wallet-next-discount{display:flex;align-items:center;gap:12px;padding:14px 15px;margin:-5px 0 18px;border-radius:18px;border:1px solid rgba(16,185,129,.42);background:linear-gradient(135deg,rgba(16,185,129,.13),rgba(6,182,212,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}.wallet-next-discount-icon{width:43px;height:43px;flex:0 0 43px;border-radius:14px;display:grid;place-items:center;color:#6ee7b7;background:rgba(16,185,129,.15);font-size:19px}.wallet-next-discount-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px}.wallet-next-discount-copy strong{font-size:.83rem;color:#d1fae5}.wallet-next-discount-copy span{font-size:.72rem;line-height:1.6;color:#cbd5e1}.wallet-next-discount>b{font-size:1.2rem;color:#6ee7b7;white-space:nowrap}
+        .home-wallet-coupon{max-width:980px;margin:14px auto 18px;padding:14px 18px;display:flex;align-items:center;justify-content:center;gap:18px;border:1px solid rgba(6,182,212,.42);border-radius:20px;background:linear-gradient(135deg,rgba(8,18,35,.96),rgba(9,35,48,.96));box-shadow:0 10px 30px rgba(0,0,0,.18);color:#f8fafc;box-sizing:border-box}.home-wallet-coupon-art{width:clamp(100px,22vw,170px);flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:transparent}.home-wallet-coupon-art img{display:block;width:100%;height:auto;max-height:150px;object-fit:contain;background:transparent!important;background-color:transparent!important;mix-blend-mode:normal}.home-wallet-coupon-info{display:flex;flex-direction:column;gap:7px;line-height:1.7;min-width:0}.home-wallet-coupon-info>strong{font-size:1.08rem;color:#67e8f9}.home-wallet-coupon-info b{color:#6ee7b7}.home-wallet-coupon-time{font-size:.9rem}.home-wallet-coupon-info small{color:#cbd5e1;font-size:.76rem}@media(max-width:480px){.home-wallet-coupon{margin:12px 10px 16px;padding:10px;gap:10px;border-radius:15px}.home-wallet-coupon-art{width:95px}.home-wallet-coupon-art img{max-height:110px}.home-wallet-coupon-info>strong{font-size:.92rem}.home-wallet-coupon-info{font-size:.78rem;gap:4px}.home-wallet-coupon-time{font-size:.75rem}}
+.price-card-modern .coupon-price-old{font-size:.78rem;color:#94a3b8;text-decoration:line-through;display:block;margin-bottom:3px}.price-card-modern .coupon-price-new{display:inline-block;color:#34d399;font-weight:900;font-size:1.02rem}.price-card-modern .coupon-price-label{display:block;color:#6ee7b7;font-size:.68rem;font-weight:800;margin-top:2px}
+.wallet-next-discount{display:flex;align-items:center;gap:12px;padding:14px 15px;margin:-5px 0 18px;border-radius:18px;border:1px solid rgba(16,185,129,.42);background:linear-gradient(135deg,rgba(16,185,129,.13),rgba(6,182,212,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}.wallet-next-discount-icon{width:43px;height:43px;flex:0 0 43px;border-radius:14px;display:grid;place-items:center;color:#6ee7b7;background:rgba(16,185,129,.15);font-size:19px}.wallet-next-discount-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px}.wallet-next-discount-copy strong{font-size:.83rem;color:#d1fae5}.wallet-next-discount-copy span{font-size:.72rem;line-height:1.6;color:#cbd5e1}.wallet-next-discount>b{font-size:1.2rem;color:#6ee7b7;white-space:nowrap}
         .wallet-rate-card{display:flex;align-items:center;gap:12px;padding:14px 15px;border-radius:17px;border:1px solid rgba(6,182,212,.32);background:linear-gradient(135deg,rgba(6,182,212,.13),rgba(59,130,246,.09));box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
         .wallet-rate-icon{width:43px;height:43px;flex:0 0 43px;border-radius:14px;display:grid;place-items:center;color:#67e8f9;background:rgba(6,182,212,.15);font-size:19px}
         .wallet-rate-content{min-width:0;flex:1}.wallet-rate-title{font-size:.75rem;color:#a5f3fc;font-weight:800}.wallet-rate-value{font-size:1.2rem;font-weight:900;color:#fff;margin-top:3px}.wallet-rate-note{font-size:.68rem;color:#94a3b8;line-height:1.6;margin-top:3px}
