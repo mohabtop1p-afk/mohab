@@ -746,7 +746,9 @@
             -webkit-mask-composite:xor; mask-composite:exclude;
         }
         @keyframes subtleEdgeSheen { 0%,65%,100% { background-position:180% 0; } 35% { background-position:-80% 0; } }
-        .price-item-icon { width:54px;height:54px;max-width:100%;object-fit:contain;object-position:center;border-radius:0;margin:0 auto 2px;display:block;background-color:transparent !important;background-image:none !important;padding:0;box-sizing:border-box;image-rendering:auto;mix-blend-mode:normal; }
+        /* صور المنتجات المرفوعة قد تحتوي على قناة شفافية؛ لا تضف خلفية للصورة نفسها */
+        .game-logo-frame img, img.price-item-icon, #modalGameImg, .option-icon img { background:transparent !important; background-color:transparent !important; background-image:none !important; object-fit:contain !important; }
+                .price-item-icon { width:54px;height:54px;max-width:100%;object-fit:contain;object-position:center;border-radius:0;margin:0 auto 2px;display:block;background-color:transparent !important;background-image:none !important;padding:0;box-sizing:border-box;image-rendering:auto;mix-blend-mode:normal; }
         .price-card-content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:126px; gap:8px; width:100%; height:100%; padding:12px 8px; box-sizing:border-box; background:var(--surface); border-radius:14.5px; }
         .price-card-content .price-item-icon, .option-icon img { background:transparent !important; background-color:transparent !important; background-image:none !important; }
         img.price-item-icon { background:transparent !important; background-color:transparent !important; background-image:none !important; border:0 !important; box-shadow:none; padding:0 !important; object-fit:contain; mix-blend-mode:normal; }
