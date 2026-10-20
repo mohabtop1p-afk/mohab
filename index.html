@@ -44,7 +44,8 @@
             user-select: none;
         }
 
-        img { background-color: var(--surface); }
+        /* الصور ذات الخلفية الشفافة يجب أن تحتفظ بشفافيتها؛ لا نضيف خلفية عامة للصور */
+        img { background-color: transparent; background-image: none; }
         img { content-visibility: auto; }
         iframe { border: 0; }
         @media (prefers-reduced-motion: reduce) {
@@ -747,6 +748,7 @@
         @keyframes subtleEdgeSheen { 0%,65%,100% { background-position:180% 0; } 35% { background-position:-80% 0; } }
         .price-item-icon { width:54px;height:54px;max-width:100%;object-fit:contain;object-position:center;border-radius:0;margin:0 auto 2px;display:block;background-color:transparent !important;background-image:none !important;padding:0;box-sizing:border-box;image-rendering:auto;mix-blend-mode:normal; }
         .price-card-content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:126px; gap:8px; width:100%; height:100%; padding:12px 8px; box-sizing:border-box; background:var(--surface); border-radius:14.5px; }
+        .price-card-content .price-item-icon, .option-icon img { background:transparent !important; background-color:transparent !important; background-image:none !important; }
         img.price-item-icon { background:transparent !important; background-color:transparent !important; background-image:none !important; border:0 !important; box-shadow:none; padding:0 !important; object-fit:contain; mix-blend-mode:normal; }
         .price-card-content:has(.price-item-icon) { grid-template-columns:1fr; }
         .item-details { justify-content:center; max-width:100%; display:flex; align-items:center; gap:8px; flex-wrap:wrap; word-break:break-word; }
@@ -2172,7 +2174,8 @@
             const oldCouponLine=couponPercent?`\n\n🎁 تم تطبيق خصمك ${couponPercent}% وتوفير ${(currentCurrency==='USD'?discountEgp/rate:discountEgp).toFixed(2)} ${currentCurrency}.`:'';
             if(!await walletShowNotice('تأكيد شراء الباقة',`السعر قبل الخصم: ${(currentCurrency==='USD'?baseUsd:baseCostEgp).toFixed(2)} ${currentCurrency}${oldCouponLine}\nالمبلغ النهائي: ${shownAmount.toFixed(2)} ${currentCurrency}\nسيتم خصم المبلغ من المحفظة ثم فتح واتساب. هل تريد المتابعة؟`,'warning',true))return;
             try {
-                const nextCoupon=walletChooseNextDiscount();
+                // نظام بالتبادل: الشراء بالسعر الكامل يمنح خصمًا للشراء التالي؛ إذا استُخدم الخصم في هذه العملية فلا نمنح خصمًا جديدًا حتى يشتري العميل مرة بالسعر الكامل.
+                const nextCoupon = couponPercent > 0 ? null : walletChooseNextDiscount();
                 const result=await balanceRef.transaction(current=>{
                     if(!current || typeof current!=='object') return;
                     const balanceEgp=Number.isFinite(Number(current.balanceEgp))?Number(current.balanceEgp):Number(current.balanceUsd||0)*rate;
