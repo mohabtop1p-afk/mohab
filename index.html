@@ -1073,6 +1073,84 @@
         .wallet-primary{width:100%;padding:13px;border:0;border-radius:13px;background:linear-gradient(135deg,var(--primary),var(--accent));color:white;font:inherit;font-weight:800;cursor:pointer;margin-top:10px}.wallet-muted{font-size:.72rem;color:var(--text-muted);line-height:1.8;margin:10px 0}.wallet-status{font-size:.78rem;line-height:1.8;margin-top:10px;color:var(--primary);overflow-wrap:anywhere}.wallet-history{margin-top:18px}.wallet-history h3{font-size:.88rem;margin-bottom:10px}.wallet-row{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--surface-border);font-size:.75rem}.wallet-row small{display:block;color:var(--text-muted);margin-top:4px}.wallet-hidden{display:none!important}
         @media(max-width:390px){.wallet-nav-btn{padding:5px 6px;gap:4px;min-height:42px}.wallet-nav-btn img,.wallet-nav-btn>i{width:24px;height:24px}.wallet-nav-btn b{font-size:.58rem}.wallet-nav-btn small{font-size:.5rem}.wallet-card{padding:15px}}
 
+    
+        /* وضع فاتح اختياري؛ الوضع الداكن الأصلي يظل الافتراضي */
+        .theme-toggle-btn{position:absolute;left:104px;top:50%;transform:translateY(-50%);z-index:4;width:42px;height:42px;border-radius:14px;border:1px solid rgba(6,182,212,.4);background:linear-gradient(135deg,rgba(6,182,212,.16),rgba(59,130,246,.12));color:var(--primary);display:grid;place-items:center;font-size:1rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.16);transition:all .2s}
+        .theme-toggle-btn:hover{transform:translateY(-50%) scale(1.05)}
+        @media(max-width:767px){.theme-toggle-btn{left:94px;width:36px;height:36px;border-radius:12px;font-size:.9rem}}
+        body.light-theme{--bg-deep:#f4f7fb;--surface:#ffffff;--surface-hover:#eef5fb;--surface-border:rgba(51,65,85,.15);--text-main:#172033;--text-muted:#64748b;--primary:#0891b2;--primary-glow:rgba(8,145,178,.18);--accent:#2563eb;color:#172033;background:#f4f7fb}
+        body.light-theme nav{background:rgba(255,255,255,.94);box-shadow:0 4px 18px rgba(15,23,42,.08)}
+        body.light-theme .currency-toggle-title,body.light-theme .game-card h3,body.light-theme .modal-title,body.light-theme .luck-page-title{color:#172033}
+        body.light-theme .currency-toggle{color:#172033;background:linear-gradient(135deg,#ecfeff,#eff6ff);border-color:rgba(8,145,178,.3)}
+        body.light-theme .currency-toggle-title{color:#172033}
+        body.light-theme .currency-toggle-hint{color:#0891b2}
+        body.light-theme .currency-toggle-arrow{background:rgba(8,145,178,.1);color:#0891b2}
+        body.light-theme .search-box input{background:#fff;color:#172033;border-color:#dbe4ee}
+        body.light-theme .search-box input:focus{background:#fff}
+        body.light-theme .game-card,body.light-theme .option-card,body.light-theme .recovery-card{background:#fff;border-color:#e2e8f0;box-shadow:0 5px 18px rgba(15,23,42,.07)}
+        body.light-theme .game-card h3,body.light-theme .item-quantity{color:#172033}
+        body.light-theme .btn-view{background:#f8fafc;color:#475569;border-color:#e2e8f0}
+        body.light-theme .bottom-nav-dock{background:rgba(255,255,255,.94);border-color:#dbe4ee;box-shadow:0 10px 28px rgba(15,23,42,.13)}
+        body.light-theme .dock-item{color:#475569}
+        body.light-theme .modal-box,body.light-theme .modal-header{background:#fff;color:#172033}
+        body.light-theme .modal-title,body.light-theme .game-request-card h3,body.light-theme .recovery-title{color:#172033}
+        body.light-theme .game-request-card{background:linear-gradient(145deg,#fff,#f1f7fc);border-color:#cbdde8}
+        body.light-theme .game-request-input{background:#fff;color:#172033;border-color:#dbe4ee}
+        body.light-theme .luck-page-header,body.light-theme .custom-external-header{background:rgba(255,255,255,.96);border-color:#e2e8f0}
+        body.light-theme .luck-back-btn,body.light-theme .custom-external-close{background:#fff;color:#334155;border-color:#dbe4ee}
+        body.light-theme .luck-page-title,body.light-theme #customExternalTitle{color:#172033}
+        body.light-theme .price-card-content{background:#fff}
+        body.light-theme .item-type,body.light-theme .luck-feature-sub{color:#64748b}
+        body.light-theme .luck-feature{color:#172033;background:linear-gradient(135deg,#ecfeff,#eff6ff);border-color:#c5eaf1}
+        body.light-theme .luck-feature-arrow{background:#e0f2fe}
+        body.light-theme .wallet-orders-page .wallet-card,body.light-theme #walletPage .wallet-card{background:linear-gradient(150deg,#fff,#f3f8fc);color:#172033}
+        body.light-theme .wallet-card-head h2,body.light-theme #walletPage h2,body.light-theme #walletPage h3{color:#172033}
+        body.light-theme .wallet-card-head p,body.light-theme .wallet-muted{color:#64748b}
+        /* الوضع الفاتح: إبقاء صورة خلفية بطاقة الرصيد ظاهرة مع طبقة فاتحة ونص واضح */
+        body.light-theme .wallet-nav-btn small,
+        body.light-theme .wallet-nav-btn b,
+        body.light-theme #walletNavBalance{color:#111827!important;text-shadow:none!important}
+        body.light-theme .wallet-nav-btn{background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(240,249,255,.96));border-color:#cbdff0;box-shadow:0 4px 14px rgba(15,23,42,.10)}
+        body.light-theme #walletPage .wallet-balance{background:linear-gradient(115deg,rgba(255,255,255,.48),rgba(234,246,255,.58)),url("https://a.top4top.io/p_3940sxuie1.jpg") center/cover no-repeat!important;border-color:#cbdff0;box-shadow:0 10px 26px rgba(15,23,42,.12)}
+        body.light-theme #walletPage .wallet-balance small,
+        body.light-theme #walletPage .wallet-balance strong,
+        body.light-theme #walletPage .wallet-balance #walletUserLabel{color:#111827!important;text-shadow:0 1px 2px rgba(255,255,255,.72)!important}
+        body.light-theme #walletPage .wallet-balance .wallet-muted{color:#334155!important}
+        #walletLoginArea .wallet-google-login{display:flex;align-items:center;justify-content:center;gap:11px;margin:0 0 14px;padding:14px 16px;background:#fff;color:#202124;border:1px solid #dadce0;box-shadow:0 2px 5px rgba(60,64,67,.16);font-weight:800;min-height:52px}
+        #walletLoginArea .wallet-google-login:hover{background:#f8faff;border-color:#c6dafc}
+        #walletLoginArea .wallet-google-icon{width:22px;height:22px;flex:0 0 22px}
+        body.light-theme #walletLoginArea .wallet-google-login{background:#fff;color:#202124;border-color:#d1d5db}
+        body.light-theme .wallet-close{background:#f1f5f9;color:#334155}
+        body.light-theme .wallet-row{border-color:#e2e8f0}
+        body.light-theme .wallet-rate-value{color:#172033}
+        body.light-theme .wallet-rate-title{color:#0e7490}
+        body.light-theme .wallet-rate-note{color:#64748b}
+        body.light-theme .home-wallet-coupon{background:linear-gradient(135deg,#fff,#effbff);color:#172033}
+        body.light-theme .home-wallet-coupon-info small,body.light-theme .home-wallet-coupon-time{color:#475569}
+        body.light-theme .discount-modal-inner{background:linear-gradient(145deg,#fff,#f1f5f9)}
+        body.light-theme .discount-title,body.light-theme .d-val{color:#172033}
+        body.light-theme .discount-details-box{background:#f1f5f9;border-color:#dbe4ee}
+        body.light-theme .timer-card{background:#fff}
+        body.light-theme .theme-toggle-btn{background:linear-gradient(135deg,#e0f2fe,#dbeafe);color:#1d4ed8;border-color:#bfdbfe}
+        body.light-theme .empty-msg{color:#dc2626}
+        /* تحسين تباين النصوص داخل نافذة اختيار طريقة الشحن في الوضع الفاتح */
+        body.light-theme #gameModal .option-card h4,
+        body.light-theme #gameModal .option-card h4[style],
+        body.light-theme #gameModal .option-card div h4{color:#111827!important}
+        body.light-theme #gameModal .option-card{color:#172033;background:#fff;border-color:#dbe4ee}
+        body.light-theme #gameModal .option-card:active,
+        body.light-theme #gameModal .option-card:hover{background:#f0f9ff;border-color:#7dd3fc}
+        body.light-theme #gameModal .option-icon{color:#0284c7}
+        body.light-theme #gameModal .price-card,
+        body.light-theme #gameModal .price-item,
+        body.light-theme #gameModal .price-option{color:#172033}
+        body.light-theme #gameModal input,
+        body.light-theme #gameModal select,
+        body.light-theme #gameModal textarea{background:#fff;color:#172033;border-color:#cbd5e1}
+        body.light-theme #gameModal input::placeholder,
+        body.light-theme #gameModal textarea::placeholder{color:#64748b}
+        body.light-theme #gameModal button:not(.theme-toggle-btn){color:inherit}
+
     </style>
 </head>
 <body>
@@ -1087,6 +1165,7 @@
             <button id="walletOrdersOpenBtn" class="wallet-nav-btn wallet-orders-nav" onclick="openWalletOrdersPage()" aria-label="طلباتي" style="display:none;position:relative!important;visibility:hidden;width:0;height:0;padding:0;margin:0;overflow:hidden">
                 <i class="fas fa-box-open"></i><span><small>طلباتي</small><b id="walletOrdersNavCount">0 طلب</b></span><em id="walletOrdersBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:99px;min-width:19px;height:19px;line-height:19px;font-size:11px;font-style:normal;font-weight:900;text-align:center;padding:0 4px">0</em>
             </button>
+            <button id="themeToggleBtn" class="theme-toggle-btn" type="button" onclick="toggleSiteTheme()" aria-label="تفعيل الوضع الفاتح" title="تغيير المظهر"><i class="fas fa-sun"></i></button>
             <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()" aria-label="تغيير العملة">
                 <img id="currencyFlag" class="currency-flag"
                      src="https://a.top4top.io/p_3914owpxp0.jpg"
@@ -2147,7 +2226,7 @@
                 if(badge){badge.textContent=String(active);badge.style.display=active?'block':'none';}
                 if(dockBadge){dockBadge.textContent=String(active);dockBadge.style.display=active?'block':'none';}
                 if(dockBtn)dockBtn.style.display=walletUser?'flex':'none';
-                const html=orderRows.length?orderRows.map(o=>`<div class="wallet-row"><div><b>${walletEscape(o.game||'منتج')} — ${walletEscape(o.pack||'باقة')}</b><small>${walletEscape(o.code||o.key)} · ${walletEscape(o.price||'')}</small></div><div style="text-align:left"><b>${({'pending_payment':'بانتظار الدفع','paid':'تم الدفع — بانتظار الشحن','processing':'قيد الشحن','shipped':'تم الشحن','rejected':'مرفوض','cancelled':'ملغي'}[o.status]||o.status||'قيد المراجعة')}</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></div>`).join(''):'لا توجد طلبات شحن حتى الآن.';
+                const html=orderRows.length?orderRows.map(o=>`<article class="wallet-row wallet-order-detail-card"><div class="wallet-order-main"><b>${walletEscape(o.game||o.gameName||'منتج')} — ${walletEscape(o.pack||o.packName||'باقة')}</b><small>🧾 كود الطلب: ${walletEscape(o.code||o.key)}</small><small>💰 السعر: ${walletEscape(o.price||'—')}</small><small>⚙️ طريقة الشحن: ${walletEscape(o.method||'يتم التأكيد مع الدعم')}</small><small>💳 طريقة الدفع: ${walletEscape(o.paymentType==='wallet'?'محفظة MOHAB STORE':o.paymentType==='whatsapp'?'واتساب — غير مدفوع':'غير محددة')}</small>${Number(o.discountPercent)>0?`<small>🎁 الخصم المطبق: ${walletEscape(o.discountPercent)}% — المخصوم من المحفظة: ${walletEscape(o.chargedAmountEgp!=null?Number(o.chargedAmountEgp).toFixed(2)+' جنيه':o.chargedAmountUsd!=null?Number(o.chargedAmountUsd).toFixed(2)+' USD':'—')}</small>`:''}</div><div class="wallet-order-status"><b>${({'pending_payment':'بانتظار الدفع','paid':'تم الدفع — بانتظار الشحن','processing':'قيد الشحن','shipped':'تم الشحن','rejected':'مرفوض','cancelled':'ملغي'}[o.status]||o.status||'قيد المراجعة')}</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></article>`).join(''):'لا توجد طلبات شحن حتى الآن.';
                 if(list)list.innerHTML=html;if(legacy)legacy.innerHTML=html;
             };
             db.ref(`wallet_orders/${walletUser.uid}`).on('value',walletOrdersListener);
@@ -2551,7 +2630,7 @@
         <div class="wallet-head"><h2><i class="fas fa-wallet" style="color:var(--primary)"></i> محفظة MOHAB STORE</h2><button class="close-modal" onclick="closeWallet()" aria-label="إغلاق"><i class="fas fa-times"></i></button></div>
         <div class="wallet-balance"><small>الرصيد المتاح</small><strong id="walletBalanceMain">0.00 USD</strong><div class="wallet-muted" id="walletUserLabel">سجّل الدخول بجوجل لتفعيل المحفظة.</div></div>
         <div id="walletNextDiscountBox" class="wallet-next-discount" style="display:none" aria-live="polite"><div class="wallet-next-discount-icon"><i class="fas fa-gift"></i></div><div class="wallet-next-discount-copy"><strong>خصمك للشراء القادم</strong><span id="walletNextDiscountText">لديك خصم جاهز للاستخدام مرة واحدة.</span></div><b id="walletNextDiscountPercent">5%</b></div>
-        <div id="walletLoginArea"><div class="wallet-history" style="margin:12px 0 16px;line-height:1.9"><h3>إزاي تستخدم محفظة MOHAB STORE؟</h3><p>• استخدم الموقع وتصفّح الأسعار بشكل عادي بدون تسجيل دخول.</p><p>• سجّل الدخول لمتابعة طلباتك وحالة الشحن ورصيدك.</p><p>• الطلب المدفوع من المحفظة يتم خصم قيمته عند التأكيد، وبعدها تتابع حالة الشحن من «طلباتي».</p><p>• تقدر تبعت طلب واتساب غير مدفوع؛ هيتسجل للمراجعة لو سجلت الدخول، والدفع بيكون عبر واتساب. الطلب غير المدفوع لا يضمن بدء الشحن قبل تأكيد الدفع.</p><p>• الإيداعات تظل معلقة حتى مراجعة الإدارة، ولا يُضاف الرصيد قبل الموافقة.</p></div><button class="wallet-primary" onclick="walletGoogleLogin()"><i class="fab fa-google"></i> تسجيل الدخول باستخدام Google</button></div>
+        <div id="walletLoginArea"><button class="wallet-primary wallet-google-login" onclick="walletGoogleLogin()"><svg class="wallet-google-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"/><path fill="#EA4335" d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z"/></svg><span>تسجيل الدخول باستخدام Google</span></button><div class="wallet-history" style="margin:12px 0 16px;line-height:1.9"><h3>إزاي تستخدم محفظة MOHAB STORE؟</h3><p>• استخدم الموقع وتصفّح الأسعار بشكل عادي بدون تسجيل دخول.</p><p>• سجّل الدخول لمتابعة طلباتك وحالة الشحن ورصيدك.</p><p>• الطلب المدفوع من المحفظة يتم خصم قيمته عند التأكيد، وبعدها تتابع حالة الشحن من «طلباتي».</p><p>• تقدر تبعت طلب واتساب غير مدفوع؛ هيتسجل للمراجعة لو سجلت الدخول، والدفع بيكون عبر واتساب. الطلب غير المدفوع لا يضمن بدء الشحن قبل تأكيد الدفع.</p><p>• الإيداعات تظل معلقة حتى مراجعة الإدارة، ولا يُضاف الرصيد قبل الموافقة.</p></div></div>
         <div id="walletTools" class="wallet-hidden">
           <div class="wallet-tabs"><button class="wallet-tab active" id="walletDepositTab" onclick="walletShowTab('deposit')">إيداع رصيد</button><button class="wallet-tab" id="walletHistoryTab" onclick="walletShowTab('history')">سجل الإيداع</button></div>
           <div id="walletDepositPane">
@@ -2582,6 +2661,33 @@
         </header>
         <iframe id="customExternalFrame" title="صفحة داخل المتجر" src="about:blank" referrerpolicy="strict-origin-when-cross-origin" allow="payment *; clipboard-read; clipboard-write; fullscreen" loading="lazy"></iframe>
     </section>
+
+
+<script>
+(function(){
+  const key='mohab-store-theme';
+  function applyTheme(theme){
+    const light=theme==='light';
+    document.body.classList.toggle('light-theme',light);
+    const btn=document.getElementById('themeToggleBtn');
+    if(btn){btn.innerHTML=light?'<i class="fas fa-moon"></i>':'<i class="fas fa-sun"></i>';btn.setAttribute('aria-label',light?'الرجوع للوضع الداكن':'تفعيل الوضع الفاتح');btn.title=light?'الرجوع للوضع الأصلي الداكن':'تفعيل الوضع الفاتح';}
+  }
+  window.toggleSiteTheme=function(){
+    const next=document.body.classList.contains('light-theme')?'dark':'light';
+    applyTheme(next);
+    try{localStorage.setItem(key,next)}catch(e){}
+  };
+  let saved='dark';try{saved=localStorage.getItem(key)||'dark'}catch(e){}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>applyTheme(saved),{once:true});else applyTheme(saved);
+})();
+</script>
+<style>
+.wallet-order-detail-card{display:flex;gap:14px;justify-content:space-between;padding:16px;margin:12px 0;border:1px solid rgba(6,182,212,.2);border-radius:16px;background:rgba(6,182,212,.035)}
+.wallet-order-main{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}.wallet-order-main>b{font-size:.94rem;line-height:1.7}.wallet-order-main small,.wallet-order-status small{font-size:.72rem;line-height:1.7;color:var(--text-muted);overflow-wrap:anywhere}
+.wallet-order-status{display:flex;flex-direction:column;gap:7px;align-items:flex-start;min-width:115px;max-width:42%;text-align:left}.wallet-order-status>b{font-size:.78rem;line-height:1.7;color:var(--primary);overflow-wrap:anywhere}
+body.light-theme .wallet-order-detail-card{background:#f8fbff;border-color:#dbeafe}
+@media(max-width:480px){.wallet-order-detail-card{gap:8px;padding:12px}.wallet-order-status{min-width:95px;max-width:40%}.wallet-order-main>b{font-size:.82rem}.wallet-order-main small,.wallet-order-status small{font-size:.67rem}}
+</style>
 
 </body>
 </html>
