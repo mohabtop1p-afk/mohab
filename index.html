@@ -2689,5 +2689,71 @@ body.light-theme .wallet-order-detail-card{background:#f8fbff;border-color:#dbea
 @media(max-width:480px){.wallet-order-detail-card{gap:8px;padding:12px}.wallet-order-status{min-width:95px;max-width:40%}.wallet-order-main>b{font-size:.82rem}.wallet-order-main small,.wallet-order-status small{font-size:.67rem}}
 </style>
 
+<style>
+
+/* تحسين شامل لصفحة المحفظة في الوضع الفاتح */
+body.light-theme #walletPage{background:rgba(15,23,42,.48)}
+body.light-theme #walletPage .wallet-card,
+body.light-theme #walletOrdersPage .wallet-card{background:linear-gradient(155deg,#ffffff 0%,#f6faff 100%)!important;color:#172033!important;border-color:#cbdff0;box-shadow:0 24px 65px rgba(15,23,42,.2)}
+body.light-theme #walletPage .wallet-head h2,
+body.light-theme #walletPage .wallet-history h3,
+body.light-theme #walletPage .wallet-history h3 *,
+body.light-theme #walletPage .wallet-field label,
+body.light-theme #walletPage .wallet-field label *,
+body.light-theme #walletPage .wallet-status,
+body.light-theme #walletPage .wallet-row,
+body.light-theme #walletPage .wallet-row b,
+body.light-theme #walletPage .wallet-row span,
+body.light-theme #walletPage #walletLoginArea p,
+body.light-theme #walletPage #walletLoginArea h3,
+body.light-theme #walletPage #walletTools,
+body.light-theme #walletPage #walletTools p,
+body.light-theme #walletPage #walletTools label{color:#172033!important}
+body.light-theme #walletPage .wallet-muted,
+body.light-theme #walletPage .wallet-row small,
+body.light-theme #walletPage #walletLoginArea .wallet-muted{color:#526174!important}
+body.light-theme #walletPage .wallet-tabs .wallet-tab,
+body.light-theme #walletPage .wallet-tab{background:#f1f7fc;color:#1e293b;border-color:#cbd5e1;box-shadow:0 2px 6px rgba(15,23,42,.04)}
+body.light-theme #walletPage .wallet-tabs .wallet-tab.active,
+body.light-theme #walletPage .wallet-tab.active{background:linear-gradient(135deg,#dff7ff,#e8efff);color:#075985;border-color:#38bdf8}
+body.light-theme #walletPage .wallet-method{background:#fff;color:#1e293b;border-color:#cbd5e1;box-shadow:0 2px 7px rgba(15,23,42,.05)}
+body.light-theme #walletPage .wallet-method strong{color:#1e293b!important}
+body.light-theme #walletPage .wallet-method.active{background:linear-gradient(135deg,#e0f7ff,#edf3ff);color:#075985;border:1.5px solid #0891b2;box-shadow:0 0 0 2px rgba(8,145,178,.1)}
+body.light-theme #walletPage .wallet-method.active strong{color:#075985!important}
+body.light-theme #walletPage .wallet-field input,
+body.light-theme #walletPage .wallet-field select,
+body.light-theme #walletPage .wallet-field textarea{background:#fff!important;color:#172033!important;border-color:#cbd5e1!important;box-shadow:inset 0 1px 2px rgba(15,23,42,.03)}
+body.light-theme #walletPage .wallet-field input::placeholder,
+body.light-theme #walletPage .wallet-field textarea::placeholder{color:#7b8798!important;opacity:1}
+body.light-theme #walletPage .wallet-field select option{background:#fff;color:#172033}
+body.light-theme #walletPage input[type=file]{color:#334155!important}
+body.light-theme #walletPage input[type=file]::file-selector-button{background:#eaf4fb;color:#164e63;border:1px solid #cbd5e1;border-radius:8px;padding:7px 10px;margin-inline-end:8px}
+body.light-theme #walletPage .wallet-primary{color:#fff!important;background:linear-gradient(135deg,#0891b2,#2563eb);box-shadow:0 6px 16px rgba(37,99,235,.16)}
+body.light-theme #walletPage .wallet-close{background:#f1f5f9;color:#334155;border-color:#cbd5e1}
+body.light-theme #walletPage .wallet-status{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 10px}
+body.light-theme #walletPage .wallet-rate-card{background:linear-gradient(135deg,#ecfeff,#eff6ff);border-color:#bae6fd}
+body.light-theme #walletPage .wallet-rate-icon{color:#0369a1;background:#dbeafe}
+body.light-theme #walletPage .wallet-rate-title{color:#075985!important}
+body.light-theme #walletPage .wallet-rate-value{color:#0f172a!important}
+body.light-theme #walletPage .wallet-rate-note{color:#475569!important}
+body.light-theme #walletPage #walletDepositRateInfo{color:#475569!important}
+body.light-theme #walletPage #walletDepositRateInfo b{color:#0f172a!important}
+body.light-theme #walletPage #walletDepositPane [role=note]{background:#fff7e6!important;color:#78350f!important;border-color:#f3c969!important}
+body.light-theme #walletPage #walletDepositPane [role=note] strong{color:#92400e!important}
+body.light-theme #walletPage .wallet-next-discount{background:linear-gradient(135deg,#ecfdf5,#ecfeff);border-color:#a7f3d0}
+body.light-theme #walletPage .wallet-next-discount-copy strong,
+body.light-theme #walletPage .wallet-next-discount-copy span{color:#14532d!important}
+body.light-theme #walletPage .wallet-next-discount>b{color:#047857!important}
+body.light-theme #walletPage .wallet-history,
+body.light-theme #walletPage .wallet-history p{color:#172033}
+body.light-theme #walletPage .wallet-row{border-color:#e2e8f0}
+body.light-theme #walletOrdersPage .wallet-card-head h2{color:#172033!important}
+body.light-theme #walletOrdersPage .wallet-card-head p{color:#526174!important}
+body.light-theme #walletOrdersPage .wallet-close{background:#f1f5f9;color:#334155;border-color:#cbd5e1}
+body.light-theme #walletOrdersPage .wallet-row{color:#172033;border-color:#e2e8f0}
+body.light-theme #walletOrdersPage .wallet-row small{color:#526174}
+body.light-theme #walletPage .wallet-google-login{background:#fff!important;color:#202124!important;border-color:#d1d5db!important}
+
+</style>
 </body>
 </html>
