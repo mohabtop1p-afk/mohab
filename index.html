@@ -1065,7 +1065,7 @@
         #walletPage{display:none;position:fixed;inset:0;z-index:600;background:rgba(3,7,18,.82);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:14px}
         #walletPage.open{display:flex;animation:fadeIn .2s ease}
         .wallet-card{width:min(520px,100%);max-height:92vh;overflow:auto;background:linear-gradient(150deg,#131c2e,#090d16);border:1px solid rgba(6,182,212,.3);border-radius:24px;padding:20px;box-shadow:0 25px 70px #0009}
-        .wallet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.wallet-head h2{font-size:1.05rem}.wallet-balance{position:relative;isolation:isolate;overflow:hidden;padding:22px 18px;border-radius:20px;background:linear-gradient(115deg,rgba(3,7,18,.76),rgba(9,20,38,.68)),url("https://a.top4top.io/p_3940sxuie1.jpg") center/cover no-repeat;border:1px solid rgba(6,182,212,.48);margin-bottom:18px;box-shadow:0 12px 32px rgba(0,0,0,.24)} .wallet-balance small,.wallet-balance strong,.wallet-balance #walletUserLabel{position:relative;z-index:1;text-shadow:0 2px 5px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.85)} .wallet-balance small{display:block;color:#fff!important;font-weight:800;font-size:.96rem}.wallet-balance strong{color:#fff!important;font-weight:900;letter-spacing:.2px}.wallet-balance #walletUserLabel{display:block;color:#fff!important;font-weight:700;overflow-wrap:anywhere}
+        .wallet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.wallet-head h2{font-size:1.05rem}.wallet-profile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin:2px 0 18px;padding:20px 14px 17px;border:1px solid rgba(6,182,212,.34);border-radius:22px;background:radial-gradient(circle at 50% 0,rgba(6,182,212,.16),transparent 65%),linear-gradient(145deg,rgba(19,28,46,.96),rgba(9,13,22,.96));box-shadow:0 12px 28px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.05)}.wallet-profile-avatar-wrap{position:relative;width:104px;height:104px;padding:4px;border-radius:50%;background:conic-gradient(from 0deg,#06b6d4,#60a5fa,#a78bfa,#06b6d4);box-shadow:0 0 0 5px rgba(6,182,212,.08),0 8px 25px rgba(0,0,0,.35);animation:walletAvatarGlow 4s linear infinite}.wallet-profile-avatar{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid #0b1220;background:#131c2e}.wallet-profile-badge{position:absolute;bottom:1px;right:1px;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#10b981;border:3px solid #0b1220;font-size:10px}.wallet-profile-title{font-size:.76rem;font-weight:800;color:#67e8f9;letter-spacing:.3px}.wallet-profile-email{max-width:100%;font-size:.84rem;font-weight:800;color:#f8fafc;text-align:center;overflow-wrap:anywhere;line-height:1.7;direction:ltr}.wallet-profile-hint{font-size:.65rem;color:#94a3b8;text-align:center}@keyframes walletAvatarGlow{to{filter:hue-rotate(360deg)}}.wallet-balance{position:relative;isolation:isolate;overflow:hidden;padding:22px 18px;border-radius:20px;background:linear-gradient(115deg,rgba(3,7,18,.76),rgba(9,20,38,.68)),url("https://a.top4top.io/p_3940sxuie1.jpg") center/cover no-repeat;border:1px solid rgba(6,182,212,.48);margin-bottom:18px;box-shadow:0 12px 32px rgba(0,0,0,.24)} .wallet-balance small,.wallet-balance strong,.wallet-balance #walletUserLabel{position:relative;z-index:1;text-shadow:0 2px 5px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.85)} .wallet-balance small{display:block;color:#fff!important;font-weight:800;font-size:.96rem}.wallet-balance strong{color:#fff!important;font-weight:900;letter-spacing:.2px}.wallet-balance #walletUserLabel{display:block;color:#fff!important;font-weight:700;overflow-wrap:anywhere}
         .wallet-balance small{color:var(--text-muted)}.wallet-balance strong{display:block;font-size:1.65rem;margin-top:8px;direction:ltr;text-align:right}
         .wallet-tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}.wallet-tab{padding:11px;border-radius:12px;background:var(--surface);border:1px solid var(--surface-border);color:#fff;font-family:inherit;font-weight:800;cursor:pointer}.wallet-tab.active{border-color:var(--primary);background:rgba(6,182,212,.13)}
         .wallet-field{display:flex;flex-direction:column;gap:7px;margin:11px 0}.wallet-field label{font-size:.78rem;color:#cbd5e1;font-weight:700}.wallet-field input,.wallet-field select{width:100%;background:#0b1220;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:12px;outline:none;font:inherit;font-size:.84rem}.wallet-field input:focus,.wallet-field select:focus{border-color:var(--primary)}
@@ -1111,7 +1111,7 @@
         body.light-theme .wallet-nav-btn b,
         body.light-theme #walletNavBalance{color:#111827!important;text-shadow:none!important}
         body.light-theme .wallet-nav-btn{background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(240,249,255,.96));border-color:#cbdff0;box-shadow:0 4px 14px rgba(15,23,42,.10)}
-        body.light-theme #walletPage .wallet-balance{background:linear-gradient(115deg,rgba(255,255,255,.48),rgba(234,246,255,.58)),url("https://a.top4top.io/p_3940sxuie1.jpg") center/cover no-repeat!important;border-color:#cbdff0;box-shadow:0 10px 26px rgba(15,23,42,.12)}
+        body.light-theme .wallet-profile{background:linear-gradient(145deg,#fff,#f1f7fc);border-color:#cbdff0}body.light-theme .wallet-profile-email{color:#172033}body.light-theme .wallet-profile-hint{color:#64748b}body.light-theme #walletPage .wallet-balance{background:linear-gradient(115deg,rgba(255,255,255,.48),rgba(234,246,255,.58)),url("https://a.top4top.io/p_3940sxuie1.jpg") center/cover no-repeat!important;border-color:#cbdff0;box-shadow:0 10px 26px rgba(15,23,42,.12)}
         body.light-theme #walletPage .wallet-balance small,
         body.light-theme #walletPage .wallet-balance strong,
         body.light-theme #walletPage .wallet-balance #walletUserLabel{color:#111827!important;text-shadow:0 1px 2px rgba(255,255,255,.72)!important}
@@ -1971,7 +1971,11 @@
         function walletShowTools() {
             document.getElementById('walletLoginArea').classList.add('wallet-hidden');
             document.getElementById('walletTools').classList.remove('wallet-hidden');
-            document.getElementById('walletUserLabel').textContent=walletUser.email || walletUser.displayName || 'تم تسجيل الدخول';
+            document.getElementById('walletUserLabel').textContent='رصيد محفظتك جاهز للاستخدام.';
+            const profile=document.getElementById('walletProfile');
+            const profileEmail=document.getElementById('walletProfileEmail');
+            if(profile)profile.style.display='flex';
+            if(profileEmail)profileEmail.textContent=walletUser.email || walletUser.displayName || 'تم تسجيل الدخول';
             document.getElementById('walletStatus').textContent='';
         }
         async function walletGoogleLogin() {
@@ -2179,9 +2183,10 @@
             if(mode==='paid') return walletConfirmPurchase(order, launch);
             if(!mode && window._mohabOrderTab && !window._mohabOrderTab.closed){window._mohabOrderTab.close();window._mohabOrderTab=null;}
             if(mode==='whatsapp') {
-                const code='MWU-'+Date.now().toString(36).toUpperCase();
+                const code='MWU-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
                 try {
-                    await db.ref(`wallet_orders/${walletUser.uid}/${code}`).set({code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,price:order.price,method:order.method,status:'pending_payment',paymentType:'whatsapp',createdAt:firebase.database.ServerValue.TIMESTAMP});
+                    const orderRef=db.ref(`wallet_orders/${walletUser.uid}`).push();
+                    await orderRef.set({code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,price:order.price,method:order.method,status:'pending_payment',paymentType:'whatsapp',createdAt:firebase.database.ServerValue.TIMESTAMP});
                     walletListenOrders();
                     let msg=`مرحباً، أريد طلب شحن غير مدفوع من MOHAB STORE\n🎮 اللعبة/المنتج: ${order.gameName}\n📦 الباقة: ${order.packName}\n💰 السعر: ${order.price}\n⚙️ طريقة الشحن: ${order.method}\n🧾 كود الطلب: ${code}\n⏳ الحالة: بانتظار الدفع عبر واتساب`;
                     launchWhatsAppText(msg);
@@ -2270,8 +2275,9 @@
                     return current;
                 });
                 if(!result.committed){await walletShowNotice('تعذر إتمام الطلب','رصيدك غير كافٍ أو تعذر تأكيد الخصم. لم يتم فتح واتساب.','warning');return;}
-                const code='MWP-'+Date.now().toString(36).toUpperCase();
-                await db.ref(`wallet_orders/${walletUser.uid}/${code}`).set({
+                const code='MWP-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+                const orderRef=db.ref(`wallet_orders/${walletUser.uid}`).push();
+                await orderRef.set({
                     code,uid:walletUser.uid,email:walletUser.email||'',game:order.gameName,pack:order.packName,
                     price:order.price,originalPrice:order.price,chargedAmountEgp:finalCostEgp,chargedAmountUsd:finalCostUsd,
                     discountPercent:couponPercent,discountAmountEgp:discountEgp,currency,costUsd:finalCostUsd,
@@ -2291,6 +2297,7 @@
                 walletBalanceUsd=0;walletBalanceEgp=0;walletNextDiscount=null;walletRenderNextDiscount();document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
                 document.getElementById('walletTools').classList.add('wallet-hidden');
                 document.getElementById('walletUserLabel').textContent='سجّل الدخول بجوجل لتفعيل المحفظة.';
+                const profile=document.getElementById('walletProfile');if(profile)profile.style.display='none';
                 walletDisplayBalance();return;
             }
             walletShowTools();
@@ -2628,6 +2635,15 @@
     <section id="walletPage" aria-hidden="true" role="dialog" aria-modal="true" aria-label="محفظة مهاب ستور">
       <div class="wallet-card">
         <div class="wallet-head"><h2><i class="fas fa-wallet" style="color:var(--primary)"></i> محفظة MOHAB STORE</h2><button class="close-modal" onclick="closeWallet()" aria-label="إغلاق"><i class="fas fa-times"></i></button></div>
+        <div id="walletProfile" class="wallet-profile" style="display:none">
+          <div class="wallet-profile-avatar-wrap">
+            <img id="walletProfileAvatar" class="wallet-profile-avatar" src="https://imgpile.com/m/LN4Gecb" alt="صورة الملف الشخصي" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=MOHAB+STORE&background=101827&color=67e8f9&size=256'">
+            <span class="wallet-profile-badge" aria-hidden="true"><i class="fas fa-check"></i></span>
+          </div>
+          <div class="wallet-profile-title">حسابك في MOHAB STORE</div>
+          <div id="walletProfileEmail" class="wallet-profile-email">—</div>
+          <div class="wallet-profile-hint"><i class="fas fa-shield-alt"></i> بيانات حسابك المسجل</div>
+        </div>
         <div class="wallet-balance"><small>الرصيد المتاح</small><strong id="walletBalanceMain">0.00 USD</strong><div class="wallet-muted" id="walletUserLabel">سجّل الدخول بجوجل لتفعيل المحفظة.</div></div>
         <div id="walletNextDiscountBox" class="wallet-next-discount" style="display:none" aria-live="polite"><div class="wallet-next-discount-icon"><i class="fas fa-gift"></i></div><div class="wallet-next-discount-copy"><strong>خصمك للشراء القادم</strong><span id="walletNextDiscountText">لديك خصم جاهز للاستخدام مرة واحدة.</span></div><b id="walletNextDiscountPercent">5%</b></div>
         <div id="walletLoginArea"><button class="wallet-primary wallet-google-login" onclick="walletGoogleLogin()"><svg class="wallet-google-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"/><path fill="#EA4335" d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z"/></svg><span>تسجيل الدخول باستخدام Google</span></button><div class="wallet-history" style="margin:12px 0 16px;line-height:1.9"><h3>إزاي تستخدم محفظة MOHAB STORE؟</h3><p>• استخدم الموقع وتصفّح الأسعار بشكل عادي بدون تسجيل دخول.</p><p>• سجّل الدخول لمتابعة طلباتك وحالة الشحن ورصيدك.</p><p>• الطلب المدفوع من المحفظة يتم خصم قيمته عند التأكيد، وبعدها تتابع حالة الشحن من «طلباتي».</p><p>• تقدر تبعت طلب واتساب غير مدفوع؛ هيتسجل للمراجعة لو سجلت الدخول، والدفع بيكون عبر واتساب. الطلب غير المدفوع لا يضمن بدء الشحن قبل تأكيد الدفع.</p><p>• الإيداعات تظل معلقة حتى مراجعة الإدارة، ولا يُضاف الرصيد قبل الموافقة.</p></div></div>
