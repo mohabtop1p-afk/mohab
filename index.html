@@ -525,13 +525,13 @@
         .game-card:hover { transform: translateY(-4px) translateZ(0); background: var(--surface-hover); border-color: rgba(6, 182, 212, 0.3); box-shadow: 0 8px 18px rgba(0,0,0,0.2); }
         .game-logo-frame {
             position: relative;
-            width: 75px;
-            height: 75px;
+            width: var(--game-frame-width, 75px);
+            height: var(--game-frame-height, 75px);
             margin-bottom: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex: 0 0 75px;
+            flex: 0 0 var(--game-frame-width, 75px);
             overflow: visible;
         }
 
@@ -540,7 +540,7 @@
             position: absolute;
             inset: 0;
             z-index: 2;
-            background: url('https://g.top4top.io/p_39146kcfj0.png') center / 100% 100% no-repeat;
+            background: var(--game-frame-image, url('https://g.top4top.io/p_39146kcfj0.png')) center / 100% 100% no-repeat;
             background-repeat: no-repeat;
             background-position: center;
             background-size: 100% 100%;
@@ -548,8 +548,8 @@
         }
 
         .game-logo-frame img {
-            width: 61px;
-            height: 61px;
+            width: var(--game-logo-width, 61px);
+            height: var(--game-logo-height, 61px);
             border-radius: 13px;
             object-fit: contain;
             margin: 0;
@@ -557,14 +557,14 @@
             display: block;
             position: relative;
             z-index: 1;
-            flex: 0 0 61px;
+            flex: 0 0 var(--game-logo-width, 61px);
         }
 
         @media (max-width: 767px) {
             .game-logo-frame {
-                width: 75px;
-                height: 75px;
-                flex-basis: 75px;
+                width: var(--game-frame-width, 75px);
+                height: var(--game-frame-height, 75px);
+                flex-basis: var(--game-frame-width, 75px);
             }
         }
         .game-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e2e8f0; }
@@ -1065,7 +1065,7 @@
         #walletPage{display:none;position:fixed;inset:0;z-index:600;background:rgba(3,7,18,.82);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:14px}
         #walletPage.open{display:flex;animation:fadeIn .2s ease}
         .wallet-card{width:min(520px,100%);max-height:92vh;overflow:auto;background:linear-gradient(150deg,#131c2e,#090d16);border:1px solid rgba(6,182,212,.3);border-radius:24px;padding:20px;box-shadow:0 25px 70px #0009}
-        .wallet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.wallet-head h2{font-size:1.05rem}.wallet-profile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin:2px 0 18px;padding:20px 14px 17px;border:1px solid rgba(6,182,212,.34);border-radius:22px;background:radial-gradient(circle at 50% 0,rgba(6,182,212,.16),transparent 65%),linear-gradient(145deg,rgba(19,28,46,.96),rgba(9,13,22,.96));box-shadow:0 12px 28px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.05)}.wallet-profile-avatar-wrap{position:relative;width:104px;height:104px;padding:4px;border-radius:50%;background:conic-gradient(from 0deg,#06b6d4,#60a5fa,#a78bfa,#06b6d4);box-shadow:0 0 0 5px rgba(6,182,212,.08),0 8px 25px rgba(0,0,0,.35);animation:walletAvatarGlow 4s linear infinite}.wallet-profile-avatar{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid #0b1220;background:#131c2e}.wallet-profile-badge{position:absolute;bottom:1px;right:1px;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#10b981;border:3px solid #0b1220;font-size:10px}.wallet-profile-title{font-size:.76rem;font-weight:800;color:#67e8f9;letter-spacing:.3px}.wallet-profile-email{max-width:100%;font-size:.84rem;font-weight:800;color:#f8fafc;text-align:center;overflow-wrap:anywhere;line-height:1.7;direction:ltr}.wallet-profile-hint{font-size:.65rem;color:#94a3b8;text-align:center}@keyframes walletAvatarGlow{to{filter:hue-rotate(360deg)}}.wallet-balance{position:relative;isolation:isolate;overflow:hidden;padding:22px 18px;border-radius:20px;background:linear-gradient(115deg,rgba(3,7,18,.76),rgba(9,20,38,.68)),url("https://a.top4top.io/p_3940sxuie1.jpg") center/cover no-repeat;border:1px solid rgba(6,182,212,.48);margin-bottom:18px;box-shadow:0 12px 32px rgba(0,0,0,.24)} .wallet-balance small,.wallet-balance strong,.wallet-balance #walletUserLabel{position:relative;z-index:1;text-shadow:0 2px 5px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.85)} .wallet-balance small{display:block;color:#fff!important;font-weight:800;font-size:.96rem}.wallet-balance strong{color:#fff!important;font-weight:900;letter-spacing:.2px}.wallet-balance #walletUserLabel{display:block;color:#fff!important;font-weight:700;overflow-wrap:anywhere}
+        .wallet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.wallet-head h2{font-size:1.05rem}.wallet-profile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin:2px 0 18px;padding:20px 14px 17px;border:1px solid rgba(6,182,212,.34);border-radius:22px;background:radial-gradient(circle at 50% 0,rgba(6,182,212,.16),transparent 65%),linear-gradient(145deg,rgba(19,28,46,.96),rgba(9,13,22,.96));box-shadow:0 12px 28px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.05)}.wallet-profile-avatar-wrap{position:relative;width:104px;height:104px;padding:4px;border-radius:50%;background:conic-gradient(from 0deg,#06b6d4,#60a5fa,#a78bfa,#06b6d4);box-shadow:0 0 0 5px rgba(6,182,212,.08),0 8px 25px rgba(0,0,0,.35);animation:walletAvatarGlow 4s linear infinite}.wallet-profile-avatar{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid #0b1220;background:#131c2e}.wallet-profile-badge{position:absolute;bottom:1px;right:1px;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#10b981;border:3px solid #0b1220;font-size:10px}.wallet-profile-title{font-size:.76rem;font-weight:800;color:#67e8f9;letter-spacing:.3px}.wallet-profile-email{max-width:100%;font-size:.84rem;font-weight:800;color:#f8fafc;text-align:center;overflow-wrap:anywhere;line-height:1.7;direction:ltr}.wallet-profile-hint{font-size:.65rem;color:#94a3b8;text-align:center}@keyframes walletAvatarGlow{to{filter:hue-rotate(360deg)}}.wallet-balance{position:relative;isolation:isolate;overflow:hidden;padding:22px 18px;border-radius:20px;background-image:linear-gradient(115deg,rgba(3,7,18,var(--wallet-bg-overlay,.76)),rgba(9,20,38,var(--wallet-bg-overlay,.68))),var(--wallet-balance-image,url("https://a.top4top.io/p_3940sxuie1.jpg"));background-position:center;background-size:var(--wallet-bg-size,cover);background-repeat:no-repeat;border:1px solid rgba(6,182,212,.48);margin-bottom:18px;box-shadow:0 12px 32px rgba(0,0,0,.24)} .wallet-balance small,.wallet-balance strong,.wallet-balance #walletUserLabel{position:relative;z-index:1;text-shadow:0 2px 5px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.85)} .wallet-balance small{display:block;color:#fff!important;font-weight:800;font-size:.96rem}.wallet-balance strong{color:#fff!important;font-weight:900;letter-spacing:.2px}.wallet-balance #walletUserLabel{display:block;color:#fff!important;font-weight:700;overflow-wrap:anywhere}
         .wallet-balance small{color:var(--text-muted)}.wallet-balance strong{display:block;font-size:1.65rem;margin-top:8px;direction:ltr;text-align:right}
         .wallet-tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}.wallet-tab{padding:11px;border-radius:12px;background:var(--surface);border:1px solid var(--surface-border);color:#fff;font-family:inherit;font-weight:800;cursor:pointer}.wallet-tab.active{border-color:var(--primary);background:rgba(6,182,212,.13)}
         .wallet-field{display:flex;flex-direction:column;gap:7px;margin:11px 0}.wallet-field label{font-size:.78rem;color:#cbd5e1;font-weight:700}.wallet-field input,.wallet-field select{width:100%;background:#0b1220;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:12px;outline:none;font:inherit;font-size:.84rem}.wallet-field input:focus,.wallet-field select:focus{border-color:var(--primary)}
@@ -1111,7 +1111,7 @@
         body.light-theme .wallet-nav-btn b,
         body.light-theme #walletNavBalance{color:#111827!important;text-shadow:none!important}
         body.light-theme .wallet-nav-btn{background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(240,249,255,.96));border-color:#cbdff0;box-shadow:0 4px 14px rgba(15,23,42,.10)}
-        body.light-theme .wallet-profile{background:linear-gradient(145deg,#fff,#f1f7fc);border-color:#cbdff0}body.light-theme .wallet-profile-email{color:#172033}body.light-theme .wallet-profile-hint{color:#64748b}body.light-theme #walletPage .wallet-balance{background:linear-gradient(115deg,rgba(255,255,255,.48),rgba(234,246,255,.58)),url("https://a.top4top.io/p_3940sxuie1.jpg") center/cover no-repeat!important;border-color:#cbdff0;box-shadow:0 10px 26px rgba(15,23,42,.12)}
+        body.light-theme .wallet-profile{background:linear-gradient(145deg,#fff,#f1f7fc);border-color:#cbdff0}body.light-theme .wallet-profile-email{color:#172033}body.light-theme .wallet-profile-hint{color:#64748b}body.light-theme #walletPage .wallet-balance{background-image:linear-gradient(115deg,rgba(255,255,255,.48),rgba(234,246,255,.58)),var(--wallet-balance-image,url("https://a.top4top.io/p_3940sxuie1.jpg"))!important;background-position:center;background-size:var(--wallet-bg-size,cover);background-repeat:no-repeat;border-color:#cbdff0;box-shadow:0 10px 26px rgba(15,23,42,.12)}
         body.light-theme #walletPage .wallet-balance small,
         body.light-theme #walletPage .wallet-balance strong,
         body.light-theme #walletPage .wallet-balance #walletUserLabel{color:#111827!important;text-shadow:0 1px 2px rgba(255,255,255,.72)!important}
@@ -1158,7 +1158,7 @@
     <nav>
         <div class="nav-content">
             <button id="walletOpenBtn" class="wallet-nav-btn" onclick="openWallet()" aria-label="المحفظة">
-                <img src="https://g.top4top.io/p_3940ozgp60.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block'">
+                <img id="walletNavIconImg" src="https://g.top4top.io/p_3940ozgp60.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block'">
                 <i class="fas fa-wallet" style="display:none"></i>
                 <span><small>رصيدك</small><b id="walletNavBalance">—</b></span>
             </button>
@@ -1620,6 +1620,24 @@
             const data = snap.val() || {};
             if (data.logo) { const logo = document.getElementById('mainLogoImg'); logo.src = data.logo; logo.style.display = 'block'; }
         }, err => console.error('General settings:', err));
+
+        db.ref('settings/visuals').on('value', snap => {
+            const v = snap.val() || {};
+            const root = document.documentElement;
+            const px = (value, fallback) => { const n = Number(value); return Number.isFinite(n) && n > 0 ? n + 'px' : fallback; };
+            root.style.setProperty('--game-frame-width', px(v.frameWidth, '75px'));
+            root.style.setProperty('--game-frame-height', px(v.frameHeight, '75px'));
+            root.style.setProperty('--game-logo-width', px(v.logoWidth, '61px'));
+            root.style.setProperty('--game-logo-height', px(v.logoHeight, '61px'));
+            root.style.setProperty('--game-frame-image', v.frameUrl ? `url("${String(v.frameUrl).replace(/["\\]/g, '')}")` : "url('https://g.top4top.io/p_39146kcfj0.png')");
+            root.style.setProperty('--wallet-balance-image', v.balanceBgUrl ? `url("${String(v.balanceBgUrl).replace(/["\\]/g, '')}")` : 'url("https://a.top4top.io/p_3940sxuie1.jpg")');
+            root.style.setProperty('--wallet-bg-size', v.balanceBgSize === 'contain' ? 'contain' : 'cover');
+            const opacity = Math.max(0, Math.min(0.95, Number(v.balanceOverlay ?? 0.76)));
+            root.style.setProperty('--wallet-bg-overlay', String(opacity));
+            const icon = document.getElementById('walletNavIconImg');
+            if (icon && v.walletIconUrl) { icon.src = v.walletIconUrl; icon.style.display = 'block'; const fallback=icon.nextElementSibling; if(fallback) fallback.style.display='none'; }
+            else if(icon) { icon.src='https://g.top4top.io/p_3940ozgp60.png'; icon.style.display='block'; }
+        }, err => console.error('Visual settings:', err));
 
         db.ref('settings/banners').on('value', snap => {
             const banners = [];
