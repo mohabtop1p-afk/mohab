@@ -470,6 +470,17 @@
             display: flex; align-items: center; justify-content: center; background-color: #05070c;
         }
         .slide-wrapper-box.active { opacity: 1; z-index: 1; }
+        .slide-loading {
+            position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
+            flex-direction:column;gap:11px;background:radial-gradient(ellipse at center,rgba(18,42,55,.98),rgba(3,9,18,.99));
+            color:#d9faff;font-weight:800;letter-spacing:2px;transition:opacity .35s ease;
+        }
+        .slide-loading::before { content:'';width:42px;height:42px;border-radius:50%;border:3px solid rgba(34,211,238,.18);border-top-color:#22d3ee;border-right-color:#a3e635;animation:mohabSlideSpin .85s linear infinite;box-shadow:0 0 22px rgba(34,211,238,.18); }
+        .slide-loading::after { content:'MOHAB STORE';font-size:11px;letter-spacing:3px;color:#a5f3fc;text-shadow:0 0 12px rgba(34,211,238,.35); }
+        .slide-wrapper-box.loaded .slide-loading { opacity:0;pointer-events:none; }
+        .slide-wrapper-box .slide { opacity:0;transition:opacity .35s ease; }
+        .slide-wrapper-box.loaded .slide { opacity:1; }
+        @keyframes mohabSlideSpin { to { transform:rotate(360deg); } }
         
         .slide-bg-blur {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -1477,7 +1488,7 @@
         db.ref('settings/banners').limitToFirst(1).on('value', snap => {
             let firstImage = '';
             snap.forEach(c => {
-                if (!firstImage) firstImage = c.val() || '';
+                if (!firstImage) { const v=c.val(); firstImage = typeof v==='string' ? v : ((v && (v.url || v.image)) || ''); }
             });
             welcomePopupFallbackImage = firstImage;
             if (!welcomePopupSettings.image) applyWelcomePopupSettings();
@@ -1657,9 +1668,14 @@
         }, err => console.error('Visual settings:', err));
 
         db.ref('settings/banners').on('value', snap => {
-            const banners = [];
-            snap.forEach(c => { if (typeof c.val() === 'string' && c.val()) banners.push(c.val()); });
-            initSlider(banners, true, 3000);
+            const banners = []; let fallbackOrder=0;
+            snap.forEach(c => {
+                const raw=c.val(); fallbackOrder++;
+                if (typeof raw === 'string' && raw) banners.push({url:raw,durationMs:5000,order:fallbackOrder,key:c.key});
+                else if (raw && typeof raw === 'object' && (raw.url || raw.image)) banners.push({url:raw.url || raw.image,durationMs:Math.max(1000,Number(raw.durationMs)||5000),order:Number(raw.order)||fallbackOrder,key:c.key});
+            });
+            banners.sort((a,b)=>a.order-b.order || String(a.key).localeCompare(String(b.key)));
+            initSlider(banners, true);
         }, err => console.error('Banner settings:', err));
 
         db.ref('settings/socials').on('value', snap => {
@@ -1668,40 +1684,48 @@
             renderBottomDock(socials);
         }, err => console.error('Social settings:', err));
 
-        let sliderInterval; let totalSlides = 0; let globalSpeed = 3000;
-        function initSlider(banners, isAuto, speed) {
-            const container = document.getElementById('sliderContainer');
-            const wrapper = document.getElementById('sliderWrapper');
-            const dotsContainer = document.getElementById('sliderDots');
-            clearInterval(sliderInterval);
-            globalSpeed = speed;
-            wrapper.innerHTML = ''; dotsContainer.innerHTML = ''; totalSlides = banners.length;
-            if(banners.length === 0) { container.style.display = 'none'; return; }
-            container.style.display = 'block';
-            let fragment = document.createDocumentFragment(); let dotsFragment = document.createDocumentFragment();
-            
-            banners.forEach((url, index) => {
-                const box = document.createElement('div');
-                box.className = index === 0 ? 'slide-wrapper-box active' : 'slide-wrapper-box';
-                
-                box.innerHTML = `
-                    <div class="slide-bg-blur" style="background-image: url('${url}');"></div>
-                    <img src="${url}" loading="lazy" decoding="async" class="slide" alt="Banner">
-                `;
-                fragment.appendChild(box);
-
-                if(banners.length > 1) {
-                    const dot = document.createElement('div'); dot.className = index === 0 ? 'dot active' : 'dot';
-                    dot.onclick = () => { goToSlide(index); if(sliderInterval) { clearInterval(sliderInterval); startAutoPlay(globalSpeed); } }; 
-                    dotsFragment.appendChild(dot);
-                }
+        let sliderInterval; let totalSlides = 0; let sliderRecords = []; let sliderTimerToken=0;
+        function initSlider(banners, isAuto) {
+            const container=document.getElementById('sliderContainer');
+            const wrapper=document.getElementById('sliderWrapper');
+            const dotsContainer=document.getElementById('sliderDots');
+            clearTimeout(sliderInterval); sliderTimerToken++;
+            sliderRecords=Array.isArray(banners)?banners:[]; totalSlides=sliderRecords.length;
+            wrapper.innerHTML=''; dotsContainer.innerHTML='';
+            if(!totalSlides){container.style.display='none';return;}
+            container.style.display='block';
+            const fragment=document.createDocumentFragment(), dots=document.createDocumentFragment();
+            sliderRecords.forEach((record,index)=>{
+                const box=document.createElement('div');
+                box.className='slide-wrapper-box'+(index===0?' active':'');
+                const loader=document.createElement('div'); loader.className='slide-loading';
+                const label=document.createElement('span'); label.textContent='جاري تجهيز الصورة'; label.style.cssText='font-size:10px;letter-spacing:0;color:#b6cbd5;font-weight:600'; loader.appendChild(label);
+                const blur=document.createElement('div'); blur.className='slide-bg-blur'; blur.style.backgroundImage=`url("${String(record.url).replace(/["\\]/g,'')}")`;
+                const img=document.createElement('img'); img.className='slide'; img.alt='MOHAB STORE Banner'; img.decoding='async'; img.loading=index===0?'eager':'lazy';
+                img.addEventListener('load',()=>{box.classList.add('loaded');},{once:true});
+                img.addEventListener('error',()=>{label.textContent='تعذر تحميل الصورة';loader.style.background='linear-gradient(135deg,#111827,#263548)';},{once:true});
+                img.src=record.url;
+                box.append(loader,blur,img); fragment.appendChild(box);
+                if(totalSlides>1){const dot=document.createElement('div');dot.className='dot'+(index===0?' active':'');dot.setAttribute('aria-label','الصورة '+(index+1));dot.onclick=()=>{goToSlide(index);scheduleNextSlide();};dots.appendChild(dot);}
             });
-            wrapper.appendChild(fragment); dotsContainer.appendChild(dotsFragment);
-            if(banners.length > 1 && isAuto) startAutoPlay(speed);
+            wrapper.appendChild(fragment);dotsContainer.appendChild(dots);
+            if(isAuto && totalSlides>1) scheduleNextSlide();
         }
-        function startAutoPlay(speed) { sliderInterval = setInterval(() => { let w = document.getElementById('sliderWrapper'); let c = Array.from(w.children).findIndex(el => el.classList.contains('active')); goToSlide((c + 1) % totalSlides); }, speed); }
-        function goToSlide(index) { const s = document.getElementById('sliderWrapper').children; const d = document.getElementById('sliderDots').children; if(!s.length) return; for(let i=0; i<s.length; i++) { s[i].classList.remove('active'); if(d[i]) d[i].classList.remove('active'); } s[index].classList.add('active'); if(d[index]) d[index].classList.add('active'); }
-        
+        function scheduleNextSlide(){
+            clearTimeout(sliderInterval); if(totalSlides<2)return;
+            const current=Array.from(document.getElementById('sliderWrapper').children).findIndex(el=>el.classList.contains('active'));
+            const duration=Math.max(1000,Number(sliderRecords[current]?.durationMs)||5000);
+            const token=++sliderTimerToken;
+            sliderInterval=setTimeout(()=>{if(token!==sliderTimerToken)return;goToSlide((current+1)%totalSlides);scheduleNextSlide();},duration);
+        }
+        function goToSlide(index){
+            const slides=document.getElementById('sliderWrapper').children;
+            const dots=document.getElementById('sliderDots').children;
+            if(!slides.length)return;
+            index=((index%slides.length)+slides.length)%slides.length;
+            for(let i=0;i<slides.length;i++){slides[i].classList.toggle('active',i===index);if(dots[i])dots[i].classList.toggle('active',i===index);}
+        }
+
         let touchstartX = 0; let touchendX = 0;
         const sWrapper = document.getElementById('sliderWrapper');
         sWrapper.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, {passive: true});
@@ -1711,10 +1735,10 @@
                 let current = Array.from(sWrapper.children).findIndex(el => el.classList.contains('active'));
                 if (touchendX > touchstartX + 40) { 
                     goToSlide((current + 1) % totalSlides); 
-                    if(sliderInterval) { clearInterval(sliderInterval); startAutoPlay(globalSpeed); }
+                    scheduleNextSlide();
                 } else if (touchendX < touchstartX - 40) { 
                     goToSlide((current - 1 + totalSlides) % totalSlides); 
-                    if(sliderInterval) { clearInterval(sliderInterval); startAutoPlay(globalSpeed); }
+                    scheduleNextSlide();
                 }
             }
         }, {passive: true});
