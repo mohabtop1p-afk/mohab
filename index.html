@@ -1969,8 +1969,8 @@
             const entries=Object.entries(walletMethods).filter(([,m])=>m&&m.enabled!==false);
             if(!entries.length){box.innerHTML='<div class="wallet-muted">لا توجد طرق إيداع متاحة حاليًا. تواصل مع الدعم.</div>';return;}
             if(!walletMethods[walletMethod]||walletMethods[walletMethod].enabled===false)walletMethod=entries[0][0];
-            box.innerHTML=entries.map(([key,m])=>`<button type="button" class="wallet-method ${key===walletMethod?'active':''}" data-method="${walletEscape(key)}" onclick="walletSelectMethod(this)">${m.logo?`<img src="${walletEscape(m.logo)}" alt="" style="width:30px;height:30px;object-fit:contain;display:block;margin:0 auto 6px" onerror="this.style.display='none'">`:''}<strong>${walletEscape(m.label||key)}</strong></button>`).join('');
-            walletSelectMethod(box.querySelector(`[data-method="${CSS.escape(walletMethod)}"]`)||box.querySelector('.wallet-method'));
+            box.innerHTML=entries.map(([key,m])=>`<button type="button" class="wallet-method ${key===walletMethod?'active':''}" data-method="${walletEscape(key)}" onclick="walletSelectMethod(this)">${m.logo?`<img src="${walletEscape(m.logo)}" alt="" style="width:30px;height:30px;object-fit:contain;display:block;margin:0 auto 6px" onerror="this.style.display='none'">`:''}<strong>${walletEscape(m.label||key)}</strong>${m.actionType==='whatsapp'?'<small style="display:block;margin-top:5px;color:#16a34a">اضغط للتواصل عبر واتساب</small>':''}</button>`).join('');
+            walletApplyMethodDetails(walletMethods[walletMethod]||walletMethods[entries[0][0]]);
         }
         db.ref('wallet_settings/depositMethods').on('value',snap=>{const v=snap.val();if(v&&typeof v==='object'&&Object.keys(v).length)walletMethods=v;walletRenderMethods();});
         function walletMoney(n,currency=currentCurrency) {
@@ -2061,13 +2061,33 @@
             });
             overlay.querySelector('[data-wallet-logout-cancel]').focus();
         }
+        function walletApplyMethodDetails(m) {
+            if(!m)return;
+            const fields=document.getElementById('walletTransferFields');
+            const notice=document.getElementById('walletMethodWhatsappNotice');
+            const isWhatsApp=m.actionType==='whatsapp';
+            if(fields)fields.style.display=isWhatsApp?'none':'';
+            if(notice)notice.style.display=isWhatsApp?'block':'none';
+            if(!isWhatsApp){
+                document.getElementById('walletTransferTarget').value=m.target||'';
+                document.getElementById('walletTransferLabel').textContent=m.kind==='id'?'حوّل إلى المعرّف التالي':'حوّل إلى الرقم التالي';
+                document.querySelector('#walletTransferTarget').nextElementSibling.textContent=m.kind==='id'?'نسخ المعرّف':'نسخ الرقم';
+            }
+        }
+        function walletOpenMethodWhatsApp(m) {
+            let phone=String(m.whatsappNumber||'').replace(/[^0-9]/g,'');
+            if(phone.startsWith('00'))phone=phone.slice(2);
+            else if(phone.startsWith('0'))phone='20'+phone.slice(1);
+            if(!phone){document.getElementById('walletStatus').textContent='رقم واتساب لهذه الطريقة غير مضبوط؛ تواصل مع الإدارة.';return;}
+            const message=String(m.whatsappMessage||`مرحباً، أريد الاستفسار عن ${m.label||'طريقة الدفع'} عبر MOHAB STORE.`);
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`,'_blank','noopener');
+        }
         function walletSelectMethod(button) {
-            walletMethod=button.dataset.method;
+            const key=button.dataset.method, m=walletMethods[key]; if(!m)return;
+            walletMethod=key;
             document.querySelectorAll('.wallet-method').forEach(b=>b.classList.toggle('active',b===button));
-            const m=walletMethods[walletMethod]; if(!m)return;
-            document.getElementById('walletTransferTarget').value=m.target||'';
-            document.getElementById('walletTransferLabel').textContent=m.kind==='id'?'حوّل إلى المعرّف التالي':'حوّل إلى الرقم التالي';
-            document.querySelector('#walletTransferTarget').nextElementSibling.textContent=m.kind==='id'?'نسخ المعرّف':'نسخ الرقم';
+            walletApplyMethodDetails(m);
+            if(m.actionType==='whatsapp')walletOpenMethodWhatsApp(m);
         }
         async function walletCopyTarget() {
             const input=document.getElementById('walletTransferTarget');
@@ -2749,6 +2769,8 @@
               بعد اعتماد الإيداع وإضافة الرصيد إلى محفظتك، لا يمكن سحب الرصيد نقدًا أو استرداده؛ ويمكنك استخدامه لشراء المنتجات والخدمات داخل MOHAB STORE. تأكد من المبلغ وبيانات التحويل قبل إرسال الطلب. يظل طلب الإيداع قيد المراجعة حتى موافقة الإدارة.
             </div>
             <div class="wallet-field"><label>اختر طريقة الإيداع</label><div class="wallet-methods" id="walletMethodsContainer"><div class="wallet-muted">جاري تحميل طرق الإيداع…</div></div></div>
+            <div id="walletMethodWhatsappNotice" class="wallet-muted" style="display:none;margin:10px 0;padding:14px;border:1px solid rgba(22,163,74,.35);border-radius:12px;line-height:1.8">تم اختيار التواصل عبر واتساب. إذا لم يفتح التطبيق تلقائيًا، اضغط على أيقونة الطريقة مرة أخرى.</div>
+            <div id="walletTransferFields">
             <div class="wallet-field"><label id="walletTransferLabel">حوّل إلى الرقم التالي</label><div style="display:flex;gap:8px"><input id="walletTransferTarget" readonly value="01019614169"><button class="wallet-tab" style="white-space:nowrap" onclick="walletCopyTarget()">نسخ الرقم</button></div></div>
             <div class="wallet-field"><label>عملة الإيداع</label><select id="walletDepositCurrency" onchange="walletUpdateDepositCurrency()"><option value="EGP">جنيه مصري (EGP)</option><option value="USD">دولار أمريكي (USD)</option></select></div>
             <div class="wallet-field"><label>المبلغ الذي حوّلته</label><input id="walletDepositAmount" type="number" min="1" step="0.01" placeholder="اكتب المبلغ" oninput="walletUpdateDepositCurrency()"><div id="walletDepositRateInfo" class="wallet-muted" style="margin-top:8px;line-height:1.8">سعر الدولار في مهاب ستور اليوم: جاري التحميل…</div></div>
@@ -2757,6 +2779,7 @@
             <div class="wallet-field"><label>صورة إيصال التحويل</label><input id="walletReceipt" type="file" accept="image/*"></div>
             <p class="wallet-muted">لن يُضاف أي رصيد قبل مراجعة الإيصال والموافقة عليه من الإدارة. احتفظ بكود الطلب للمتابعة.</p>
             <button class="wallet-primary" id="walletSubmitBtn" onclick="walletSubmitDeposit()">إرسال طلب الإيداع للمراجعة</button>
+            </div>
           </div>
           <div id="walletHistoryPane" class="wallet-hidden"><div class="wallet-history"><h3>سجل الإيداع</h3><div id="walletHistoryList" class="wallet-muted">جارٍ تحميل الطلبات…</div></div></div>
           <div class="wallet-status" id="walletStatus" role="status"></div>
