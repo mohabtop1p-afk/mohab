@@ -47,6 +47,8 @@
         /* الصور ذات الخلفية الشفافة يجب أن تحتفظ بشفافيتها؛ لا نضيف خلفية عامة للصور */
         img { background-color: transparent; background-image: none; }
         img { content-visibility: auto; }
+        /* مساحة تحميل ثابتة تمنع ظهور أيقونة الصورة المكسورة مع بطء الاتصال */
+        img.mohab-image-pending { background-color:rgba(15,27,43,.92)!important; background-image:linear-gradient(135deg,rgba(6,182,212,.10),rgba(30,41,59,.65))!important; object-fit:contain; }
         iframe { border: 0; }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
@@ -1384,6 +1386,41 @@
             if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
         };
 
+        // تحميل الصور تدريجياً مع Placeholder موحد؛ عند فشل الرابط لا تظهر علامة الصورة المكسورة.
+        (function installMohabImageFallback(){
+            const placeholder = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90"><rect width="120" height="90" rx="12" fill="#101d2d"/><rect x="35" y="20" width="50" height="42" rx="6" fill="none" stroke="#22d3ee" stroke-width="4" opacity=".8"/><circle cx="72" cy="33" r="5" fill="#22d3ee" opacity=".8"/><path d="M40 57l14-14 10 10 8-8 9 12" fill="none" stroke="#22d3ee" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/><path d="M48 74h24" stroke="#64748b" stroke-width="3" stroke-linecap="round"/></svg>');
+            function prepare(img){
+                if(!img || img.dataset.mohabPrepared==='1') return;
+                const src=img.getAttribute('src');
+                if(!src || src.startsWith('data:') || src.startsWith('blob:')) return;
+                img.dataset.mohabPrepared='1';
+                img.dataset.mohabOriginalSrc=src;
+                img.classList.add('mohab-image-pending');
+                img.dataset.mohabLastSrc=placeholder;
+                img.setAttribute('src',placeholder);
+                const probe=new Image();
+                probe.onload=()=>{ const real=img.dataset.mohabOriginalSrc; img.dataset.mohabLastSrc=real; img.setAttribute('src',real); img.classList.remove('mohab-image-pending'); };
+                probe.onerror=()=>{ img.dataset.mohabLastSrc=placeholder; img.setAttribute('src',placeholder); img.classList.add('mohab-image-pending'); };
+                probe.src=src;
+            }
+            function scan(root){
+                if(root && root.tagName==='IMG') prepare(root);
+                if(root && root.querySelectorAll) root.querySelectorAll('img').forEach(prepare);
+            }
+            if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>scan(document),{once:true}); else scan(document);
+            const observer=new MutationObserver(records=>records.forEach(record=>{
+                if(record.type==='childList') record.addedNodes.forEach(node=>{if(node.nodeType===1)scan(node);});
+                else if(record.type==='attributes' && record.target.tagName==='IMG'){
+                    const img=record.target;
+                    const current=img.getAttribute('src');
+                    if(img.dataset.mohabPrepared==='1' && current===img.dataset.mohabLastSrc) return;
+                    if(img.dataset.mohabPrepared==='1') { img.dataset.mohabPrepared='0'; delete img.dataset.mohabOriginalSrc; delete img.dataset.mohabLastSrc; }
+                    prepare(img);
+                }
+            }));
+            observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});
+        })();
+
         const firebaseConfig = {
             apiKey: "AIzaSyAVV1wjaYY1saP5Op9TdY_Snrt7DQcXSwU",
             authDomain: "mohab-store.firebaseapp.com",
@@ -1400,6 +1437,50 @@
         let currentGameId = null;
         let currentPriceType = null; 
         let currentCurrency = 'EGP';
+
+        // روابط مباشرة قابلة للمشاركة: #game/<id>/prices/<method>
+        // نستخدم hash صريحاً ونحدّث شريط العنوان في كل انتقال داخل المتجر.
+        function mohabRouteUrl(route) {
+            const base = location.pathname + location.search;
+            return base + (route ? '#'+route : '');
+        }
+        function mohabPushRoute(route, state) {
+            const url = mohabRouteUrl(route);
+            try { history.pushState(state || { mohabRoute: route }, '', url); }
+            catch (err) { location.hash = route || ''; }
+        }
+        function mohabReplaceRoute(route, state) {
+            const url = mohabRouteUrl(route);
+            try { history.replaceState(state || { mohabRoute: route }, '', url); }
+            catch (err) { location.replace(url); }
+        }
+        function mohabCurrentRoute() {
+            let raw = (location.hash || '').replace(/^#/, '');
+            try { return decodeURIComponent(raw); } catch (_) { return raw; }
+        }
+        function mohabApplyInitialRoute() {
+            if (window.__mohabInitialRouteApplied) return;
+            window.__mohabInitialRouteApplied = true;
+            const route = mohabCurrentRoute();
+            if (!route) return;
+            if (route.startsWith('game/')) {
+                const parts = route.split('/');
+                const id = parts[1];
+                if (!id || !globalGames[id]) return;
+                openGame(id, true);
+                if (parts[2] === 'prices' && parts[3]) {
+                    // افتح قائمة الأسعار نفسها عند مشاركة الرابط، مع إبقاء الرجوع لقائمة الطرق.
+                    const method = parts.slice(3).join('/');
+                    mohabReplaceRoute('game/' + encodeURIComponent(id), { mohabRoute: 'game' });
+                    showPrices(method);
+                }
+                return;
+            }
+            if (route === 'wallet') { openWallet(true); return; }
+            if (route === 'luck') { openLuckPage(null, true); return; }
+            if (route === 'chatbot') { openChatbotPage(null, true); return; }
+            if (route === 'recovery') { openRecovery(true); return; }
+        }
 
         let visitorId = localStorage.getItem('mohab_visitor_id');
         if(!visitorId) {
@@ -1518,6 +1599,22 @@
         });
 
         window.addEventListener('popstate', function(e) {
+            if (document.getElementById('walletPage') && document.getElementById('walletPage').classList.contains('open')) {
+                closeWallet(true);
+                return;
+            }
+            if (document.getElementById('luckPage') && document.getElementById('luckPage').classList.contains('open')) {
+                closeLuckPage(true);
+                return;
+            }
+            if (document.getElementById('chatbotPage') && document.getElementById('chatbotPage').classList.contains('open')) {
+                closeChatbotPage(true);
+                return;
+            }
+            if (document.getElementById('recoveryPage') && document.getElementById('recoveryPage').classList.contains('open')) {
+                closeRecovery(true);
+                return;
+            }
             if (document.getElementById('customExternalPage').classList.contains('open')) {
                 closeExternalPage(true);
                 return;
@@ -1790,6 +1887,7 @@
                 }
             });
             grid.innerHTML = htmlString;
+            mohabApplyInitialRoute();
         });
 
         function decodeExternalTarget(item) {
@@ -1866,10 +1964,10 @@
             }, 150); 
         }
 
-        function openGame(id) {
+        function openGame(id, fromRoute = false) {
             const selectedItem = globalGames[id];
             if (selectedItem && selectedItem.kind === 'external') { openExternalItem(id); return; }
-            pushModalState();
+            if (!fromRoute) mohabPushRoute('game/' + encodeURIComponent(id), { mohabRoute: 'game' });
             currentGameId = id; const game = globalGames[id];
             document.getElementById('modalGameName').innerText = game.name; document.getElementById('modalGameImg').src = game.img;
             const optionsList = document.getElementById('modalOptionsList'); let htmlString = ''; let hasAnyOption = false;
@@ -1892,8 +1990,8 @@
             document.getElementById('modalScrollBox').scrollTop = 0; const modal = document.getElementById('gameModal'); modal.style.display = 'flex'; void modal.offsetWidth; modal.classList.add('active');
         }
 
-        function showPrices(type) {
-            pushModalState();
+        function showPrices(type, fromRoute = false) {
+            if (!fromRoute) mohabPushRoute('game/' + encodeURIComponent(currentGameId) + '/prices/' + encodeURIComponent(type), { mohabRoute: 'prices' });
             currentPriceType = type; const game = globalGames[currentGameId];
             let pricesStr = ''; let methodTextForWhatsApp = '';
             
@@ -2008,8 +2106,9 @@
         }
         db.ref('wallet_discount_settings').on('value',snap=>{const v=snap.val();if(v&&typeof v==='object')walletDiscountSettings=v;});
         let walletPageHistoryPushed=false, walletOrdersHistoryPushed=false;
-        function openWallet() {
-            if(!walletPageHistoryPushed){history.pushState({mohabWallet:true},'','#wallet');walletPageHistoryPushed=true;}
+        function openWallet(fromRoute = false) {
+            if(!walletPageHistoryPushed && !fromRoute){mohabPushRoute('wallet',{mohabWallet:true});walletPageHistoryPushed=true;}
+            else if(fromRoute) walletPageHistoryPushed=false;
             document.getElementById('walletPage').classList.add('open');
             document.getElementById('walletPage').setAttribute('aria-hidden','false');
             document.body.style.overflow='hidden';
@@ -2636,14 +2735,14 @@
         initLiveDiscounts();
 
         const luckTarget = atob('aHR0cHM6Ly9tb2hhYnRvcDFwLWFmay5naXRodWIuaW8vbHVjay0v');
-        function openLuckPage(e) {
+        function openLuckPage(e, fromRoute = false) {
             if (e) e.preventDefault();
             const page = document.getElementById('luckPage');
             const frame = document.getElementById('luckFrame');
             if (frame.getAttribute('src') !== luckTarget) frame.src = luckTarget;
             page.classList.add('open'); page.setAttribute('aria-hidden','false');
             document.body.style.overflow='hidden';
-            history.pushState({ luck: true }, '');
+            if (!fromRoute) mohabPushRoute('luck', { luck: true, mohabRoute: 'luck' });
         }
         function closeLuckPage(fromHistory=false) {
             const page = document.getElementById('luckPage');
@@ -2654,14 +2753,14 @@
         }
 
         const chatbotTarget = atob('aHR0cHM6Ly9tb2hhYnRvcDFwLWFmay5naXRodWIuaW8vTWFoYWItQ2hhdC0v');
-        function openChatbotPage(e) {
+        function openChatbotPage(e, fromRoute = false) {
             if (e) e.preventDefault();
             const page = document.getElementById('chatbotPage');
             const frame = document.getElementById('chatbotFrame');
             if (frame.getAttribute('src') !== chatbotTarget) frame.src = chatbotTarget;
             page.classList.add('open'); page.setAttribute('aria-hidden','false');
             document.body.style.overflow='hidden';
-            history.pushState({ chatbot: true }, '');
+            if (!fromRoute) mohabPushRoute('chatbot', { chatbot: true, mohabRoute: 'chatbot' });
         }
         function closeChatbotPage(fromHistory=false) {
             const page = document.getElementById('chatbotPage');
@@ -2671,16 +2770,19 @@
             document.body.style.overflow='';
         }
 
-        function openRecovery() {
+        function openRecovery(fromRoute = false) {
             document.getElementById('recoveryPage').classList.add('open');
             document.body.style.overflow = 'hidden';
-            history.pushState({ recovery: true }, '');
+            if (!fromRoute) mohabPushRoute('recovery', { recovery: true, mohabRoute: 'recovery' });
         }
 
-        function closeRecovery() {
+        function closeRecovery(fromPopState = false) {
             document.getElementById('recoveryPage').classList.remove('open');
             document.body.style.overflow = '';
-            if (history.state && history.state.recovery) history.back();
+            if (!fromPopState) {
+                if (history.state && history.state.recovery) history.back();
+                else mohabReplaceRoute('', {});
+            }
         }
 
         window.addEventListener('popstate', function(e) {
