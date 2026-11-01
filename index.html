@@ -1530,6 +1530,23 @@
             EGP: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40"><rect width="60" height="40" fill="#fff"/><rect width="60" height="13.33" fill="#ce1126"/><rect y="26.67" width="60" height="13.33" fill="#000"/><circle cx="30" cy="20" r="5" fill="#d4af37"/></svg>`),
             USD: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40"><rect width="60" height="40" fill="#fff"/><g fill="#b22234"><rect width="60" height="3.08"/><rect y="6.15" width="60" height="3.08"/><rect y="12.31" width="60" height="3.08"/><rect y="18.46" width="60" height="3.08"/><rect y="24.62" width="60" height="3.08"/><rect y="30.77" width="60" height="3.08"/><rect y="36.92" width="60" height="3.08"/></g><rect width="25" height="21.54" fill="#3c3b6e"/><g fill="#fff"><circle cx="4" cy="4" r="1"/><circle cx="10" cy="4" r="1"/><circle cx="16" cy="4" r="1"/><circle cx="22" cy="4" r="1"/><circle cx="7" cy="9" r="1"/><circle cx="13" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="4" cy="14" r="1"/><circle cx="10" cy="14" r="1"/><circle cx="16" cy="14" r="1"/><circle cx="22" cy="14" r="1"/><circle cx="7" cy="19" r="1"/><circle cx="13" cy="19" r="1"/><circle cx="19" cy="19" r="1"/></g></svg>`),
         };
+        const DEFAULT_CURRENCY_FLAGS = {
+            EGP: 'https://a.top4top.io/p_3914owpxp0.jpg',
+            USD: 'https://k.top4top.io/p_3914ild450.jpg'
+        };
+        let customCurrencyFlags = {};
+        function applyCurrencyFlag(){
+            const flag=document.getElementById('currencyFlag');if(!flag)return;
+            const key=currentCurrency==='USD'?'USD':'EGP';
+            flag.dataset.currencyFallback='0';
+            flag.src=customCurrencyFlags[key]||DEFAULT_CURRENCY_FLAGS[key];
+            flag.alt=key==='USD'?'علم الولايات المتحدة':'علم مصر';
+        }
+        db.ref('settings/currencyFlags').on('value',snap=>{
+            customCurrencyFlags=snap.exists()?(snap.val()||{}):{};
+            applyCurrencyFlag();
+        },err=>console.error('Currency flag settings:',err));
+
         function handleCurrencyFlagError(img) {
             if (!img || img.dataset.currencyFallback === '1') return;
             img.dataset.currencyFallback = '1';
@@ -1546,12 +1563,12 @@
             const title = document.getElementById('currencyTitle');
 
             if (currentCurrency === 'USD') {
-                flag.src = 'https://k.top4top.io/p_3914ild450.jpg';
+                flag.src = customCurrencyFlags.USD || DEFAULT_CURRENCY_FLAGS.USD;
                 flag.alt = 'علم الولايات المتحدة';
                 title.textContent = 'الأسعار بالدولار الأمريكي';
                 btn.setAttribute('aria-label', 'الأسعار بالدولار الأمريكي - اضغط للعودة للجنيه المصري');
             } else {
-                flag.src = 'https://a.top4top.io/p_3914owpxp0.jpg';
+                flag.src = customCurrencyFlags.EGP || DEFAULT_CURRENCY_FLAGS.EGP;
                 flag.alt = 'علم مصر';
                 title.textContent = 'الأسعار بالجنيه المصري';
                 btn.setAttribute('aria-label', 'الأسعار بالجنيه المصري - اضغط للتغيير للدولار');
