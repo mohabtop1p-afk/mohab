@@ -735,10 +735,6 @@
         .option-icon { width: 42px; height: 42px; border-radius: 12px; background: rgba(6, 182, 212, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         
         .prices-top-bar { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; }
-        .prices-share-btn{display:flex;align-items:center;gap:7px;border:1px solid rgba(34,211,238,.35);background:rgba(34,211,238,.10);color:var(--primary);border-radius:12px;padding:8px 12px;font-weight:800;font-size:.78rem;cursor:pointer;transition:.2s}
-        .prices-share-btn:hover{background:rgba(34,211,238,.18);transform:translateY(-1px)}
-        .prices-share-btn i{font-size:.9rem}
-        .currency-flag{object-fit:cover!important;object-position:center!important;overflow:hidden;clip-path:circle(50% at 50% 50%)}
         .back-step-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 0.9rem; transition: transform 0.2s; will-change: transform; }
         .back-step-btn:hover { color: var(--accent); transform: translateX(4px); }
         
@@ -1332,7 +1328,6 @@
                 <div class="prices-top-bar">
                     <button class="back-step-btn" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>
                     <span style="color:#fff; font-weight:800; font-size:0.95rem;">الأسعار</span>
-                    <button type="button" class="prices-share-btn" onclick="shareCurrentPrices()" aria-label="مشاركة قائمة الأسعار" title="مشاركة قائمة الأسعار"><i class="fas fa-share-alt"></i><span>مشاركة</span></button>
                 </div>
                 <div class="prices-grid-container" id="pricesContent"></div>
             </div>
@@ -1442,7 +1437,6 @@
         let currentGameId = null;
         let currentPriceType = null; 
         let currentCurrency = 'EGP';
-        window.__mohabDirectSharedRoute = false;
 
         // روابط مباشرة قابلة للمشاركة: #game/<id>/prices/<method>
         // نستخدم hash صريحاً ونحدّث شريط العنوان في كل انتقال داخل المتجر.
@@ -1475,10 +1469,16 @@
                 if (!id || !globalGames[id]) return;
                 openGame(id, true);
                 if (parts[2] === 'prices' && parts[3]) {
-                    // الرابط المباشر يظل كما هو؛ لا نضيف إدخالاً وهمياً في سجل المتصفح.
                     const method = parts.slice(3).join('/');
-                    window.__mohabDirectSharedRoute = true;
-                    showPrices(method, true);
+                    mohabReplaceRoute('game/' + encodeURIComponent(id), { mohabRoute: 'game' });
+                    showPrices(method);
+                } else if (parts[2] === 'external' && parts[3] !== undefined) {
+                    const methodIndex = Number(parts[3]);
+                    const method = globalGames[id]?.custom_methods?.[methodIndex];
+                    if (method && method.type === 'external') {
+                        mohabReplaceRoute('game/' + encodeURIComponent(id), { mohabRoute: 'game' });
+                        openExternalMethod(method, id, methodIndex);
+                    }
                 }
                 return;
             }
@@ -1942,9 +1942,43 @@
             openExternalPageUrl(decodeExternalTarget(item), item.name || 'صفحة');
         }
 
-        function openExternalMethod(method) {
+        function decodeCustomMethodTarget(method) {
+            if (!method) return '';
+            if (method.external_url) return method.external_url;
+            try { return method.external_url_b64 ? decodeURIComponent(escape(atob(method.external_url_b64))) : ''; }
+            catch (_) { return ''; }
+        }
+
+        function openExternalMethod(method, gameId = currentGameId, methodIndex = -1, fromRoute = false) {
             if (!method) return;
-            openExternalPageUrl(decodeExternalTarget(method), method.name || 'صفحة');
+            const target = decodeCustomMethodTarget(method);
+            let parsed;
+            try { parsed = new URL(String(target || '').trim()); } catch (_) { parsed = null; }
+            if (!parsed || parsed.protocol !== 'https:') { alert('رابط طريقة الشحن غير صحيح. راجع الرابط في لوحة التحكم.'); return; }
+            if (!fromRoute && gameId && Number.isInteger(Number(methodIndex))) {
+                mohabPushRoute('game/' + encodeURIComponent(gameId) + '/external/' + Number(methodIndex), { mohabRoute: 'external-method' });
+            }
+            currentExternalTarget = parsed.href;
+            const page = document.getElementById('customExternalPage');
+            const frame = document.getElementById('customExternalFrame');
+            document.getElementById('customExternalTitle').textContent = method.name || 'طريقة الشحن';
+            page.classList.add('open');
+            page.setAttribute('aria-hidden','false');
+            document.body.style.overflow='hidden';
+            frame.src = currentExternalTarget;
+        }
+
+        async function shareExternalMethod() {
+            const url = location.href;
+            const title = document.getElementById('customExternalTitle')?.textContent || 'MOHAB STORE';
+            const data = { title, text: 'افتح طريقة الشحن من MOHAB STORE', url };
+            try {
+                if (navigator.share) await navigator.share(data);
+                else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(url); alert('تم نسخ رابط المشاركة.'); }
+                else { window.prompt('انسخ رابط المشاركة:', url); }
+            } catch (e) {
+                if (e && e.name !== 'AbortError') window.prompt('انسخ رابط المشاركة:', url);
+            }
         }
 
         function closeExternalPage(fromHistory = false) {
@@ -1986,7 +2020,7 @@
                 game.custom_methods.forEach((cm, index) => {
                     const methodName = String(cm.name || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
                     const iconHtml = cm.icon ? `<img src="${String(cm.icon).replace(/"/g,'&quot;')}" alt="" style="width:100%;height:100%;object-fit:contain;background:transparent!important;background-color:transparent!important;background-image:none!important;mix-blend-mode:normal" onerror="this.outerHTML='<i class=\"fas fa-bolt\"></i>'">` : '<i class="fas fa-bolt"></i>';
-                    const action = cm.type === 'external' ? `openExternalMethod(globalGames[currentGameId].custom_methods[${index}])` : `showPrices('custom_${index}')`;
+                    const action = cm.type === 'external' ? `openExternalMethod(globalGames[currentGameId].custom_methods[${index}], currentGameId, ${index})` : `showPrices('custom_${index}')`;
                     htmlString += `<div class="option-card" onclick="${action}"><div class="option-icon">${iconHtml}</div><div><h4 style="color:#fff; font-size:0.95rem;">${methodName}</h4></div></div>`;
                 });
             }
@@ -2037,26 +2071,6 @@
                 content.innerHTML = htmlString;
             }
             document.getElementById('stepSelection').classList.remove('active'); document.getElementById('stepPrices').classList.add('active'); document.getElementById('modalScrollBox').scrollTop = 0;
-        }
-
-        async function shareCurrentPrices() {
-            const url = window.location.href;
-            const game = globalGames[currentGameId] || {};
-            const method = currentPriceType === 'id' ? 'شحن ID' : currentPriceType === 'account' ? 'شحن الحساب' : 'طريقة الشحن';
-            const shareData = { title: 'أسعار ' + (game.name || 'اللعبة') + ' - MOHAB STORE', text: 'قائمة أسعار ' + (game.name || 'اللعبة') + ' - ' + method + ' من MOHAB STORE', url };
-            if (navigator.share) {
-                try { await navigator.share(shareData); }
-                catch (err) { if (err && err.name !== 'AbortError') console.error('Share error:', err); }
-                return;
-            }
-            try {
-                if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(url);
-                else {
-                    const field=document.createElement('textarea'); field.value=url; field.style.position='fixed'; field.style.opacity='0'; document.body.appendChild(field); field.select(); document.execCommand('copy'); field.remove();
-                }
-                if (typeof showToast === 'function') showToast('تم نسخ رابط قائمة الأسعار');
-                else alert('تم نسخ رابط قائمة الأسعار');
-            } catch(e) { prompt('انسخ رابط قائمة الأسعار:', url); }
         }
 
         function openWhatsApp(element) {
@@ -2535,24 +2549,12 @@
         document.addEventListener('DOMContentLoaded',walletUpdateDepositCurrency);
 
         function goBack(fromHistory = false) {
-            if(!fromHistory) {
-                if (currentGameId) mohabReplaceRoute('game/' + encodeURIComponent(currentGameId), {mohabRoute:'game'});
-                window.__mohabDirectSharedRoute = false;
-            }
+            if(!fromHistory) { history.back(); return; } 
             currentPriceType = null; document.getElementById('stepPrices').classList.remove('active'); document.getElementById('stepSelection').classList.add('active'); document.getElementById('modalScrollBox').scrollTop = 0;
         }
 
         function closeModal(modalId, fromHistory = false) {
-            if(!fromHistory && modalId === 'gameModal') {
-                // إغلاق القائمة من رابط مشاركة يغلق النافذة فعلياً ولا يترك المستخدم عالقاً في سجل المتصفح.
-                mohabReplaceRoute('', {mohabRoute:'home'});
-                window.__mohabDirectSharedRoute = false;
-                currentPriceType = null;
-                const directModal = document.getElementById(modalId);
-                directModal.classList.remove('active'); setTimeout(() => directModal.style.display = 'none', 250);
-                return;
-            }
-            if(!fromHistory) { history.back(); return; }
+            if(!fromHistory) { history.back(); return; } 
             if(modalId === 'gameModal') currentPriceType = null;
             const modal = document.getElementById(modalId); modal.classList.remove('active'); setTimeout(() => modal.style.display = 'none', 250);
             
@@ -2930,7 +2932,8 @@
     <section id="customExternalPage" aria-hidden="true">
         <header class="custom-external-header">
             <button class="custom-external-close" type="button" onclick="closeExternalPage()" aria-label="رجوع"><i class="fas fa-arrow-right"></i></button>
-            <div id="customExternalTitle">الصفحة</div>
+            <div id="customExternalTitle" style="flex:1">الصفحة</div>
+            <button class="custom-external-close" type="button" onclick="shareExternalMethod()" aria-label="مشاركة الرابط" title="مشاركة الرابط"><i class="fas fa-share-alt"></i></button>
         </header>
         <iframe id="customExternalFrame" title="صفحة داخل المتجر" src="about:blank" referrerpolicy="strict-origin-when-cross-origin" allow="payment *; clipboard-read; clipboard-write; fullscreen" loading="lazy"></iframe>
     </section>
