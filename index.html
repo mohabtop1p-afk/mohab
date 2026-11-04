@@ -1164,7 +1164,49 @@
         body.light-theme #gameModal textarea::placeholder{color:#64748b}
         body.light-theme #gameModal button:not(.theme-toggle-btn){color:inherit}
 
-    </style>
+    
+        /* إصلاح أيقونة العملة: قصّ العلم داخل دائرة فعلية مع الحفاظ على حجمه ونسبه */
+        #currencyBtn {
+            overflow: visible;
+        }
+        #currencyBtn #currencyFlag.currency-flag {
+            display: block;
+            width: clamp(36px, 3.8vw, 48px) !important;
+            height: clamp(36px, 3.8vw, 48px) !important;
+            min-width: clamp(36px, 3.8vw, 48px);
+            min-height: clamp(36px, 3.8vw, 48px);
+            flex: 0 0 clamp(36px, 3.8vw, 48px) !important;
+            aspect-ratio: 1 / 1;
+            border-radius: 50% !important;
+            object-fit: cover !important;
+            object-position: center;
+            overflow: hidden;
+            clip-path: circle(50%);
+            -webkit-clip-path: circle(50%);
+            border: 2px solid rgba(255,255,255,.28);
+            box-shadow: 0 2px 9px rgba(0,0,0,.32);
+            background: transparent !important;
+        }
+        @media (max-width: 767px) {
+            #currencyBtn #currencyFlag.currency-flag {
+                width: 38px !important;
+                height: 38px !important;
+                min-width: 38px;
+                min-height: 38px;
+                flex-basis: 38px !important;
+            }
+        }
+        @media (max-width: 390px) {
+            #currencyBtn #currencyFlag.currency-flag {
+                width: 35px !important;
+                height: 35px !important;
+                min-width: 35px;
+                min-height: 35px;
+                flex-basis: 35px !important;
+            }
+        }
+
+</style>
 </head>
 <body>
 
