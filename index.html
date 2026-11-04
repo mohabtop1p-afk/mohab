@@ -2596,11 +2596,33 @@
         }
 
         function closeModal(modalId, fromHistory = false) {
-            if(!fromHistory) { history.back(); return; } 
-            if(modalId === 'gameModal') currentPriceType = null;
-            const modal = document.getElementById(modalId); modal.classList.remove('active'); setTimeout(() => modal.style.display = 'none', 250);
-            
-            if(modalId === 'discountModal' && activeDiscountData) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+
+            // زر إغلاق قائمة الأسعار يجب أن يغلق النافذة بالكامل، وليس الرجوع
+            // خطوة واحدة إلى قائمة طرق الشحن. هذا مهم خصوصاً عند فتح رابط مشاركة مباشر.
+            if (modalId === 'gameModal' && !fromHistory) {
+                currentPriceType = null;
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+                setTimeout(() => { modal.style.display = 'none'; }, 250);
+                // إزالة مسار القائمة من الرابط دون إنشاء انتقال تاريخي جديد أو
+                // الاعتماد على history.back() الذي كان يعيد المستخدم لخطوة الأسعار.
+                try {
+                    history.replaceState({ mohabRoute: 'home' }, '', location.pathname + location.search);
+                } catch (err) {
+                    if (location.hash) location.hash = '';
+                }
+                return;
+            }
+
+            if (!fromHistory) { history.back(); return; }
+            if (modalId === 'gameModal') currentPriceType = null;
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
+            setTimeout(() => { modal.style.display = 'none'; }, 250);
+
+            if (modalId === 'discountModal' && activeDiscountData) {
                 document.getElementById('floatingGift').style.display = 'flex';
             }
         }
