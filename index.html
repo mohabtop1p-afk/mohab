@@ -1588,6 +1588,37 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         let currentGameId = null;
         let currentPriceType = null; 
         let currentCurrency = 'EGP';
+        let usdPricingSettings = { applyToAll:false, selectedGames:{} };
+        let storeUsdToEgp = 50;
+        function isUsdAutoPricingEnabled(gameId) {
+            return !!(usdPricingSettings && (usdPricingSettings.applyToAll === true || (usdPricingSettings.selectedGames && usdPricingSettings.selectedGames[gameId] === true)));
+        }
+        function convertEgpPriceListToUsd(priceList) {
+            const rate = Number(storeUsdToEgp);
+            if (!Number.isFinite(rate) || rate <= 0 || !priceList) return priceList || '';
+            return String(priceList).split('\n').map(line => {
+                const parts = line.split('=');
+                if (parts.length !== 2) return line;
+                const left = parts[0];
+                const right = parts.slice(1).join('=');
+                const converted = right.split(/(بدل)/i).map(segment => {
+                    if (/^بدل$/i.test(segment)) return ' بدل ';
+                    let foundNumber = false;
+                    let valueText = segment.replace(/[0-9][0-9,]*(?:\.[0-9]+)?/g, token => {
+                        const value = Number(token.replace(/,/g,''));
+                        if (!Number.isFinite(value)) return token;
+                        foundNumber = true;
+                        return (Math.round((value / rate) * 100) / 100).toLocaleString('en-US',{maximumFractionDigits:2});
+                    }).replace(/جنيه مصري|جنيه|ج\.م|EGP|ج(?=\s|$)/gi, '').trim();
+                    return foundNumber ? valueText + ' $' : valueText;
+                }).join('').trim();
+                return left + '= ' + converted;
+            }).join('\n');
+        }
+        db.ref('settings/usdPricing').on('value', snap => {
+            usdPricingSettings = snap.val() || { applyToAll:false, selectedGames:{} };
+            if (currentCurrency === 'USD' && currentGameId && currentPriceType && document.getElementById('stepPrices')?.classList.contains('active')) showPrices(currentPriceType, true);
+        }, err => console.error('USD pricing settings:', err));
 
         // روابط مباشرة قابلة للمشاركة: #game/<id>/prices/<method>
         // نستخدم hash صريحاً ونحدّث شريط العنوان في كل انتقال داخل المتجر.
@@ -2201,12 +2232,19 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             currentPriceType = type; const game = globalGames[currentGameId];
             let pricesStr = ''; let methodTextForWhatsApp = '';
             
-            if (type === 'id') { 
-                pricesStr = currentCurrency === 'USD' ? (game.id_prices_usd || '') : (game.id_prices || ''); methodTextForWhatsApp = 'عن طريق شحن الـ ID'; 
-            } else if (type === 'account') { 
-                pricesStr = currentCurrency === 'USD' ? (game.account_prices_usd || '') : (game.account_prices || ''); methodTextForWhatsApp = 'عن طريق شحن الحساب'; 
-            } else if (type.startsWith('custom_')) { 
-                const index = parseInt(type.split('_')[1]); const customMethod = game.custom_methods[index]; pricesStr = currentCurrency === 'USD' ? (customMethod.prices_usd || '') : (customMethod.prices || ''); methodTextForWhatsApp = customMethod.name; 
+            if (type === 'id') {
+                const manualUsd = String(game.id_prices_usd || '').trim();
+                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId) ? convertEgpPriceListToUsd(game.id_prices || '') : '')) : (game.id_prices || '');
+                methodTextForWhatsApp = 'عن طريق شحن الـ ID';
+            } else if (type === 'account') {
+                const manualUsd = String(game.account_prices_usd || '').trim();
+                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId) ? convertEgpPriceListToUsd(game.account_prices || '') : '')) : (game.account_prices || '');
+                methodTextForWhatsApp = 'عن طريق شحن الحساب';
+            } else if (type.startsWith('custom_')) {
+                const index = parseInt(type.split('_')[1]); const customMethod = game.custom_methods[index];
+                const manualUsd = String(customMethod.prices_usd || '').trim();
+                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId) ? convertEgpPriceListToUsd(customMethod.prices || '') : '')) : (customMethod.prices || '');
+                methodTextForWhatsApp = customMethod.name;
             }
             
             const content = document.getElementById('pricesContent');
@@ -2738,9 +2776,10 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             walletListenOrders();
         });
         db.ref('wallet_settings/usdToEgp').on('value',snap=>{
-            const n=Number(snap.val());if(Number.isFinite(n)&&n>0)walletFxRate=n;
+            const n=Number(snap.val());if(Number.isFinite(n)&&n>0){walletFxRate=n;storeUsdToEgp=n;}
             if(walletUser && walletBalanceEgp>=0) walletBalanceUsd=walletBalanceEgp/(walletFxRate||1);
             walletDisplayBalance();walletUpdateDepositCurrency();
+            if(currentCurrency==='USD'&&currentGameId&&currentPriceType&&document.getElementById('stepPrices')?.classList.contains('active'))showPrices(currentPriceType,true);
         });
         document.addEventListener('DOMContentLoaded',walletUpdateDepositCurrency);
 
