@@ -1591,10 +1591,9 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         let usdPricingSettings = { applyToAll:false, selectedGames:{}, listSelections:{} };
         let storeUsdToEgp = 50;
         function isUsdAutoPricingEnabled(gameId, listType) {
-            const settings = usdPricingSettings || {};
-            const perGame = settings.listSelections && settings.listSelections[gameId];
-            if (perGame && Object.prototype.hasOwnProperty.call(perGame, listType)) return perGame[listType] === true;
             const game = globalGames[gameId] || {};
+            const selections = game.usd_auto_lists || {};
+            if (Object.prototype.hasOwnProperty.call(selections, listType)) return selections[listType] === true;
             const field = listType === 'id' ? 'id_auto_usd' : (listType === 'account' ? 'account_auto_usd' : '');
             if (field && typeof game[field] === 'boolean') return game[field];
             if (listType && listType.startsWith('custom_')) {
@@ -1602,7 +1601,7 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
                 const method = game.custom_methods && game.custom_methods[idx];
                 if (method && typeof method.auto_usd === 'boolean') return method.auto_usd;
             }
-            return !!(settings.applyToAll === true || (settings.selectedGames && settings.selectedGames[gameId] === true));
+            return false;
         }
         function convertEgpPriceListToUsd(priceList) {
             const rate = Number(storeUsdToEgp);
@@ -1610,23 +1609,24 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             const latin = value => String(value)
                 .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
                 .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
-            const fmt = value => (Math.round((value / rate) * 100) / 100).toLocaleString('en-US', {maximumFractionDigits:2}) + ' $';
+            const formatUsd = value => {
+                const n = Math.round((value / rate) * 100) / 100;
+                return n.toLocaleString('en-US', {maximumFractionDigits:2}) + ' $';
+            };
             return String(priceList).split(/\r?\n/).map(line => {
                 const eq = line.indexOf('=');
-                if (eq < 1) return line;
+                if (eq < 0) return line;
                 const left = line.slice(0, eq + 1);
-                const right = latin(line.slice(eq + 1));
-                // Convert all monetary numbers on the right side, including discounted/old prices.
-                const converted = right.replace(/(\d[\d,]*(?:\.\d+)?)(\s*(?:جنيه\s*مصري|جنيه|ج\.م|EGP|LE|ج)?)/gi, (match, raw, suffix, offset, whole) => {
-                    const before = whole.slice(0, offset);
-                    const after = whole.slice(offset + match.length);
-                    const n = Number(raw.replace(/,/g, ''));
-                    if (!Number.isFinite(n)) return match;
-                    // Only amounts following '=' are converted; numbers embedded in words/IDs are excluded.
-                    if (/[A-Za-z0-9]/.test(before.slice(-1)) || /^[A-Za-z]/.test(after)) return match;
-                    return fmt(n);
-                });
-                return left + ' ' + converted.replace(/جنيه\s*مصري|جنيه|ج\.م|EGP|LE|ج(?=\s|$)/gi, '').replace(/\s+/g,' ').trim();
+                let right = latin(line.slice(eq + 1));
+                // Right-hand side is the price text. Convert every standalone amount there,
+                // including current and old/discounted prices, while preserving Arabic labels.
+                right = right.replace(/(^|[^\dA-Za-z])(\d[\d,]*(?:\.\d+)?)(?=$|[^\dA-Za-z])/g,
+                    (whole, prefix, raw) => {
+                        const amount = Number(raw.replace(/,/g, ''));
+                        return Number.isFinite(amount) ? prefix + formatUsd(amount) : whole;
+                    });
+                right = right.replace(/جنيه\s*مصري|جنيه|ج\.م|EGP|LE|ج(?=\s|$)/gi, '').replace(/\s+/g, ' ').trim();
+                return left + ' ' + right;
             }).join('\n');
         }
         db.ref('settings/usdPricing').on('value', snap => {
@@ -2248,16 +2248,16 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             
             if (type === 'id') {
                 const manualUsd = String(game.id_prices_usd || '').trim();
-                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId, 'id') ? convertEgpPriceListToUsd(game.id_prices || '') : '')) : (game.id_prices || '');
+                pricesStr = currentCurrency === 'USD' ? (isUsdAutoPricingEnabled(currentGameId, 'id') ? convertEgpPriceListToUsd(game.id_prices || '') : (manualUsd || '')) : (game.id_prices || '');
                 methodTextForWhatsApp = 'عن طريق شحن الـ ID';
             } else if (type === 'account') {
                 const manualUsd = String(game.account_prices_usd || '').trim();
-                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId, 'account') ? convertEgpPriceListToUsd(game.account_prices || '') : '')) : (game.account_prices || '');
+                pricesStr = currentCurrency === 'USD' ? (isUsdAutoPricingEnabled(currentGameId, 'account') ? convertEgpPriceListToUsd(game.account_prices || '') : (manualUsd || '')) : (game.account_prices || '');
                 methodTextForWhatsApp = 'عن طريق شحن الحساب';
             } else if (type.startsWith('custom_')) {
                 const index = parseInt(type.split('_')[1]); const customMethod = game.custom_methods[index];
                 const manualUsd = String(customMethod.prices_usd || '').trim();
-                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId, type) ? convertEgpPriceListToUsd(customMethod.prices || '') : '')) : (customMethod.prices || '');
+                pricesStr = currentCurrency === 'USD' ? (isUsdAutoPricingEnabled(currentGameId, type) ? convertEgpPriceListToUsd(customMethod.prices || '') : (manualUsd || '')) : (customMethod.prices || '');
                 methodTextForWhatsApp = customMethod.name;
             }
             
