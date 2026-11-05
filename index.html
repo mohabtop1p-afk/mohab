@@ -1590,29 +1590,33 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         let currentCurrency = 'EGP';
         let usdPricingSettings = { applyToAll:false, selectedGames:{} };
         let storeUsdToEgp = 50;
-        function isUsdAutoPricingEnabled(gameId) {
+        function isUsdAutoPricingEnabled(gameId, listType) {
+            const game = globalGames[gameId] || {};
+            const field = listType === 'id' ? 'id_auto_usd' : (listType === 'account' ? 'account_auto_usd' : '');
+            if (field && typeof game[field] === 'boolean') return game[field];
+            if (listType && listType.startsWith('custom_')) {
+                const idx = Number(listType.split('_')[1]);
+                const method = game.custom_methods && game.custom_methods[idx];
+                if (method && typeof method.auto_usd === 'boolean') return method.auto_usd;
+            }
+            // Compatibility with the older game-wide selector saved in the previous version.
             return !!(usdPricingSettings && (usdPricingSettings.applyToAll === true || (usdPricingSettings.selectedGames && usdPricingSettings.selectedGames[gameId] === true)));
         }
         function convertEgpPriceListToUsd(priceList) {
             const rate = Number(storeUsdToEgp);
             if (!Number.isFinite(rate) || rate <= 0 || !priceList) return priceList || '';
-            return String(priceList).split('\n').map(line => {
-                const parts = line.split('=');
-                if (parts.length !== 2) return line;
-                const left = parts[0];
-                const right = parts.slice(1).join('=');
-                const converted = right.split(/(بدل)/i).map(segment => {
-                    if (/^بدل$/i.test(segment)) return ' بدل ';
-                    let foundNumber = false;
-                    let valueText = segment.replace(/[0-9][0-9,]*(?:\.[0-9]+)?/g, token => {
-                        const value = Number(token.replace(/,/g,''));
-                        if (!Number.isFinite(value)) return token;
-                        foundNumber = true;
-                        return (Math.round((value / rate) * 100) / 100).toLocaleString('en-US',{maximumFractionDigits:2});
-                    }).replace(/جنيه مصري|جنيه|ج\.م|EGP|ج(?=\s|$)/gi, '').trim();
-                    return foundNumber ? valueText + ' $' : valueText;
-                }).join('').trim();
-                return left + '= ' + converted;
+            const toLatin = value => String(value).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+            return String(priceList).split(/\r?\n/).map(line => {
+                const eq = line.indexOf('=');
+                if (eq < 1) return line;
+                const left = line.slice(0, eq);
+                const right = line.slice(eq + 1);
+                const converted = toLatin(right).replace(/([0-9][0-9,]*(?:\.[0-9]+)?)(?=\s*(?:جنيه مصري|جنيه|ج\.م|EGP|ج)?(?:\s|$|بدل))/gi, (token) => {
+                    const value = Number(token.replace(/,/g, ''));
+                    if (!Number.isFinite(value)) return token;
+                    return (Math.round((value / rate) * 100) / 100).toLocaleString('en-US', {maximumFractionDigits:2}) + ' $';
+                }).replace(/جنيه مصري|جنيه|ج\.م|EGP|ج(?=\s|$)/gi, '');
+                return left + '= ' + converted.replace(/\s+/g, ' ').trim();
             }).join('\n');
         }
         db.ref('settings/usdPricing').on('value', snap => {
@@ -2234,16 +2238,16 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             
             if (type === 'id') {
                 const manualUsd = String(game.id_prices_usd || '').trim();
-                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId) ? convertEgpPriceListToUsd(game.id_prices || '') : '')) : (game.id_prices || '');
+                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId, 'id') ? convertEgpPriceListToUsd(game.id_prices || '') : '')) : (game.id_prices || '');
                 methodTextForWhatsApp = 'عن طريق شحن الـ ID';
             } else if (type === 'account') {
                 const manualUsd = String(game.account_prices_usd || '').trim();
-                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId) ? convertEgpPriceListToUsd(game.account_prices || '') : '')) : (game.account_prices || '');
+                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId, 'account') ? convertEgpPriceListToUsd(game.account_prices || '') : '')) : (game.account_prices || '');
                 methodTextForWhatsApp = 'عن طريق شحن الحساب';
             } else if (type.startsWith('custom_')) {
                 const index = parseInt(type.split('_')[1]); const customMethod = game.custom_methods[index];
                 const manualUsd = String(customMethod.prices_usd || '').trim();
-                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId) ? convertEgpPriceListToUsd(customMethod.prices || '') : '')) : (customMethod.prices || '');
+                pricesStr = currentCurrency === 'USD' ? (manualUsd || (isUsdAutoPricingEnabled(currentGameId, type) ? convertEgpPriceListToUsd(customMethod.prices || '') : '')) : (customMethod.prices || '');
                 methodTextForWhatsApp = customMethod.name;
             }
             
