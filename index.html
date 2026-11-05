@@ -1206,7 +1206,79 @@
             }
         }
 
-</style>
+
+        /* تحسينات واجهة العملة وتسجيل دخول المحفظة */
+        .currency-toggle{
+            width:124px!important;min-height:42px!important;height:42px!important;
+            padding:4px 7px!important;gap:5px!important;border-radius:13px!important;
+            box-shadow:0 3px 10px rgba(0,0,0,.16)!important;
+            transition:background .18s ease,border-color .18s ease,box-shadow .18s ease!important;
+            will-change:auto!important;
+        }
+        .currency-toggle:hover{transform:translateY(-50%)!important;box-shadow:0 4px 12px rgba(6,182,212,.12)!important}
+        .currency-toggle:active{transform:translateY(-50%)!important;filter:brightness(1.08)}
+        .currency-flag{width:23px!important;height:23px!important;flex-basis:23px!important}
+        .currency-toggle-title{font-size:.55rem!important}
+        .currency-toggle-hint{font-size:.43rem!important;margin-top:2px!important}
+        .currency-toggle-arrow{width:18px!important;height:18px!important;flex-basis:18px!important;font-size:.52rem!important}
+        @media(max-width:767px){
+            .currency-toggle{width:116px!important;height:40px!important;min-height:40px!important;right:0;padding:4px 6px!important;border-radius:12px!important}
+            .currency-flag{width:21px!important;height:21px!important;flex-basis:21px!important}
+            .currency-toggle-title{font-size:.51rem!important}
+            .currency-toggle-hint{font-size:.40rem!important}
+            .currency-toggle-arrow{width:17px!important;height:17px!important;flex-basis:17px!important}
+        }
+        @media(max-width:390px){.currency-toggle{width:108px!important}.currency-toggle-title{font-size:.47rem!important}.main-logo{max-width:108px!important}}
+        #walletLoginArea .wallet-login-hero{
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            gap:9px;margin:2px auto 18px;text-align:center;
+        }
+        #walletLoginArea .wallet-login-art{
+            width:92px;height:92px;max-width:28vw;max-height:28vw;object-fit:contain;
+            border-radius:25px;padding:10px;
+            background:linear-gradient(145deg,rgba(34,211,238,.17),rgba(59,130,246,.10));
+            border:1px solid rgba(103,232,249,.28);
+            box-shadow:0 12px 35px rgba(6,182,212,.16),inset 0 1px 0 rgba(255,255,255,.15);
+        }
+        #walletLoginArea .wallet-login-fallback{
+            width:92px;height:92px;border-radius:25px;display:grid;place-items:center;
+            color:#67e8f9;font-size:2.2rem;
+            background:linear-gradient(145deg,rgba(34,211,238,.18),rgba(59,130,246,.12));
+            border:1px solid rgba(103,232,249,.28);box-shadow:0 12px 35px rgba(6,182,212,.16);
+        }
+        #walletLoginArea .wallet-login-heading{font-size:1.05rem;font-weight:900;color:#fff}
+        #walletLoginArea .wallet-login-caption{font-size:.75rem;line-height:1.8;color:var(--text-muted)}
+        #walletLoginArea .wallet-google-login{
+            position:relative;overflow:hidden;isolation:isolate;
+            background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.07))!important;
+            color:#fff!important;border:1px solid rgba(255,255,255,.24)!important;
+            border-radius:16px!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+            box-shadow:0 10px 28px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.16)!important;
+            transition:background .2s ease,border-color .2s ease,box-shadow .2s ease!important;
+        }
+        #walletLoginArea .wallet-google-login::before{
+            content:"";position:absolute;inset:0;z-index:-1;
+            background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.10) 48%,transparent 76%);
+            opacity:.7;pointer-events:none;
+        }
+        #walletLoginArea .wallet-google-login:hover{
+            background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.10))!important;
+            border-color:rgba(103,232,249,.48)!important;transform:none!important;
+            box-shadow:0 12px 30px rgba(6,182,212,.13),inset 0 1px 0 rgba(255,255,255,.2)!important;
+        }
+        #walletLoginArea .wallet-google-icon{filter:drop-shadow(0 2px 5px rgba(0,0,0,.22))}
+        .prices-top-bar{display:flex;align-items:center;gap:10px}
+        .prices-top-bar .prices-share-btn{
+            margin-inline-start:auto;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+            min-height:36px;padding:7px 12px;border-radius:11px;
+            color:#dffaff;background:rgba(6,182,212,.12);
+            border:1px solid rgba(6,182,212,.32);font:700 .75rem 'Almarai',sans-serif;cursor:pointer;
+            transition:background .18s ease,border-color .18s ease;
+        }
+        .prices-top-bar .prices-share-btn:active{background:rgba(6,182,212,.24)}
+        @media(prefers-reduced-motion:reduce){.currency-toggle,#walletLoginArea .wallet-google-login{transition:none!important}}
+
+    </style>
 </head>
 <body>
 
@@ -1370,6 +1442,7 @@
                 <div class="prices-top-bar">
                     <button class="back-step-btn" onclick="goBack()"><i class="fas fa-arrow-right"></i> رجوع</button>
                     <span style="color:#fff; font-weight:800; font-size:0.95rem;">الأسعار</span>
+                    <button type="button" class="prices-share-btn" onclick="shareCurrentPriceList()" aria-label="مشاركة قائمة الأسعار"><i class="fas fa-share-alt"></i><span>مشاركة</span></button>
                 </div>
                 <div class="prices-grid-container" id="pricesContent"></div>
             </div>
@@ -1810,6 +1883,21 @@
             const icon = document.getElementById('walletNavIconImg');
             if (icon && v.walletIconUrl) { icon.src = v.walletIconUrl; icon.style.display = 'block'; const fallback=icon.nextElementSibling; if(fallback) fallback.style.display='none'; }
             else if(icon) { icon.src='https://g.top4top.io/p_3940ozgp60.png'; icon.style.display='block'; }
+            const loginArt = document.getElementById('walletLoginArt');
+            const loginFallback = document.getElementById('walletLoginArtFallback');
+            if (loginArt && v.walletLoginGifUrl) {
+                loginArt.src = v.walletLoginGifUrl;
+                loginArt.style.display = 'block';
+                if (loginFallback) loginFallback.style.display = 'none';
+            } else if (loginArt) {
+                loginArt.removeAttribute('src');
+                loginArt.style.display = 'none';
+                if (loginFallback) loginFallback.style.display = 'grid';
+            }
+            if (loginArt) {
+                loginArt.style.width = (Number(v.walletLoginGifWidth) > 0 ? Math.min(180, Number(v.walletLoginGifWidth)) : 92) + 'px';
+                loginArt.style.height = (Number(v.walletLoginGifHeight) > 0 ? Math.min(180, Number(v.walletLoginGifHeight)) : 92) + 'px';
+            }
         }, err => console.error('Visual settings:', err));
 
         db.ref('settings/banners').on('value', snap => {
@@ -2113,6 +2201,36 @@
                 content.innerHTML = htmlString;
             }
             document.getElementById('stepSelection').classList.remove('active'); document.getElementById('stepPrices').classList.add('active'); document.getElementById('modalScrollBox').scrollTop = 0;
+        }
+
+        async function shareCurrentPriceList() {
+            const game = globalGames[currentGameId];
+            if (!game) { alert('تعذر تحديد المنتج الحالي للمشاركة.'); return; }
+            const methodNames = {id:'شحن عن طريق ID',account:'شحن عن طريق الحساب'};
+            let methodName = methodNames[currentPriceType] || '';
+            if (currentPriceType && currentPriceType.startsWith('custom_')) {
+                const idx = Number(currentPriceType.split('_')[1]);
+                methodName = game.custom_methods?.[idx]?.name || 'طريقة شحن';
+            }
+            const title = `قائمة أسعار ${game.name}${methodName ? ' - ' + methodName : ''}`;
+            // استبعاد معاملات التتبع من الرابط مع الاحتفاظ بمسار قائمة الأسعار القابل للفتح مباشرة.
+            const cleanUrl = `${location.origin}${location.pathname}#game/${encodeURIComponent(currentGameId)}/prices/${encodeURIComponent(currentPriceType || 'id')}`;
+            const shareData = { title, text: `${title} من MOHAB STORE`, url: cleanUrl };
+            try {
+                if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+                    await navigator.share(shareData);
+                } else if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(cleanUrl);
+                    alert('تم نسخ رابط قائمة الأسعار. يمكنك مشاركته الآن.');
+                } else {
+                    window.prompt('انسخ رابط قائمة الأسعار:', cleanUrl);
+                }
+            } catch (err) {
+                if (err?.name !== 'AbortError') {
+                    try { window.prompt('انسخ رابط قائمة الأسعار:', cleanUrl); }
+                    catch (_) { alert('تعذرت المشاركة من هذا المتصفح.'); }
+                }
+            }
         }
 
         function openWhatsApp(element) {
@@ -2966,7 +3084,14 @@
           <div class="wallet-balance"><small><i class="fas fa-wallet"></i> الرصيد المتاح في محفظتك</small><strong id="walletBalanceMain">0.00 USD</strong><div class="wallet-muted" id="walletUserLabel">سجّل الدخول بجوجل لتفعيل المحفظة.</div></div>
         </div>
         <div id="walletNextDiscountBox" class="wallet-next-discount" style="display:none" aria-live="polite"><div class="wallet-next-discount-icon"><i class="fas fa-gift"></i></div><div class="wallet-next-discount-copy"><strong>خصمك للشراء القادم</strong><span id="walletNextDiscountText">لديك خصم جاهز للاستخدام مرة واحدة.</span></div><b id="walletNextDiscountPercent">5%</b></div>
-        <div id="walletLoginArea"><button class="wallet-primary wallet-google-login" onclick="walletGoogleLogin()"><svg class="wallet-google-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"/><path fill="#EA4335" d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z"/></svg><span>تسجيل الدخول باستخدام Google</span></button><div class="wallet-history" style="margin:12px 0 16px;line-height:1.9"><h3>إزاي تستخدم محفظة MOHAB STORE؟</h3><p>• استخدم الموقع وتصفّح الأسعار بشكل عادي بدون تسجيل دخول.</p><p>• سجّل الدخول لمتابعة طلباتك وحالة الشحن ورصيدك.</p><p>• الطلب المدفوع من المحفظة يتم خصم قيمته عند التأكيد، وبعدها تتابع حالة الشحن من «طلباتي».</p><p>• تقدر تبعت طلب واتساب غير مدفوع؛ هيتسجل للمراجعة لو سجلت الدخول، والدفع بيكون عبر واتساب. الطلب غير المدفوع لا يضمن بدء الشحن قبل تأكيد الدفع.</p><p>• الإيداعات تظل معلقة حتى مراجعة الإدارة، ولا يُضاف الرصيد قبل الموافقة.</p></div></div>
+        <div id="walletLoginArea">
+          <div class="wallet-login-hero">
+            <div id="walletLoginArtFallback" class="wallet-login-fallback" aria-hidden="true"><i class="fas fa-wallet"></i></div>
+            <img id="walletLoginArt" class="wallet-login-art" src="" alt="أيقونة محفظة MOHAB STORE" style="display:none">
+            <div class="wallet-login-heading">محفظتك الرقمية في MOHAB STORE</div>
+            <div class="wallet-login-caption">سجّل الدخول بأمان لمتابعة رصيدك وطلباتك وإيداعاتك</div>
+          </div>
+          <button class="wallet-primary wallet-google-login" onclick="walletGoogleLogin()"><svg class="wallet-google-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"/><path fill="#EA4335" d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z"/></svg><span>تسجيل الدخول باستخدام Google</span></button><div class="wallet-history" style="margin:12px 0 16px;line-height:1.9"><h3>إزاي تستخدم محفظة MOHAB STORE؟</h3><p>• استخدم الموقع وتصفّح الأسعار بشكل عادي بدون تسجيل دخول.</p><p>• سجّل الدخول لمتابعة طلباتك وحالة الشحن ورصيدك.</p><p>• الطلب المدفوع من المحفظة يتم خصم قيمته عند التأكيد، وبعدها تتابع حالة الشحن من «طلباتي».</p><p>• تقدر تبعت طلب واتساب غير مدفوع؛ هيتسجل للمراجعة لو سجلت الدخول، والدفع بيكون عبر واتساب. الطلب غير المدفوع لا يضمن بدء الشحن قبل تأكيد الدفع.</p><p>• الإيداعات تظل معلقة حتى مراجعة الإدارة، ولا يُضاف الرصيد قبل الموافقة.</p></div></div>
         <div id="walletTools" class="wallet-hidden">
           <div class="wallet-tabs"><button class="wallet-tab active" id="walletDepositTab" onclick="walletShowTab('deposit')">إيداع رصيد</button><button class="wallet-tab" id="walletHistoryTab" onclick="walletShowTab('history')">سجل الإيداع</button></div>
           <div id="walletDepositPane">
