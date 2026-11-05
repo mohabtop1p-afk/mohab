@@ -1588,9 +1588,12 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         let currentGameId = null;
         let currentPriceType = null; 
         let currentCurrency = 'EGP';
-        let usdPricingSettings = { applyToAll:false, selectedGames:{} };
+        let usdPricingSettings = { applyToAll:false, selectedGames:{}, listSelections:{} };
         let storeUsdToEgp = 50;
         function isUsdAutoPricingEnabled(gameId, listType) {
+            const settings = usdPricingSettings || {};
+            const perGame = settings.listSelections && settings.listSelections[gameId];
+            if (perGame && Object.prototype.hasOwnProperty.call(perGame, listType)) return perGame[listType] === true;
             const game = globalGames[gameId] || {};
             const field = listType === 'id' ? 'id_auto_usd' : (listType === 'account' ? 'account_auto_usd' : '');
             if (field && typeof game[field] === 'boolean') return game[field];
@@ -1599,28 +1602,35 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
                 const method = game.custom_methods && game.custom_methods[idx];
                 if (method && typeof method.auto_usd === 'boolean') return method.auto_usd;
             }
-            // Compatibility with the older game-wide selector saved in the previous version.
-            return !!(usdPricingSettings && (usdPricingSettings.applyToAll === true || (usdPricingSettings.selectedGames && usdPricingSettings.selectedGames[gameId] === true)));
+            return !!(settings.applyToAll === true || (settings.selectedGames && settings.selectedGames[gameId] === true));
         }
         function convertEgpPriceListToUsd(priceList) {
             const rate = Number(storeUsdToEgp);
             if (!Number.isFinite(rate) || rate <= 0 || !priceList) return priceList || '';
-            const toLatin = value => String(value).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+            const latin = value => String(value)
+                .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+                .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+            const fmt = value => (Math.round((value / rate) * 100) / 100).toLocaleString('en-US', {maximumFractionDigits:2}) + ' $';
             return String(priceList).split(/\r?\n/).map(line => {
                 const eq = line.indexOf('=');
                 if (eq < 1) return line;
-                const left = line.slice(0, eq);
-                const right = line.slice(eq + 1);
-                const converted = toLatin(right).replace(/([0-9][0-9,]*(?:\.[0-9]+)?)(?=\s*(?:جنيه مصري|جنيه|ج\.م|EGP|ج)?(?:\s|$|بدل))/gi, (token) => {
-                    const value = Number(token.replace(/,/g, ''));
-                    if (!Number.isFinite(value)) return token;
-                    return (Math.round((value / rate) * 100) / 100).toLocaleString('en-US', {maximumFractionDigits:2}) + ' $';
-                }).replace(/جنيه مصري|جنيه|ج\.م|EGP|ج(?=\s|$)/gi, '');
-                return left + '= ' + converted.replace(/\s+/g, ' ').trim();
+                const left = line.slice(0, eq + 1);
+                const right = latin(line.slice(eq + 1));
+                // Convert all monetary numbers on the right side, including discounted/old prices.
+                const converted = right.replace(/(\d[\d,]*(?:\.\d+)?)(\s*(?:جنيه\s*مصري|جنيه|ج\.م|EGP|LE|ج)?)/gi, (match, raw, suffix, offset, whole) => {
+                    const before = whole.slice(0, offset);
+                    const after = whole.slice(offset + match.length);
+                    const n = Number(raw.replace(/,/g, ''));
+                    if (!Number.isFinite(n)) return match;
+                    // Only amounts following '=' are converted; numbers embedded in words/IDs are excluded.
+                    if (/[A-Za-z0-9]/.test(before.slice(-1)) || /^[A-Za-z]/.test(after)) return match;
+                    return fmt(n);
+                });
+                return left + ' ' + converted.replace(/جنيه\s*مصري|جنيه|ج\.م|EGP|LE|ج(?=\s|$)/gi, '').replace(/\s+/g,' ').trim();
             }).join('\n');
         }
         db.ref('settings/usdPricing').on('value', snap => {
-            usdPricingSettings = snap.val() || { applyToAll:false, selectedGames:{} };
+            usdPricingSettings = snap.val() || { applyToAll:false, selectedGames:{}, listSelections:{} };
             if (currentCurrency === 'USD' && currentGameId && currentPriceType && document.getElementById('stepPrices')?.classList.contains('active')) showPrices(currentPriceType, true);
         }, err => console.error('USD pricing settings:', err));
 
