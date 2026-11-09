@@ -1347,6 +1347,19 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         </div>
     </nav>
 
+    <section id="announcementTicker" class="announcement-ticker" aria-label="إعلانات وأحداث اليوم" hidden>
+      <div class="announcement-ticker-label">📢 أخبار MOHAB STORE</div>
+      <div class="announcement-ticker-window"><div id="announcementTickerTrack" class="announcement-ticker-track"></div></div>
+    </section>
+    <style>
+      .announcement-ticker{--ticker-bg:#082f49;--ticker-fg:#ecfeff;display:flex;align-items:stretch;gap:0;margin:0 auto 14px;width:min(100% - 20px,1200px);min-height:44px;border-radius:13px;overflow:hidden;background:var(--ticker-bg);color:var(--ticker-fg);box-shadow:0 7px 22px rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.13)}
+      .announcement-ticker[hidden]{display:none!important}.announcement-ticker-label{flex:0 0 auto;display:flex;align-items:center;padding:0 13px;background:rgba(0,0,0,.18);font-size:.76rem;font-weight:900;white-space:nowrap}
+      .announcement-ticker-window{position:relative;min-width:0;flex:1;height:54px;overflow:hidden}.announcement-ticker-track{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;animation:tickerVertical 12s linear infinite}.announcement-ticker-track span{height:54px;min-height:54px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 12px;font-size:.86rem;font-weight:800;line-height:1.5;box-sizing:border-box}
+      .announcement-ticker:hover .announcement-ticker-track{animation-play-state:paused}@keyframes tickerVertical{0%,8%{transform:translateY(0)}25%,33%{transform:translateY(-54px)}50%,58%{transform:translateY(-108px)}75%,83%{transform:translateY(-162px)}100%{transform:translateY(-216px)}}
+      @media(max-width:520px){.announcement-ticker{min-height:42px}.announcement-ticker-label{font-size:.65rem;padding:0 8px}.announcement-ticker-track span{font-size:.76rem}}
+      @media(prefers-reduced-motion:reduce){.announcement-ticker-track{animation:none;position:static}.announcement-ticker-window{height:auto}.announcement-ticker-track span:not(:first-child){display:none}}
+    </style>
+
     <div class="luck-feature-wrap">
         <a href="#luck" class="luck-feature" onclick="openLuckPage(event)" aria-label="فتح عجلة الحظ">
             <img src="https://e.top4top.io/p_3913ditnr0.png" alt="عجلة الحظ" loading="lazy" decoding="async">
@@ -2689,7 +2702,7 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
                 actions.children[0].onclick=()=>finish('paid'); actions.children[1].onclick=()=>finish('whatsapp'); actions.children[2].onclick=()=>finish(null);
             });
         }
-        let walletOrdersListener=null, walletAdminAdjustmentsListener=null;
+        let walletOrdersListener=null, walletOrdersRef=null, walletAdminAdjustmentsListener=null;
         function openWalletOrdersPage(){
             if(!walletUser){openWallet();return;}
             const page=document.getElementById('walletOrdersPage');if(page){page.classList.add('open');page.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
@@ -2697,21 +2710,38 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         function closeWalletOrdersPage(fromPopState=false){const page=document.getElementById('walletOrdersPage');if(page){page.classList.remove('open');page.setAttribute('aria-hidden','true');}document.body.style.overflow='';if(walletOrdersHistoryPushed){walletOrdersHistoryPushed=false;if(!fromPopState && history.state && history.state.mohabWalletOrders)history.back();}}
         function walletListenOrders(){
             if(!walletUser)return;
-            if(walletOrdersListener)db.ref(`wallet_orders/${walletUser.uid}`).off('value',walletOrdersListener);
+            if(walletOrdersListener && walletOrdersRef)walletOrdersRef.off('value',walletOrdersListener);
+            walletOrdersRef=db.ref(`wallet_orders/${walletUser.uid}`);
+            const list=document.getElementById('walletOrderPageList');
+            if(list)list.innerHTML='<div class="wallet-muted">جارٍ تحميل طلباتك…</div>';
             walletOrdersListener=snap=>{
-                const orderRows=[];snap.forEach(c=>orderRows.push({...c.val(),key:c.key}));
+                const orderRows=[];
+                snap.forEach(c=>{const value=c.val()||{};orderRows.push({...value,key:c.key});});
                 orderRows.sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
-                const list=document.getElementById('walletOrderPageList'),legacy=document.getElementById('walletOrderHistoryList');
+                const legacy=document.getElementById('walletOrderHistoryList');
                 const active=orderRows.filter(o=>!['shipped','rejected','cancelled'].includes(o.status)).length;
                 const count=document.getElementById('walletOrdersNavCount'),badge=document.getElementById('walletOrdersBadge'),dockBadge=document.getElementById('walletOrdersDockBadge'),dockBtn=document.getElementById('walletOrdersDockBtn');
                 if(count)count.textContent=orderRows.length+' طلب';
                 if(badge){badge.textContent=String(active);badge.style.display=active?'block':'none';}
                 if(dockBadge){dockBadge.textContent=String(active);dockBadge.style.display=active?'block':'none';}
                 if(dockBtn)dockBtn.style.display=walletUser?'flex':'none';
-                const html=orderRows.length?orderRows.map(o=>`<article class="wallet-row wallet-order-detail-card"><div class="wallet-order-main"><b>${walletEscape(o.game||o.gameName||'منتج')} — ${walletEscape(o.pack||o.packName||'باقة')}</b><small>🧾 كود الطلب: ${walletEscape(o.code||o.key)}</small><small>💰 السعر: ${walletEscape(o.price||'—')}</small><small>⚙️ طريقة الشحن: ${walletEscape(o.method||'يتم التأكيد مع الدعم')}</small>${o.deliveryDetails?`<small>📦 تفاصيل الشحنة: ${walletEscape(o.deliveryDetails)}</small>`:''}${o.updatedAt?`<small>🕒 آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</small>`:''}<small>💳 طريقة الدفع: ${walletEscape(o.paymentType==='wallet'?'محفظة MOHAB STORE':o.paymentType==='whatsapp'?'واتساب — غير مدفوع':'غير محددة')}</small>${Number(o.discountPercent)>0?`<small>🎁 الخصم المطبق: ${walletEscape(o.discountPercent)}% — المخصوم من المحفظة: ${walletEscape(o.chargedAmountEgp!=null?Number(o.chargedAmountEgp).toFixed(2)+' جنيه':o.chargedAmountUsd!=null?Number(o.chargedAmountUsd).toFixed(2)+' USD':'—')}</small>`:''}</div><div class="wallet-order-status"><b>${({'pending_payment':'بانتظار الدفع','paid':'تم الدفع — بانتظار الشحن','processing':'قيد الشحن','shipped':'تم الشحن','rejected':'مرفوض','cancelled':'ملغي'}[o.status]||o.status||'قيد المراجعة')}</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></article>`).join(''):'لا توجد طلبات شحن حتى الآن.';
-                if(list)list.innerHTML=html;if(legacy)legacy.innerHTML=html;
+                const labels={pending_payment:'بانتظار الدفع',paid:'تم الدفع — بانتظار الشحن',processing:'قيد الشحن',shipped:'تم الشحن',rejected:'مرفوض',cancelled:'ملغي'};
+                const html=orderRows.length?orderRows.map(o=>{
+                    const history=Object.values(o.statusHistory||{}).sort((a,b)=>Number(a.at||0)-Number(b.at||0));
+                    const historyHtml=history.length?`<div class="wallet-order-timeline"><b>سجل تحديثات الطلب</b>${history.map(h=>`<small>• ${walletEscape(labels[h.status]||h.status||'تحديث')} — ${h.at?new Date(h.at).toLocaleString('ar-EG'):'—'}${h.details?` — ${walletEscape(h.details)}`:''}</small>`).join('')}</div>`:'';
+                    const rejection=o.rejectionReason?`<small>❗ سبب الرفض: ${walletEscape(o.rejectionReason)}</small>`:'';
+                    const delivery=o.deliveryDetails?`<small>📦 تفاصيل الشحنة: ${walletEscape(o.deliveryDetails)}</small>`:'';
+                    return `<article class="wallet-row wallet-order-detail-card"><div class="wallet-order-main"><b>${walletEscape(o.game||o.gameName||'منتج')} — ${walletEscape(o.pack||o.packName||'باقة')}</b><small>🧾 كود الطلب: ${walletEscape(o.code||o.key)}</small><small>💰 السعر: ${walletEscape(o.price||'—')}</small><small>⚙️ طريقة الشحن: ${walletEscape(o.method||'يتم التأكيد مع الدعم')}</small><small>💳 طريقة الدفع: ${walletEscape(o.paymentType==='wallet'?'محفظة MOHAB STORE':o.paymentType==='whatsapp'?'واتساب — غير مدفوع':'غير محددة')}</small>${Number(o.discountPercent)>0?`<small>🎁 الخصم المطبق: ${walletEscape(o.discountPercent)}%</small>`:''}${delivery}${rejection}${o.shippedAt?`<small>🚚 تاريخ الشحن: ${new Date(o.shippedAt).toLocaleString('ar-EG')}</small>`:''}${historyHtml}</div><div class="wallet-order-status"><b>${walletEscape(labels[o.status]||o.status||'قيد المراجعة')}</b><small>تاريخ الطلب: ${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small>${o.updatedAt?`<small>آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</small>`:''}</div></article>`;
+                }).join(''):'لا توجد طلبات شحن حتى الآن.';
+                if(list)list.innerHTML=html;
+                if(legacy)legacy.innerHTML=html;
             };
-            db.ref(`wallet_orders/${walletUser.uid}`).on('value',walletOrdersListener);
+            walletOrdersRef.on('value',walletOrdersListener,error=>{
+                console.error('Wallet orders listener failed:',error);
+                const message='تعذر تحميل طلباتك بسبب صلاحيات Firebase. تأكد من السماح للمستخدم بقراءة wallet_orders/'+walletUser.uid;
+                if(list)list.innerHTML=`<div class="wallet-muted" role="alert">${walletEscape(message)}</div>`;
+                if(legacy)legacy.textContent=message;
+            });
         }
 
         function walletEscape(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -2755,7 +2785,7 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
                 const code='MWP-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
                 const orderRef=db.ref(`wallet_orders/${walletUser.uid}`).push();
                 await orderRef.set({
-                    code,uid:walletUser.uid,email:walletUser.email||'',game:order.gameName,pack:order.packName,
+                    code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,
                     price:order.price,originalPrice:order.price,chargedAmountEgp:finalCostEgp,chargedAmountUsd:finalCostUsd,
                     discountPercent:couponPercent,discountAmountEgp:discountEgp,currency,costUsd:finalCostUsd,
                     method:order.method,status:'paid',paymentType:'wallet',createdAt:firebase.database.ServerValue.TIMESTAMP
@@ -3234,6 +3264,7 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
 })();
 </script>
 <style>
+.wallet-order-timeline{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding:9px 11px;border-inline-start:3px solid #0891b2;background:rgba(8,145,178,.07);border-radius:9px}.wallet-order-timeline>b{font-size:.75rem;color:var(--primary)}.wallet-order-timeline small{display:block}
 .wallet-order-detail-card{display:flex;gap:14px;justify-content:space-between;padding:16px;margin:12px 0;border:1px solid rgba(6,182,212,.2);border-radius:16px;background:rgba(6,182,212,.035)}
 .wallet-order-main{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}.wallet-order-main>b{font-size:.94rem;line-height:1.7}.wallet-order-main small,.wallet-order-status small{font-size:.72rem;line-height:1.7;color:var(--text-muted);overflow-wrap:anywhere}
 .wallet-order-status{display:flex;flex-direction:column;gap:7px;align-items:flex-start;min-width:115px;max-width:42%;text-align:left}.wallet-order-status>b{font-size:.78rem;line-height:1.7;color:var(--primary);overflow-wrap:anywhere}
@@ -3307,5 +3338,45 @@ body.light-theme #walletOrdersPage .wallet-row small{color:#526174}
 body.light-theme #walletPage .wallet-google-login{background:#fff!important;color:#202124!important;border-color:#d1d5db!important}
 
 </style>
+
+<script>
+(function(){
+  function startAnnouncementTicker(){
+    if(!window.firebase || !firebase.apps || !firebase.apps.length || !firebase.database)return;
+    const root=document.getElementById('announcementTicker'),track=document.getElementById('announcementTickerTrack');
+    if(!root||!track)return;
+    firebase.database().ref('settings/announcementTicker').on('value',snap=>{
+      const data=snap.val()||{};
+      const messages=Array.isArray(data.messages)?data.messages:(typeof data.text==='string'?data.text.split(/\r?\n/):[]);
+      const clean=messages.map(x=>String(x||'').trim()).filter(Boolean).slice(0,5);
+      if(data.enabled===false||!clean.length){root.hidden=true;return;}
+      root.style.setProperty('--ticker-bg',/^#[0-9a-f]{6}$/i.test(data.background||'')?data.background:'#082f49');
+      root.style.setProperty('--ticker-fg',/^#[0-9a-f]{6}$/i.test(data.color||'')?data.color:'#ecfeff');
+      track.innerHTML='';
+      const loop=clean.length===1?[clean[0]]:[...clean,clean[0]];
+      loop.forEach(message=>{const span=document.createElement('span');span.textContent=message;track.appendChild(span);});
+      const duration=Math.max(4,Math.min(30,Number(data.speed)||12));
+      track.style.animationDuration=duration+'s';
+      if(clean.length===1){track.style.animationName='none';}
+      else{
+        let frames='0%, 8%{transform:translateY(0)}';
+        const count=clean.length;
+        for(let i=1;i<=count;i++){
+          const pct=(8+(i/count)*84).toFixed(2);
+          const hold=(8+(i/count)*84+2).toFixed(2);
+          frames+=`${pct}%{transform:translateY(-${i*54}px)}${hold}%{transform:translateY(-${i*54}px)}`;
+        }
+        let style=document.getElementById('announcementTickerDynamicKeyframes');
+        if(!style){style=document.createElement('style');style.id='announcementTickerDynamicKeyframes';document.head.appendChild(style);}
+        style.textContent=`@keyframes tickerVerticalDynamic{${frames}100%{transform:translateY(-${count*54}px)}}`;
+        track.style.animationName='tickerVerticalDynamic';
+      }
+      root.hidden=false;
+    },error=>console.warn('Announcement ticker listener:',error));
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startAnnouncementTicker,{once:true});else startAnnouncementTicker();
+})();
+</script>
+
 </body>
 </html>
