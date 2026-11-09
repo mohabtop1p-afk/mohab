@@ -2570,6 +2570,9 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
                 walletShowTab('history');
             } catch(e) {
                 console.error('Wallet deposit submission failed at stage:',stage,e);
+                if(e && (e.code==='PERMISSION_DENIED' || /permission_denied/i.test(String(e.message||'')))) {
+                    status.textContent='رفض Firebase حفظ الطلب. راجع قواعد Realtime Database وتأكد من تسجيل الدخول بنفس حساب المستخدم. لم يتم اعتماد الإيداع.';
+                }
                 const code=ref&&ref.key?'MHW-'+ref.key.slice(-8).toUpperCase():'';
                 const errorCode=e&&e.code?` (${e.code})`:'';
                 const detail=(e&&e.message?e.message:'خطأ غير معروف').slice(0,220);
@@ -2580,6 +2583,7 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             } finally {btn.disabled=false;btn.textContent='إرسال طلب الإيداع للمراجعة';}
         }
         let walletDepositHistoryRows = [], walletAdminHistoryRows = [], walletAdminHistoryListener = null;
+        let walletHistoryQuery = null, walletAdminHistoryQuery = null;
         function walletRenderDepositHistory(){
             const list=document.getElementById('walletHistoryList'); if(!list)return;
             const rows=[...walletDepositHistoryRows,...walletAdminHistoryRows].sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
@@ -2606,20 +2610,22 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         }
         function walletListenHistory() {
             if(!walletUser)return;
-            if(walletHistoryListener) db.ref('wallet_deposits').off('value',walletHistoryListener);
+            if(walletHistoryListener && walletHistoryQuery) walletHistoryQuery.off('value',walletHistoryListener);
+            walletHistoryQuery=db.ref('wallet_deposits').orderByChild('uid').equalTo(walletUser.uid);
             walletHistoryListener=snap=>{
                 walletDepositHistoryRows=[];
                 snap.forEach(child=>{const d=child.val()||{};if(d.uid===walletUser.uid)walletDepositHistoryRows.push({...d,key:child.key});});
                 walletRenderDepositHistory();
             };
-            db.ref('wallet_deposits').on('value',walletHistoryListener);
-            if(walletAdminHistoryListener)db.ref('wallet_admin_adjustments').off('value',walletAdminHistoryListener);
+            walletHistoryQuery.on('value',walletHistoryListener, e=>console.error('Deposit history listener:',e));
+            if(walletAdminHistoryListener && walletAdminHistoryQuery)walletAdminHistoryQuery.off('value',walletAdminHistoryListener);
+            walletAdminHistoryQuery=db.ref('wallet_admin_adjustments').orderByChild('uid').equalTo(walletUser.uid);
             walletAdminHistoryListener=snap=>{
                 walletAdminHistoryRows=[];
                 snap.forEach(child=>{const a=child.val()||{};if(a.uid===walletUser.uid)walletAdminHistoryRows.push({...a,key:child.key,recordType:'admin_adjustment',createdAt:a.createdAt||a.timestamp||0,amountEgp:Number.isFinite(Number(a.amountEgp))?Number(a.amountEgp):Number(a.amount||0)*walletFxRate});});
                 walletRenderDepositHistory();
             };
-            db.ref('wallet_admin_adjustments').on('value',walletAdminHistoryListener);
+            walletAdminHistoryQuery.on('value',walletAdminHistoryListener, e=>console.error('Wallet adjustments listener:',e));
         }
 
         function walletShowNotice(title, message, type='info', confirmMode=false) {
@@ -2702,7 +2708,7 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
                 if(badge){badge.textContent=String(active);badge.style.display=active?'block':'none';}
                 if(dockBadge){dockBadge.textContent=String(active);dockBadge.style.display=active?'block':'none';}
                 if(dockBtn)dockBtn.style.display=walletUser?'flex':'none';
-                const html=orderRows.length?orderRows.map(o=>`<article class="wallet-row wallet-order-detail-card"><div class="wallet-order-main"><b>${walletEscape(o.game||o.gameName||'منتج')} — ${walletEscape(o.pack||o.packName||'باقة')}</b><small>🧾 كود الطلب: ${walletEscape(o.code||o.key)}</small><small>💰 السعر: ${walletEscape(o.price||'—')}</small><small>⚙️ طريقة الشحن: ${walletEscape(o.method||'يتم التأكيد مع الدعم')}</small><small>💳 طريقة الدفع: ${walletEscape(o.paymentType==='wallet'?'محفظة MOHAB STORE':o.paymentType==='whatsapp'?'واتساب — غير مدفوع':'غير محددة')}</small>${Number(o.discountPercent)>0?`<small>🎁 الخصم المطبق: ${walletEscape(o.discountPercent)}% — المخصوم من المحفظة: ${walletEscape(o.chargedAmountEgp!=null?Number(o.chargedAmountEgp).toFixed(2)+' جنيه':o.chargedAmountUsd!=null?Number(o.chargedAmountUsd).toFixed(2)+' USD':'—')}</small>`:''}</div><div class="wallet-order-status"><b>${({'pending_payment':'بانتظار الدفع','paid':'تم الدفع — بانتظار الشحن','processing':'قيد الشحن','shipped':'تم الشحن','rejected':'مرفوض','cancelled':'ملغي'}[o.status]||o.status||'قيد المراجعة')}</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></article>`).join(''):'لا توجد طلبات شحن حتى الآن.';
+                const html=orderRows.length?orderRows.map(o=>`<article class="wallet-row wallet-order-detail-card"><div class="wallet-order-main"><b>${walletEscape(o.game||o.gameName||'منتج')} — ${walletEscape(o.pack||o.packName||'باقة')}</b><small>🧾 كود الطلب: ${walletEscape(o.code||o.key)}</small><small>💰 السعر: ${walletEscape(o.price||'—')}</small><small>⚙️ طريقة الشحن: ${walletEscape(o.method||'يتم التأكيد مع الدعم')}</small>${o.deliveryDetails?`<small>📦 تفاصيل الشحنة: ${walletEscape(o.deliveryDetails)}</small>`:''}${o.updatedAt?`<small>🕒 آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</small>`:''}<small>💳 طريقة الدفع: ${walletEscape(o.paymentType==='wallet'?'محفظة MOHAB STORE':o.paymentType==='whatsapp'?'واتساب — غير مدفوع':'غير محددة')}</small>${Number(o.discountPercent)>0?`<small>🎁 الخصم المطبق: ${walletEscape(o.discountPercent)}% — المخصوم من المحفظة: ${walletEscape(o.chargedAmountEgp!=null?Number(o.chargedAmountEgp).toFixed(2)+' جنيه':o.chargedAmountUsd!=null?Number(o.chargedAmountUsd).toFixed(2)+' USD':'—')}</small>`:''}</div><div class="wallet-order-status"><b>${({'pending_payment':'بانتظار الدفع','paid':'تم الدفع — بانتظار الشحن','processing':'قيد الشحن','shipped':'تم الشحن','rejected':'مرفوض','cancelled':'ملغي'}[o.status]||o.status||'قيد المراجعة')}</b><small>${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small></div></article>`).join(''):'لا توجد طلبات شحن حتى الآن.';
                 if(list)list.innerHTML=html;if(legacy)legacy.innerHTML=html;
             };
             db.ref(`wallet_orders/${walletUser.uid}`).on('value',walletOrdersListener);
@@ -2763,7 +2769,9 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         firebase.auth().onAuthStateChanged(user=>{
             walletUser=user||null;
             if(walletBalanceListener){const oldUid=walletBalanceListener.uid;db.ref(`wallet_users/${oldUid}`).off('value',walletBalanceListener.fn);walletBalanceListener=null;}
-            if(walletHistoryListener){db.ref('wallet_deposits').off('value',walletHistoryListener);walletHistoryListener=null;}if(walletAdminHistoryListener){db.ref('wallet_admin_adjustments').off('value',walletAdminHistoryListener);walletAdminHistoryListener=null;}walletDepositHistoryRows=[];walletAdminHistoryRows=[];
+            if(walletHistoryListener && walletHistoryQuery){walletHistoryQuery.off('value',walletHistoryListener);walletHistoryListener=null;walletHistoryQuery=null;}
+            if(walletAdminHistoryListener && walletAdminHistoryQuery){walletAdminHistoryQuery.off('value',walletAdminHistoryListener);walletAdminHistoryListener=null;walletAdminHistoryQuery=null;}
+            walletDepositHistoryRows=[];walletAdminHistoryRows=[];
             if(!user){
                 walletBalanceUsd=0;walletBalanceEgp=0;walletNextDiscount=null;walletRenderNextDiscount();document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
                 document.getElementById('walletTools').classList.add('wallet-hidden');
