@@ -13,6 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <style>
@@ -1313,6 +1314,27 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-login:hover{
 }
 body.light-theme #walletPage #walletLoginArea .wallet-google-login::before{display:none!important}
 body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!important}
+</style>
+
+
+<style id="mohabCoinsStyles">
+#mohabCoinsPage{display:none;position:fixed;inset:0;z-index:950;background:rgba(3,7,18,.96);color:#f8fafc;overflow:auto;padding:18px}
+#mohabCoinsPage.open{display:block;animation:fadeIn .18s ease}
+.mcp-shell{max-width:900px;margin:0 auto}
+.mcp-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 20px}
+.mcp-btn{border:1px solid #334155;background:#172033;color:#fff;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}
+.mcp-balance{border:1px solid rgba(245,158,11,.35);background:radial-gradient(circle at 80% 10%,rgba(245,158,11,.2),transparent 45%),linear-gradient(135deg,#172033,#0b1220);border-radius:24px;padding:24px;text-align:center;margin-bottom:18px}
+.mcp-balance img{width:48px;height:48px;object-fit:contain;vertical-align:middle}
+.mcp-balance strong{display:block;font-size:2.2rem;color:#fbbf24;margin:10px 0}
+.mcp-section{background:#111b2b;border:1px solid #263449;border-radius:20px;padding:17px;margin:14px 0}
+.mcp-games{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.mcp-game{background:#0b1220;border:1px solid #29384e;border-radius:16px;padding:13px;text-align:center}
+.mcp-game img{width:100%;height:105px;object-fit:contain;border-radius:10px}
+.mcp-game button{width:100%;margin-top:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#17120a;border:0;border-radius:11px;padding:11px;font-weight:900;cursor:pointer}
+.mcp-game button:disabled{opacity:.45;cursor:not-allowed}
+.mcp-row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #263449;padding:10px 0;font-size:.88rem}
+.mcp-muted{color:#94a3b8;font-size:.85rem}
+@media(max-width:520px){#mohabCoinsPage{padding:12px}.mcp-balance{padding:18px}.mcp-balance strong{font-size:1.8rem}}
 </style>
 
 </head>
@@ -3159,7 +3181,24 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         body.light-theme .wallet-logout-dialog{background:linear-gradient(145deg,#fff,#eff6ff);color:#111827}body.light-theme .wallet-logout-dialog p{color:#475569}body.light-theme .wallet-logout-cancel{background:#e2e8f0;color:#1e293b}
         @media(max-width:420px){.wallet-orders-page{padding:10px}.wallet-orders-page .wallet-card{max-height:84vh}.wallet-orders-page .wallet-row{align-items:flex-start}.wallet-orders-page .wallet-row>div:last-child{max-width:46%}.wallet-card-head h2{font-size:1.05rem}}
         </style>
-    <section id="walletPage" aria-hidden="true" role="dialog" aria-modal="true" aria-label="محفظة مهاب ستور">
+    
+<!-- MOHAB STORE: Coins feature -->
+<div class="luck-feature-wrap" id="mohabCoinsFeatureWrap">
+  <a class="luck-feature" href="javascript:void(0)" onclick="mohabOpenCoinsPage()" aria-label="صفحة العملات"
+     style="border-color:rgba(245,158,11,.35);background:linear-gradient(135deg,rgba(245,158,11,.16),rgba(234,179,8,.08));">
+    <span style="width:52px;height:52px;border-radius:16px;background:rgba(245,158,11,.15);display:grid;place-items:center;overflow:hidden;flex-shrink:0">
+      <img id="mohabCoinsFeatureImage" alt="العملات" src="" style="width:100%;height:100%;object-fit:contain;display:none">
+      <i id="mohabCoinsFeatureIcon" class="fas fa-coins" style="font-size:27px;color:#fbbf24"></i>
+    </span>
+    <span style="display:flex;flex-direction:column;gap:4px;text-align:right">
+      <strong style="font-size:.98rem">مكافآت MOHAB STORE</strong>
+      <small style="opacity:.8">اجمع العملات واستبدلها بمكافآت حصرية</small>
+    </span>
+    <i class="fas fa-chevron-left" style="margin-right:auto;opacity:.7"></i>
+  </a>
+</div>
+
+<section id="walletPage" aria-hidden="true" role="dialog" aria-modal="true" aria-label="محفظة مهاب ستور">
       <div class="wallet-card">
         <div class="wallet-head"><h2><i class="fas fa-wallet" style="color:var(--primary)"></i> محفظة MOHAB STORE</h2><button class="close-modal" onclick="closeWallet()" aria-label="إغلاق"><i class="fas fa-times"></i></button></div>
         <div id="walletProfile" class="wallet-profile" style="display:none">
@@ -3309,5 +3348,89 @@ body.light-theme #walletOrdersPage .wallet-row small{color:#526174}
 body.light-theme #walletPage .wallet-google-login{background:#fff!important;color:#202124!important;border-color:#d1d5db!important}
 
 </style>
+
+<div id="mohabCoinsPage" dir="rtl" aria-hidden="true">
+ <div class="mcp-shell">
+  <div class="mcp-top"><div><h2 style="margin:0">مكافآت MOHAB STORE</h2><small class="mcp-muted">اجمع العملات مع مشترياتك واستبدلها</small></div><button class="mcp-btn" onclick="mohabCloseCoinsPage()">رجوع <i class="fas fa-arrow-left"></i></button></div>
+  <div id="mcpLogin" class="mcp-section" style="text-align:center;display:none">
+    <h3>سجّل الدخول أولاً</h3><p class="mcp-muted">سجّل الدخول بحساب Google المرتبط بمحفظتك لعرض رصيد العملات.</p>
+    <button class="mcp-btn" onclick="document.getElementById('walletPage')?.classList.add('open')">فتح تسجيل دخول المحفظة</button>
+  </div>
+  <div id="mcpContent" style="display:none">
+   <div class="mcp-balance">
+    <img id="mcpCoinImage" alt="عملة">
+    <div class="mcp-muted">رصيدك الحالي</div>
+    <strong id="mcpBalance">0</strong><span>عملة</span>
+    <div id="mcpUserLabel" class="mcp-muted"></div>
+   </div>
+   <div class="mcp-section"><h3 style="margin-top:0">استبدل عملاتك</h3><div id="mcpGames" class="mcp-games"><p class="mcp-muted">جاري تحميل المكافآت...</p></div></div>
+   <div class="mcp-section"><h3 style="margin-top:0">سجل العملات</h3><div id="mcpHistory"><p class="mcp-muted">لا توجد معاملات بعد.</p></div></div>
+  </div>
+ </div>
+</div>
+
+
+<script id="mohabCoinsClient">
+(function(){
+ const COIN_FN_REGION='us-central1';
+ let coinWalletRef=null, coinCatalogRef=null, coinHistoryRef=null;
+ let coinWalletHandler=null, coinCatalogHandler=null, coinHistoryHandler=null;
+ let coinCatalog={games:{},settings:{}};
+ const $=id=>document.getElementById(id);
+ function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+ window.mohabOpenCoinsPage=function(){
+   $('mohabCoinsPage').classList.add('open');$('mohabCoinsPage').setAttribute('aria-hidden','false');
+   if(!window.firebase||!firebase.auth().currentUser){$('mcpLogin').style.display='block';$('mcpContent').style.display='none';return;}
+   $('mcpLogin').style.display='none';$('mcpContent').style.display='block';mcpAttach();
+ };
+ window.mohabCloseCoinsPage=function(){
+   $('mohabCoinsPage').classList.remove('open');$('mohabCoinsPage').setAttribute('aria-hidden','true');mcpDetach();
+ };
+ function mcpDetach(){
+   if(coinWalletRef&&coinWalletHandler)coinWalletRef.off('value',coinWalletHandler);
+   if(coinCatalogRef&&coinCatalogHandler)coinCatalogRef.off('value',coinCatalogHandler);
+   if(coinHistoryRef&&coinHistoryHandler)coinHistoryRef.off('value',coinHistoryHandler);
+   coinWalletRef=coinCatalogRef=coinHistoryRef=null;coinWalletHandler=coinCatalogHandler=coinHistoryHandler=null;
+ }
+ function mcpAttach(){
+   const u=firebase.auth().currentUser;if(!u)return;mcpDetach();
+   $('mcpUserLabel').textContent=u.displayName||u.email||'';
+   coinWalletRef=firebase.database().ref('coin_wallets/'+u.uid);
+   coinWalletHandler=s=>{const v=s.val()||{};$('mcpBalance').textContent=Math.max(0,Number(v.balance||0)).toLocaleString('en-US');};
+   coinWalletRef.on('value',coinWalletHandler);
+   coinCatalogRef=firebase.database().ref('coin_catalog');
+   coinCatalogHandler=s=>{coinCatalog=s.val()||{games:{},settings:{}};const im=coinCatalog.settings.coinImage||'';$('mcpCoinImage').src=im;$('mcpCoinImage').style.display=im?'inline-block':'none';renderGames();const fi=coinCatalog.settings.featureImage||'';if(fi){$('mohabCoinsFeatureImage').src=fi;$('mohabCoinsFeatureImage').style.display='block';$('mohabCoinsFeatureIcon').style.display='none';}};
+   coinCatalogRef.on('value',coinCatalogHandler);
+   coinHistoryRef=firebase.database().ref('coin_transactions/'+u.uid).limitToLast(30);
+   coinHistoryHandler=s=>{const vals=[];s.forEach(c=>vals.push(c.val()||{}));vals.reverse();$('mcpHistory').innerHTML=vals.length?vals.map(x=>`<div class="mcp-row"><span>${esc(x.title||x.type||'معاملة')}</span><b style="color:${Number(x.amount)>=0?'#4ade80':'#f87171'}">${Number(x.amount)>0?'+':''}${Number(x.amount||0)} عملة</b></div>`).join(''):'<p class="mcp-muted">لا توجد معاملات بعد.</p>';};
+   coinHistoryRef.on('value',coinHistoryHandler);
+ }
+ function renderGames(){
+   const games=coinCatalog.games||{},items=Object.entries(games).filter(([k,g])=>g&&g.enabled!==false);
+   $('mcpGames').innerHTML=items.length?items.map(([id,g])=>`<div class="mcp-game">${g.image?`<img src="${esc(g.image)}" alt="">`:''}<h4>${esc(g.name||'مكافأة')}</h4><div style="color:#fbbf24;font-weight:900">${Number(g.cost||0)} عملة</div><button ${Number(g.cost||0)<=0?'disabled':''} onclick="mohabRedeemCoins('${esc(id)}')">استبدال العملات</button></div>`).join(''):'<p class="mcp-muted">لا توجد مكافآت متاحة حاليًا.</p>';
+ }
+ window.mohabRedeemCoins=async function(gameId){
+   const u=firebase.auth().currentUser;if(!u){alert('سجّل الدخول أولاً.');return;}
+   const game=(coinCatalog.games||{})[gameId];if(!game)return;
+   const playerId=prompt('اكتب ID اللاعب لاستلام المكافأة:');if(!playerId)return;
+   if(!confirm(`استبدال ${game.cost} عملة مقابل ${game.name}؟`))return;
+   try{
+     const fn=firebase.app().functions(COIN_FN_REGION).httpsCallable('redeemCoins');
+     const requestId='coin_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,12);
+     const result=await fn({gameId,playerId:String(playerId).trim(),requestId});
+     const d=result.data||{};
+     const text=`طلب استبدال عملات MOHAB STORE%0Aالمكافأة: ${encodeURIComponent(game.name||'') }%0AID اللاعب: ${encodeURIComponent(playerId)}%0Aكود الطلب: ${encodeURIComponent(d.orderCode||'')}`;
+     const phone=String(coinCatalog.settings.whatsappNumber||'');
+     if(phone)window.open(`https://wa.me/${phone.replace(/\D/g,'')}?text=${text}`,'_blank','noopener');
+     alert('تم خصم العملات وتسجيل طلبك بنجاح.');
+   }catch(e){console.error(e);alert(e.message||'تعذر تنفيذ الاستبدال.');}
+ };
+ firebase.auth().onAuthStateChanged(u=>{
+   const page=$('mohabCoinsPage');if(!page)return;
+   if(page.classList.contains('open')){if(u){$('mcpLogin').style.display='none';$('mcpContent').style.display='block';mcpAttach();}else{mcpDetach();$('mcpLogin').style.display='block';$('mcpContent').style.display='none';}}
+ });
+})();
+</script>
+
 </body>
 </html>
