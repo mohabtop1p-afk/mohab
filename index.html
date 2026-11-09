@@ -2703,8 +2703,19 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             });
         }
         let walletOrdersListener=null, walletOrdersRef=null, walletAdminAdjustmentsListener=null;
+        let walletOrdersFirstSnapshot=true;
+        let walletOrdersLatestEvents={};
+        const walletUnreadStorageKey=()=>`mohab_wallet_unread_${walletUser?walletUser.uid:'guest'}`;
+        function walletGetUnreadEvents(){try{return JSON.parse(localStorage.getItem(walletUnreadStorageKey())||'[]');}catch(e){return [];}}
+        function walletSetUnreadEvents(items){try{localStorage.setItem(walletUnreadStorageKey(),JSON.stringify([...new Set(items)]));}catch(e){} walletRenderUnreadBadge();}
+        function walletRenderUnreadBadge(){
+            const unread=walletGetUnreadEvents().length;
+            ['walletOrdersBadge','walletOrdersDockBadge'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=unread>99?'99+':String(unread);el.style.display=unread?'block':'none';}});
+        }
+        function walletMarkOrdersRead(){walletSetUnreadEvents([]);}
         function openWalletOrdersPage(){
             if(!walletUser){openWallet();return;}
+            walletMarkOrdersRead();
             const page=document.getElementById('walletOrdersPage');if(page){page.classList.add('open');page.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
         }
         function closeWalletOrdersPage(fromPopState=false){const page=document.getElementById('walletOrdersPage');if(page){page.classList.remove('open');page.setAttribute('aria-hidden','true');}document.body.style.overflow='';if(walletOrdersHistoryPushed){walletOrdersHistoryPushed=false;if(!fromPopState && history.state && history.state.mohabWalletOrders)history.back();}}
@@ -2712,6 +2723,8 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             if(!walletUser)return;
             if(walletOrdersListener && walletOrdersRef)walletOrdersRef.off('value',walletOrdersListener);
             walletOrdersRef=db.ref(`wallet_orders/${walletUser.uid}`);
+            walletOrdersFirstSnapshot=true;
+            walletOrdersLatestEvents={};
             const list=document.getElementById('walletOrderPageList');
             if(list)list.innerHTML='<div class="wallet-muted">جارٍ تحميل طلباتك…</div>';
             walletOrdersListener=snap=>{
@@ -2719,11 +2732,26 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
                 snap.forEach(c=>{const value=c.val()||{};orderRows.push({...value,key:c.key});});
                 orderRows.sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
                 const legacy=document.getElementById('walletOrderHistoryList');
-                const active=orderRows.filter(o=>!['shipped','rejected','cancelled'].includes(o.status)).length;
-                const count=document.getElementById('walletOrdersNavCount'),badge=document.getElementById('walletOrdersBadge'),dockBadge=document.getElementById('walletOrdersDockBadge'),dockBtn=document.getElementById('walletOrdersDockBtn');
+                const unread=walletGetUnreadEvents();
+                const pageIsOpen=!!document.getElementById('walletOrdersPage')?.classList.contains('open');
+                const nextLatest={};
+                orderRows.forEach(o=>{
+                    const eventKey=String(o.key)+'|'+String(o.status||'new')+'|'+String(o.updatedAt||o.createdAt||0);
+                    nextLatest[o.key]=eventKey;
+                    const previous=walletOrdersLatestEvents[o.key];
+                    if(!walletOrdersFirstSnapshot && previous!==eventKey){
+                        const oldIndex=unread.indexOf(previous);if(oldIndex>=0)unread.splice(oldIndex,1);
+                        if(!pageIsOpen && !unread.includes(eventKey))unread.push(eventKey);
+                    }
+                });
+                walletOrdersLatestEvents=nextLatest;
+                if(walletOrdersFirstSnapshot){
+                    // Existing orders are history, not unread notifications.
+                    walletOrdersFirstSnapshot=false;
+                }
+                walletSetUnreadEvents(pageIsOpen?[]:unread);
+                const count=document.getElementById('walletOrdersNavCount'),dockBtn=document.getElementById('walletOrdersDockBtn');
                 if(count)count.textContent=orderRows.length+' طلب';
-                if(badge){badge.textContent=String(active);badge.style.display=active?'block':'none';}
-                if(dockBadge){dockBadge.textContent=String(active);dockBadge.style.display=active?'block':'none';}
                 if(dockBtn)dockBtn.style.display=walletUser?'flex':'none';
                 const labels={pending_payment:'بانتظار الدفع',paid:'تم الدفع — بانتظار الشحن',processing:'قيد الشحن',shipped:'تم الشحن',rejected:'مرفوض',cancelled:'ملغي'};
                 const html=orderRows.length?orderRows.map(o=>{
@@ -2738,7 +2766,7 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             };
             walletOrdersRef.on('value',walletOrdersListener,error=>{
                 console.error('Wallet orders listener failed:',error);
-                const message='تعذر تحميل طلباتك بسبب صلاحيات Firebase. تأكد من السماح للمستخدم بقراءة wallet_orders/'+walletUser.uid;
+                const message='تعذر تحميل طلباتك. تحقق من اتصال الإنترنت وصلاحيات قراءة wallet_orders/'+walletUser.uid;
                 if(list)list.innerHTML=`<div class="wallet-muted" role="alert">${walletEscape(message)}</div>`;
                 if(legacy)legacy.textContent=message;
             });
