@@ -1347,17 +1347,19 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         </div>
     </nav>
 
-    <section id="announcementTicker" class="announcement-ticker" aria-label="إعلانات وأحداث اليوم" hidden>
-      <div class="announcement-ticker-label">📢 أخبار MOHAB STORE</div>
+    <section id="announcementTicker" class="announcement-ticker" aria-label="آخر الأحداث" hidden>
       <div class="announcement-ticker-window"><div id="announcementTickerTrack" class="announcement-ticker-track"></div></div>
     </section>
     <style>
-      .announcement-ticker{--ticker-bg:#082f49;--ticker-fg:#ecfeff;display:flex;align-items:stretch;gap:0;margin:0 auto 14px;width:min(100% - 20px,1200px);min-height:44px;border-radius:13px;overflow:hidden;background:var(--ticker-bg);color:var(--ticker-fg);box-shadow:0 7px 22px rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.13)}
-      .announcement-ticker[hidden]{display:none!important}.announcement-ticker-label{flex:0 0 auto;display:flex;align-items:center;padding:0 13px;background:rgba(0,0,0,.18);font-size:.76rem;font-weight:900;white-space:nowrap}
-      .announcement-ticker-window{position:relative;min-width:0;flex:1;height:54px;overflow:hidden}.announcement-ticker-track{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;animation:tickerVertical 12s linear infinite}.announcement-ticker-track span{height:54px;min-height:54px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 12px;font-size:.86rem;font-weight:800;line-height:1.5;box-sizing:border-box}
-      .announcement-ticker:hover .announcement-ticker-track{animation-play-state:paused}@keyframes tickerVertical{0%,8%{transform:translateY(0)}25%,33%{transform:translateY(-54px)}50%,58%{transform:translateY(-108px)}75%,83%{transform:translateY(-162px)}100%{transform:translateY(-216px)}}
-      @media(max-width:520px){.announcement-ticker{min-height:42px}.announcement-ticker-label{font-size:.65rem;padding:0 8px}.announcement-ticker-track span{font-size:.76rem}}
-      @media(prefers-reduced-motion:reduce){.announcement-ticker-track{animation:none;position:static}.announcement-ticker-window{height:auto}.announcement-ticker-track span:not(:first-child){display:none}}
+      .announcement-ticker{--ticker-bg:#082f49;--ticker-fg:#ecfeff;width:100%;height:34px;margin:0 0 10px;overflow:hidden;background:var(--ticker-bg);color:var(--ticker-fg);}
+      .announcement-ticker[hidden]{display:none!important}
+      .announcement-ticker-window{position:relative;width:100%;height:34px;overflow:hidden;white-space:nowrap}
+      .announcement-ticker-track{position:absolute;inset:0;display:flex;align-items:center;width:max-content;min-width:100%;animation:tickerHorizontal 18s linear infinite;will-change:transform}
+      .announcement-ticker-track span{flex:0 0 auto;display:inline-flex;align-items:center;height:34px;padding:0 34px;font-size:.78rem;font-weight:700;line-height:1;white-space:nowrap}
+      .announcement-ticker:hover .announcement-ticker-track{animation-play-state:paused}
+      @keyframes tickerHorizontal{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+      @media(max-width:520px){.announcement-ticker,.announcement-ticker-window,.announcement-ticker-track,.announcement-ticker-track span{height:32px}.announcement-ticker-track span{font-size:.72rem;padding:0 24px}}
+      @media(prefers-reduced-motion:reduce){.announcement-ticker-track{animation:none;position:static;justify-content:center;width:100%}.announcement-ticker-track span:not(:first-child){display:none}}
     </style>
 
     <div class="luck-feature-wrap">
@@ -1412,6 +1414,14 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             <i class="fas fa-search"></i>
         </div>
     </div>
+
+    <div id="productCategoryBar" class="product-category-bar" aria-label="تصنيفات المنتجات" style="display:none"></div>
+    <style>
+      .product-category-bar{max-width:900px;width:100%;margin:8px auto 12px;padding:0 20px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+      .product-category-bar::-webkit-scrollbar{display:none}
+      .product-category-chip{flex:0 0 auto;border:1px solid var(--surface-border);background:var(--surface);color:var(--text-muted);border-radius:999px;padding:9px 16px;font:700 .78rem 'Almarai',sans-serif;cursor:pointer;white-space:nowrap;transition:background .2s,border-color .2s,color .2s}
+      .product-category-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+    </style>
 
     <div class="container">
         <div class="games-grid" id="gamesGrid">
@@ -2091,6 +2101,36 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             dock.innerHTML = htmlString;
         }
 
+        let activeProductCategory = 'all';
+        let publicProductCategories = {};
+        function renderPublicProductCategories() {
+            const bar = document.getElementById('productCategoryBar');
+            if (!bar) return;
+            const entries = Object.keys(publicProductCategories || {}).map(key => ({key, ...(publicProductCategories[key] || {})})).filter(c => c.name).sort((a,b)=>(Number(a.order)||99)-(Number(b.order)||99));
+            if (!entries.length) { bar.style.display='none'; activeProductCategory='all'; return; }
+            bar.style.display='flex';
+            const esc = value => String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+            bar.innerHTML = `<button type="button" class="product-category-chip ${activeProductCategory==='all'?'active':''}" data-category="all">الكل</button>` + entries.map(c => `<button type="button" class="product-category-chip ${activeProductCategory===c.key?'active':''}" data-category="${esc(c.key)}">${esc(c.name)}</button>`).join('');
+            bar.querySelectorAll('.product-category-chip').forEach(button => button.addEventListener('click', () => {
+                activeProductCategory = button.dataset.category || 'all';
+                bar.querySelectorAll('.product-category-chip').forEach(b => b.classList.toggle('active', b===button));
+                applyPublicGameFilters();
+            }));
+        }
+        function applyPublicGameFilters() {
+            const q = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+            document.querySelectorAll('#gamesGrid .game-card').forEach(card => {
+                const matchesName = (card.dataset.name || '').includes(q);
+                const matchesCategory = activeProductCategory==='all' || card.dataset.category===activeProductCategory;
+                card.style.display = matchesName && matchesCategory ? 'flex' : 'none';
+            });
+        }
+        firebase.database().ref('settings/productCategories').on('value', snap => {
+            publicProductCategories = snap.val() || {};
+            if (activeProductCategory!=='all' && !publicProductCategories[activeProductCategory]) activeProductCategory='all';
+            renderPublicProductCategories(); applyPublicGameFilters();
+        });
+
         db.ref('games').on('value', snap => {
             globalGames = snap.val() || {};
             const grid = document.getElementById('gamesGrid');
@@ -2101,12 +2141,13 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             gamesArray.forEach(g => {
                 const safeName = String(g.name || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
                 if (g.kind === 'external') {
-                    htmlString += `<div class="game-card" data-name="${safeName.toLowerCase()}" onclick="openExternalItem('${g.key}')"><div class="game-logo-frame"><img src="${g.img || ''}" alt="${safeName}" loading="lazy" decoding="async"></div><h3>${safeName}</h3><button class="btn-view">فتح الصفحة <i class="fas fa-arrow-left"></i></button></div>`;
+                    htmlString += `<div class="game-card" data-name="${safeName.toLowerCase()}" data-category="${String(g.categoryId || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" onclick="openExternalItem('${g.key}')"><div class="game-logo-frame"><img src="${g.img || ''}" alt="${safeName}" loading="lazy" decoding="async"></div><h3>${safeName}</h3><button class="btn-view">فتح الصفحة <i class="fas fa-arrow-left"></i></button></div>`;
                 } else {
-                    htmlString += `<div class="game-card" data-name="${safeName.toLowerCase()}" onclick="openGame('${g.key}')"><div class="game-logo-frame"><img src="${g.img || ''}" alt="${safeName}" loading="lazy" decoding="async"></div><h3>${safeName}</h3><button class="btn-view">عرض الأسعار</button></div>`;
+                    htmlString += `<div class="game-card" data-name="${safeName.toLowerCase()}" data-category="${String(g.categoryId || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" onclick="openGame('${g.key}')"><div class="game-logo-frame"><img src="${g.img || ''}" alt="${safeName}" loading="lazy" decoding="async"></div><h3>${safeName}</h3><button class="btn-view">عرض الأسعار</button></div>`;
                 }
             });
             grid.innerHTML = htmlString;
+            applyPublicGameFilters();
             mohabApplyInitialRoute();
         });
 
@@ -2210,12 +2251,7 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         let searchTimeout;
         function filterGamesDebounced() {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                let q = document.getElementById('searchInput').value.toLowerCase(); 
-                document.querySelectorAll('.game-card').forEach(card => { 
-                    card.style.display = card.dataset.name.includes(q) ? "flex" : "none"; 
-                });
-            }, 150); 
+            searchTimeout = setTimeout(applyPublicGameFilters, 150);
         }
 
         function openGame(id, fromRoute = false) {
@@ -3381,24 +3417,11 @@ body.light-theme #walletPage .wallet-google-login{background:#fff!important;colo
       root.style.setProperty('--ticker-bg',/^#[0-9a-f]{6}$/i.test(data.background||'')?data.background:'#082f49');
       root.style.setProperty('--ticker-fg',/^#[0-9a-f]{6}$/i.test(data.color||'')?data.color:'#ecfeff');
       track.innerHTML='';
-      const loop=clean.length===1?[clean[0]]:[...clean,clean[0]];
-      loop.forEach(message=>{const span=document.createElement('span');span.textContent=message;track.appendChild(span);});
+      const repeated=clean.length===1?[clean[0]]:[...clean,...clean];
+      repeated.forEach(message=>{const span=document.createElement('span');span.textContent=message;track.appendChild(span);});
       const duration=Math.max(4,Math.min(30,Number(data.speed)||12));
       track.style.animationDuration=duration+'s';
-      if(clean.length===1){track.style.animationName='none';}
-      else{
-        let frames='0%, 8%{transform:translateY(0)}';
-        const count=clean.length;
-        for(let i=1;i<=count;i++){
-          const pct=(8+(i/count)*84).toFixed(2);
-          const hold=(8+(i/count)*84+2).toFixed(2);
-          frames+=`${pct}%{transform:translateY(-${i*54}px)}${hold}%{transform:translateY(-${i*54}px)}`;
-        }
-        let style=document.getElementById('announcementTickerDynamicKeyframes');
-        if(!style){style=document.createElement('style');style.id='announcementTickerDynamicKeyframes';document.head.appendChild(style);}
-        style.textContent=`@keyframes tickerVerticalDynamic{${frames}100%{transform:translateY(-${count*54}px)}}`;
-        track.style.animationName='tickerVerticalDynamic';
-      }
+      track.style.animationName='tickerHorizontal';
       root.hidden=false;
     },error=>console.warn('Announcement ticker listener:',error));
   }
