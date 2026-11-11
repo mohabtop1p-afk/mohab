@@ -1348,18 +1348,24 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
     </nav>
 
     <section id="announcementTicker" class="announcement-ticker" aria-label="آخر الأحداث" hidden>
-      <div class="announcement-ticker-window"><div id="announcementTickerTrack" class="announcement-ticker-track"></div></div>
+      <div class="announcement-ticker-window">
+        <div id="announcementTickerTrack" class="announcement-ticker-track">
+          <div class="announcement-ticker-group"></div>
+          <div class="announcement-ticker-group" aria-hidden="true"></div>
+        </div>
+      </div>
     </section>
     <style>
       .announcement-ticker{--ticker-bg:#082f49;--ticker-fg:#ecfeff;width:100%;height:34px;margin:0 0 10px;overflow:hidden;background:var(--ticker-bg);color:var(--ticker-fg);}
       .announcement-ticker[hidden]{display:none!important}
       .announcement-ticker-window{position:relative;width:100%;height:34px;overflow:hidden;white-space:nowrap}
-      .announcement-ticker-track{position:absolute;inset:0;display:flex;align-items:center;width:max-content;min-width:100%;animation:tickerHorizontal 18s linear infinite;will-change:transform}
-      .announcement-ticker-track span{flex:0 0 auto;display:inline-flex;align-items:center;height:34px;padding:0 34px;font-size:.78rem;font-weight:700;line-height:1;white-space:nowrap}
+      .announcement-ticker-track{position:absolute;top:0;left:0;display:flex;flex-wrap:nowrap;align-items:center;width:max-content;height:34px;will-change:transform;animation:tickerHorizontal var(--ticker-duration,18s) linear infinite}
+      .announcement-ticker-group{direction:rtl;display:flex;flex:0 0 auto;align-items:center;width:max-content;min-width:100vw;height:34px}
+      .announcement-ticker-group span{flex:0 0 auto;display:inline-flex;align-items:center;height:34px;padding:0 34px;font-size:.78rem;font-weight:700;line-height:1;white-space:nowrap}
       .announcement-ticker:hover .announcement-ticker-track{animation-play-state:paused}
-      @keyframes tickerHorizontal{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
-      @media(max-width:520px){.announcement-ticker,.announcement-ticker-window,.announcement-ticker-track,.announcement-ticker-track span{height:32px}.announcement-ticker-track span{font-size:.72rem;padding:0 24px}}
-      @media(prefers-reduced-motion:reduce){.announcement-ticker-track{animation:none;position:static;justify-content:center;width:100%}.announcement-ticker-track span:not(:first-child){display:none}}
+      @keyframes tickerHorizontal{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+      @media(max-width:520px){.announcement-ticker,.announcement-ticker-window,.announcement-ticker-track,.announcement-ticker-group,.announcement-ticker-group span{height:32px}.announcement-ticker-group span{font-size:.72rem;padding:0 24px}}
+      @media(prefers-reduced-motion:reduce){.announcement-ticker-track{animation:none!important;transform:none!important}.announcement-ticker-group[aria-hidden="true"]{display:none}}
     </style>
 
     <div class="luck-feature-wrap">
@@ -3409,20 +3415,37 @@ body.light-theme #walletPage .wallet-google-login{background:#fff!important;colo
     if(!window.firebase || !firebase.apps || !firebase.apps.length || !firebase.database)return;
     const root=document.getElementById('announcementTicker'),track=document.getElementById('announcementTickerTrack');
     if(!root||!track)return;
+    const groups=track.querySelectorAll('.announcement-ticker-group');
+    if(groups.length!==2)return;
     firebase.database().ref('settings/announcementTicker').on('value',snap=>{
       const data=snap.val()||{};
-      const messages=Array.isArray(data.messages)?data.messages:(typeof data.text==='string'?data.text.split(/\r?\n/):[]);
+      const messages=Array.isArray(data.messages)?data.messages:(typeof data.text==='string'?data.text.split(/\\r?\\n/):[]);
       const clean=messages.map(x=>String(x||'').trim()).filter(Boolean).slice(0,5);
       if(data.enabled===false||!clean.length){root.hidden=true;return;}
       root.style.setProperty('--ticker-bg',/^#[0-9a-f]{6}$/i.test(data.background||'')?data.background:'#082f49');
       root.style.setProperty('--ticker-fg',/^#[0-9a-f]{6}$/i.test(data.color||'')?data.color:'#ecfeff');
-      track.innerHTML='';
-      const repeated=clean.length===1?[clean[0]]:[...clean,...clean];
-      repeated.forEach(message=>{const span=document.createElement('span');span.textContent=message;track.appendChild(span);});
-      const duration=Math.max(4,Math.min(30,Number(data.speed)||12));
-      track.style.animationDuration=duration+'s';
-      track.style.animationName='tickerHorizontal';
+      groups.forEach(group=>{
+        group.replaceChildren();
+        clean.forEach(message=>{
+          const span=document.createElement('span');
+          span.textContent=message;
+          group.appendChild(span);
+        });
+      });
+      const legacyDuration=Math.max(4,Math.min(30,Number(data.speed)||12));
+      const legacyMode=legacyDuration>=20?'slow':(legacyDuration<=8?'fast':'normal');
+      const mode=['slow','normal','fast'].includes(data.speedMode)?data.speedMode:legacyMode;
+      const pixelsPerSecond={slow:28,normal:50,fast:85}[mode];
+      const measureAndStart=()=>{
+        const groupWidth=groups[0].getBoundingClientRect().width;
+        const duration=Math.max(3,groupWidth/pixelsPerSecond);
+        track.style.setProperty('--ticker-duration',duration+'s');
+        track.style.animation='none';
+        void track.offsetWidth;
+        track.style.animation='tickerHorizontal var(--ticker-duration) linear infinite';
+      };
       root.hidden=false;
+      requestAnimationFrame(measureAndStart);
     },error=>console.warn('Announcement ticker listener:',error));
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startAnnouncementTicker,{once:true});else startAnnouncementTicker();
