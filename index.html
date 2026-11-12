@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+    <!-- MOHAB STORE: Website favicon -->
+    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
+    <link rel="shortcut icon" type="image/jpeg" href="/favicon.jpg">
+    <link rel="apple-touch-icon" href="/favicon.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MOHAB STORE | المتجر الرسمي</title>
@@ -1315,8 +1319,118 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-login::before{displ
 body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!important}
 </style>
 
+
+<style id="mohab-initial-loader-styles">
+  /* شاشة تحميل شفافة: الموقع يظل ظاهرًا بالخلفية مع تمويه ناعم */
+  #mohabInitialLoader{
+    position:fixed;inset:0;z-index:999999;
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;
+    background:rgba(5,10,19,.30);
+    -webkit-backdrop-filter:blur(13px) saturate( .82 );
+    backdrop-filter:blur(13px) saturate(.82);
+    opacity:1;visibility:visible;
+    transition:opacity .55s ease,visibility .55s ease,backdrop-filter .55s ease;
+  }
+  #mohabInitialLoader.mohab-loader-hidden{
+    opacity:0;visibility:hidden;pointer-events:none;
+    -webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);
+  }
+  #mohabInitialLoader .mohab-loader-card{
+    width:min(300px,100%);text-align:center;
+    padding:26px 20px;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:22px;
+    background:rgba(10,17,30,.40);
+    box-shadow:0 18px 55px rgba(0,0,0,.18);
+    -webkit-backdrop-filter:blur(9px);
+    backdrop-filter:blur(9px);
+    animation:mohabLoaderFloat 2.8s ease-in-out infinite;
+  }
+  #mohabInitialLoader .mohab-loader-spinner{
+    position:relative;width:54px;height:54px;margin:0 auto 17px;
+    border-radius:50%;
+    border:3px solid rgba(255,255,255,.12);
+    border-top-color:#22d3ee;
+    border-left-color:rgba(59,130,246,.82);
+    box-shadow:0 0 24px rgba(6,182,212,.20),inset 0 0 12px rgba(6,182,212,.06);
+    animation:mohabLoaderSpin .9s cubic-bezier(.55,.1,.35,.9) infinite;
+  }
+  #mohabInitialLoader .mohab-loader-spinner::after{
+    content:"";position:absolute;inset:7px;border-radius:50%;
+    border:2px solid transparent;border-bottom-color:rgba(34,211,238,.62);
+    animation:mohabLoaderSpin 1.5s linear infinite reverse;
+  }
+  #mohabInitialLoader p{
+    margin:0;color:#f1f5f9;font-size:14px;line-height:1.8;
+    font-weight:800;letter-spacing:.1px;
+    text-shadow:0 2px 12px rgba(0,0,0,.45);
+  }
+  #mohabInitialLoader .mohab-loader-error{display:none;margin-top:10px;color:#fcd34d;font-size:12px;line-height:1.7}
+  @keyframes mohabLoaderSpin{to{transform:rotate(360deg)}}
+  @keyframes mohabLoaderFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  @media(prefers-reduced-motion:reduce){
+    #mohabInitialLoader .mohab-loader-spinner,
+    #mohabInitialLoader .mohab-loader-spinner::after,
+    #mohabInitialLoader .mohab-loader-card{animation:none}
+    #mohabInitialLoader{transition:none}
+  }
+</style>
+
 </head>
 <body>
+
+<div id="mohabInitialLoader" role="status" aria-live="polite" aria-label="جاري تحميل الموقع">
+  <div class="mohab-loader-card">
+    <div class="mohab-loader-spinner" aria-hidden="true"></div>
+    <p id="mohabLoaderMessage">جاري تحميل الموقع</p>
+    <div class="mohab-loader-error" id="mohabLoaderError"></div>
+  </div>
+</div>
+<script id="mohab-initial-loader-controller">
+(function(){
+  const started=Date.now();let finished=false;
+  const overlay=()=>document.getElementById('mohabInitialLoader');
+  function progress(value,message){
+    const label=document.getElementById('mohabLoaderMessage');
+    if(label&&message)label.textContent='جاري تحميل الموقع';
+  }
+  function hide(){
+    if(finished)return;finished=true;
+    const wait=Math.max(0,520-(Date.now()-started));
+    setTimeout(()=>{
+      const el=overlay();
+      if(el){el.classList.add('mohab-loader-hidden');setTimeout(()=>el.remove(),620);}
+    },wait);
+  }
+  window.mohabFinishInitialLoad=async function(games){
+    if(finished)return;
+    const urls=[...new Set((games||[]).map(g=>String(g&&g.img||'').trim()).filter(u=>/^https?:\/\//i.test(u)))];
+    if(urls.length){
+      let done=0;
+      const checks=urls.map(url=>new Promise(resolve=>{
+        let settled=false;
+        const finish=()=>{if(settled)return;settled=true;done++;resolve();};
+        const img=new Image();img.onload=finish;img.onerror=finish;img.src=url;
+        if(img.complete)finish();
+        setTimeout(finish,4500);
+      }));
+      await Promise.race([Promise.all(checks),new Promise(resolve=>setTimeout(resolve,4800))]);
+    }
+    if(finished)return;
+    hide();
+  };
+  window.mohabInitialLoadFailed=function(){
+    if(finished)return;
+    const msg=document.getElementById('mohabLoaderMessage');
+    if(msg)msg.textContent='جاري تحميل الموقع';
+    setTimeout(hide,900);
+  };
+  // حماية من بقاء شاشة التحميل إذا تعذر الاتصال بقاعدة البيانات.
+  setTimeout(()=>{if(!finished)window.mohabInitialLoadFailed();},13000);
+})();
+</script>
+
 
     <nav>
         <div class="nav-content">
@@ -2142,7 +2256,11 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             const grid = document.getElementById('gamesGrid');
             let gamesArray = Object.keys(globalGames).map(key => ({ key: key, ...globalGames[key] }));
             gamesArray.sort((a, b) => (a.order || 99) - (b.order || 99));
-            if(gamesArray.length === 0) { grid.innerHTML = '<div class="empty-msg">لا توجد منتجات مضافة حالياً</div>'; return; }
+            if(gamesArray.length === 0) {
+                grid.innerHTML = '<div class="empty-msg">لا توجد منتجات مضافة حالياً</div>';
+                if(window.mohabFinishInitialLoad) window.mohabFinishInitialLoad([]);
+                return;
+            }
             let htmlString = '';
             gamesArray.forEach(g => {
                 const safeName = String(g.name || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -2155,6 +2273,12 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             grid.innerHTML = htmlString;
             applyPublicGameFilters();
             mohabApplyInitialRoute();
+            // Wait only for the first games snapshot and its essential card images.
+            // Secondary widgets, videos, and below-the-fold lazy images never block the visitor.
+            if(window.mohabFinishInitialLoad) window.mohabFinishInitialLoad(gamesArray);
+        }, error => {
+            console.error('Initial games load failed:', error);
+            if(window.mohabInitialLoadFailed) window.mohabInitialLoadFailed();
         });
 
         function decodeExternalTarget(item) {
@@ -3160,18 +3284,6 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             page.classList.remove('open'); page.setAttribute('aria-hidden','true');
             document.body.style.overflow='';
         }
-
-
-        // استقبال طلب فتح تسجيل دخول المحفظة من صفحة عجلة الحظ المستضافة خارجيًا.
-        // نتحقق من مصدر الرسالة ومن أن المرسل هو iframe العجلة نفسه.
-        window.addEventListener('message', function(event) {
-            if (event.origin !== 'https://mohabtop1p-afk.github.io') return;
-            if (event.source !== document.getElementById('luckFrame')?.contentWindow) return;
-            if (event.data && event.data.type === 'MOHAB_OPEN_WALLET_LOGIN') {
-                closeLuckPage(true);
-                openWallet();
-            }
-        });
 
         const chatbotTarget = atob('aHR0cHM6Ly9tb2hhYnRvcDFwLWFmay5naXRodWIuaW8vTWFoYWItQ2hhdC0v');
         function openChatbotPage(e, fromRoute = false) {
