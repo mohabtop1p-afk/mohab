@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <!-- MOHAB STORE: Website favicon -->
-    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.jpg">
-    <link rel="shortcut icon" type="image/png" href="/favicon.jpg">
+    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
+    <link rel="shortcut icon" type="image/jpeg" href="/favicon.jpg">
     <link rel="apple-touch-icon" href="/favicon.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1321,29 +1321,69 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
 
 
 <style id="mohab-initial-loader-styles">
-  #mohabInitialLoader{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 50% 38%,rgba(6,182,212,.13),transparent 48%),#090d16;opacity:1;visibility:visible;transition:opacity .38s ease,visibility .38s ease}
-  #mohabInitialLoader.mohab-loader-hidden{opacity:0;visibility:hidden;pointer-events:none}
-  #mohabInitialLoader .mohab-loader-card{width:min(360px,100%);text-align:center;padding:30px 24px;border:1px solid rgba(255,255,255,.09);border-radius:24px;background:linear-gradient(145deg,rgba(19,28,46,.96),rgba(10,17,30,.96));box-shadow:0 22px 70px rgba(0,0,0,.38),0 0 38px rgba(6,182,212,.07)}
-  #mohabInitialLoader .mohab-loader-mark{width:58px;height:58px;margin:0 auto 18px;border-radius:18px;display:grid;place-items:center;color:#fff;font-size:25px;background:linear-gradient(135deg,#0891b2,#2563eb);box-shadow:0 8px 28px rgba(6,182,212,.24)}
-  #mohabInitialLoader h2{font-size:19px;font-weight:800;color:#f8fafc;margin:0 0 9px}
-  #mohabInitialLoader p{font-size:13px;line-height:1.8;color:#9caec3;margin:0 0 19px}
-  #mohabInitialLoader .mohab-loader-track{height:6px;width:100%;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.09)}
-  #mohabInitialLoader .mohab-loader-progress{height:100%;width:8%;border-radius:99px;background:linear-gradient(90deg,#06b6d4,#3b82f6);transition:width .3s ease}
-  #mohabInitialLoader .mohab-loader-percent{display:block;margin-top:10px;color:#67e8f9;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
-  #mohabInitialLoader .mohab-loader-error{display:none;margin-top:14px;color:#fbbf24;font-size:12px;line-height:1.7}
-  @media(prefers-reduced-motion:reduce){#mohabInitialLoader,#mohabInitialLoader .mohab-loader-progress{transition:none}}
+  /* شاشة تحميل شفافة: الموقع يظل ظاهرًا بالخلفية مع تمويه ناعم */
+  #mohabInitialLoader{
+    position:fixed;inset:0;z-index:999999;
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;
+    background:rgba(5,10,19,.30);
+    -webkit-backdrop-filter:blur(13px) saturate( .82 );
+    backdrop-filter:blur(13px) saturate(.82);
+    opacity:1;visibility:visible;
+    transition:opacity .55s ease,visibility .55s ease,backdrop-filter .55s ease;
+  }
+  #mohabInitialLoader.mohab-loader-hidden{
+    opacity:0;visibility:hidden;pointer-events:none;
+    -webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);
+  }
+  #mohabInitialLoader .mohab-loader-card{
+    width:min(300px,100%);text-align:center;
+    padding:26px 20px;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:22px;
+    background:rgba(10,17,30,.40);
+    box-shadow:0 18px 55px rgba(0,0,0,.18);
+    -webkit-backdrop-filter:blur(9px);
+    backdrop-filter:blur(9px);
+    animation:mohabLoaderFloat 2.8s ease-in-out infinite;
+  }
+  #mohabInitialLoader .mohab-loader-spinner{
+    position:relative;width:54px;height:54px;margin:0 auto 17px;
+    border-radius:50%;
+    border:3px solid rgba(255,255,255,.12);
+    border-top-color:#22d3ee;
+    border-left-color:rgba(59,130,246,.82);
+    box-shadow:0 0 24px rgba(6,182,212,.20),inset 0 0 12px rgba(6,182,212,.06);
+    animation:mohabLoaderSpin .9s cubic-bezier(.55,.1,.35,.9) infinite;
+  }
+  #mohabInitialLoader .mohab-loader-spinner::after{
+    content:"";position:absolute;inset:7px;border-radius:50%;
+    border:2px solid transparent;border-bottom-color:rgba(34,211,238,.62);
+    animation:mohabLoaderSpin 1.5s linear infinite reverse;
+  }
+  #mohabInitialLoader p{
+    margin:0;color:#f1f5f9;font-size:14px;line-height:1.8;
+    font-weight:800;letter-spacing:.1px;
+    text-shadow:0 2px 12px rgba(0,0,0,.45);
+  }
+  #mohabInitialLoader .mohab-loader-error{display:none;margin-top:10px;color:#fcd34d;font-size:12px;line-height:1.7}
+  @keyframes mohabLoaderSpin{to{transform:rotate(360deg)}}
+  @keyframes mohabLoaderFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  @media(prefers-reduced-motion:reduce){
+    #mohabInitialLoader .mohab-loader-spinner,
+    #mohabInitialLoader .mohab-loader-spinner::after,
+    #mohabInitialLoader .mohab-loader-card{animation:none}
+    #mohabInitialLoader{transition:none}
+  }
 </style>
 
 </head>
 <body>
 
-<div id="mohabInitialLoader" role="status" aria-live="polite" aria-label="تحميل المتجر">
+<div id="mohabInitialLoader" role="status" aria-live="polite" aria-label="جاري تحميل الموقع">
   <div class="mohab-loader-card">
-    <div class="mohab-loader-mark"><i class="fas fa-gamepad" aria-hidden="true"></i></div>
-    <h2>MOHAB STORE</h2>
-    <p id="mohabLoaderMessage">بنجهّز المتجر ليك… بنحمّل الألعاب والصور الأساسية</p>
-    <div class="mohab-loader-track"><div class="mohab-loader-progress" id="mohabLoaderProgress"></div></div>
-    <span class="mohab-loader-percent" id="mohabLoaderPercent">8%</span>
+    <div class="mohab-loader-spinner" aria-hidden="true"></div>
+    <p id="mohabLoaderMessage">جاري تحميل الموقع</p>
     <div class="mohab-loader-error" id="mohabLoaderError"></div>
   </div>
 </div>
@@ -1351,12 +1391,43 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
 (function(){
   const started=Date.now();let finished=false;
   const overlay=()=>document.getElementById('mohabInitialLoader');
-  function progress(value,message){const bar=document.getElementById('mohabLoaderProgress'),pct=document.getElementById('mohabLoaderPercent'),label=document.getElementById('mohabLoaderMessage');if(bar)bar.style.width=Math.max(0,Math.min(100,value))+'%';if(pct)pct.textContent=Math.round(value)+'%';if(label&&message)label.textContent=message;}
-  function hide(){if(finished)return;finished=true;const wait=Math.max(0,520-(Date.now()-started));setTimeout(()=>{const el=overlay();if(el){el.classList.add('mohab-loader-hidden');setTimeout(()=>el.remove(),450);}},wait);}
-  window.mohabFinishInitialLoad=async function(games){if(finished)return;progress(58,'تم تحميل بيانات المتجر… بنجهّز صور الألعاب');const urls=[...new Set((games||[]).map(g=>String(g&&g.img||'').trim()).filter(u=>/^https?:\/\//i.test(u)))];if(!urls.length){progress(92,'المتجر جاهز تقريبًا…');hide();return;}let done=0;const update=()=>progress(62+(done/urls.length)*29,'بنحمّل صور الألعاب الأساسية ('+done+' من '+urls.length+')');update();const checks=urls.map(url=>new Promise(resolve=>{let settled=false;const finish=()=>{if(settled)return;settled=true;done++;update();resolve();};const img=new Image();img.onload=finish;img.onerror=finish;img.src=url;if(img.complete)finish();setTimeout(finish,6500);}));await Promise.race([Promise.all(checks),new Promise(resolve=>setTimeout(resolve,7200))]);if(finished)return;progress(96,'اكتمل تجهيز المحتوى الأساسي…');hide();};
-  window.mohabInitialLoadFailed=function(){if(finished)return;const msg=document.getElementById('mohabLoaderMessage'),err=document.getElementById('mohabLoaderError');if(msg)msg.textContent='فيه تأخير في الاتصال ببيانات المتجر';if(err){err.textContent='هنعرض الموقع بدل ما نفضل على شاشة التحميل. لو الألعاب ما ظهرتش، حدّث الصفحة بعد التأكد من الإنترنت.';err.style.display='block';}progress(100,'');setTimeout(hide,1400);};
-  // Safety net: never leave visitors stuck behind the loading screen.
-  setTimeout(()=>{if(!finished){window.mohabInitialLoadFailed();}},13000);
+  function progress(value,message){
+    const label=document.getElementById('mohabLoaderMessage');
+    if(label&&message)label.textContent='جاري تحميل الموقع';
+  }
+  function hide(){
+    if(finished)return;finished=true;
+    const wait=Math.max(0,520-(Date.now()-started));
+    setTimeout(()=>{
+      const el=overlay();
+      if(el){el.classList.add('mohab-loader-hidden');setTimeout(()=>el.remove(),620);}
+    },wait);
+  }
+  window.mohabFinishInitialLoad=async function(games){
+    if(finished)return;
+    const urls=[...new Set((games||[]).map(g=>String(g&&g.img||'').trim()).filter(u=>/^https?:\/\//i.test(u)))];
+    if(urls.length){
+      let done=0;
+      const checks=urls.map(url=>new Promise(resolve=>{
+        let settled=false;
+        const finish=()=>{if(settled)return;settled=true;done++;resolve();};
+        const img=new Image();img.onload=finish;img.onerror=finish;img.src=url;
+        if(img.complete)finish();
+        setTimeout(finish,4500);
+      }));
+      await Promise.race([Promise.all(checks),new Promise(resolve=>setTimeout(resolve,4800))]);
+    }
+    if(finished)return;
+    hide();
+  };
+  window.mohabInitialLoadFailed=function(){
+    if(finished)return;
+    const msg=document.getElementById('mohabLoaderMessage');
+    if(msg)msg.textContent='جاري تحميل الموقع';
+    setTimeout(hide,900);
+  };
+  // حماية من بقاء شاشة التحميل إذا تعذر الاتصال بقاعدة البيانات.
+  setTimeout(()=>{if(!finished)window.mohabInitialLoadFailed();},13000);
 })();
 </script>
 
