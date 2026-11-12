@@ -2590,15 +2590,125 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             const profile=document.getElementById('walletProfile');
             const profileEmail=document.getElementById('walletProfileEmail');
             if(profile)profile.style.display='flex';
-            if(profileEmail)profileEmail.textContent=walletUser.email || walletUser.displayName || 'تم تسجيل الدخول';
+            if(profileEmail)profileEmail.textContent=(walletUser.displayName && walletUser.displayName!==walletUser.email ? walletUser.displayName : (walletUser.email||'').split('@')[0]) || 'تم تسجيل الدخول';
             document.getElementById('walletStatus').textContent='';
         }
+
+        // Username/password accounts use Firebase Email/Password with a private synthetic email.
+        // The real email is never shown to customers. Username uniqueness is reserved in RTDB.
+        const WALLET_LOGIN_DOMAIN='accounts.mohabstore.com';
+        let walletAuthMode='login';
+        function walletUsernameNormalize(value){return String(value||'').trim().toLowerCase();}
+        function walletUsernameValid(value){return /^[a-z0-9][a-z0-9._-]{2,19}$/.test(value);}
+        function walletSyntheticEmail(username){return walletUsernameNormalize(username)+'@'+WALLET_LOGIN_DOMAIN;}
+        function walletAuthMessage(message,isError=false){const el=document.getElementById('walletAuthStatus');if(!el)return;el.textContent=message||'';el.classList.toggle('error',!!isError);}
+        function walletSetAuthMode(mode){
+            walletAuthMode=mode==='register'?'register':'login';
+            document.getElementById('walletLoginTab').classList.toggle('active',walletAuthMode==='login');
+            document.getElementById('walletRegisterTab').classList.toggle('active',walletAuthMode==='register');
+            document.getElementById('walletPasswordStrength').hidden=walletAuthMode!=='register';
+            document.getElementById('walletPasswordInput').autocomplete=walletAuthMode==='register'?'new-password':'current-password';
+            document.getElementById('walletUsernameSubmit').innerHTML=walletAuthMode==='register'?'<i class="fas fa-user-plus"></i><span>إنشاء الحساب</span>':'<i class="fas fa-lock"></i><span>تسجيل الدخول</span>';
+            walletAuthMessage(walletAuthMode==='register'?'أنشئ اسم مستخدم فريدًا وكلمة مرور قوية.':'أدخل اسم المستخدم وكلمة المرور للمتابعة.');
+        }
+        function walletPasswordChecks(p){
+            return {length:p.length>=10,upper:/[A-Z]/.test(p)&&/[a-z]/.test(p),number:/\d/.test(p),symbol:/[^A-Za-z0-9]/.test(p)};
+        }
+        function walletUpdatePasswordStrength(){
+            const p=document.getElementById('walletPasswordInput').value, c=walletPasswordChecks(p), score=Object.values(c).filter(Boolean).length;
+            document.getElementById('walletPasswordStrength').hidden=walletAuthMode!=='register';
+            document.getElementById('walletStrengthBar').style.width=(score*25)+'%';
+            document.getElementById('walletStrengthBar').style.background=['#ef4444','#f97316','#eab308','#84cc16','#10b981'][score];
+            document.getElementById('walletStrengthText').textContent=['ضعيفة جدًا','ضعيفة','متوسطة','جيدة','قوية جدًا'][score];
+            ['Length','Upper','Number','Symbol'].forEach((k,i)=>document.getElementById('walletRule'+k).classList.toggle('ok',Object.values(c)[i]));
+            return c;
+        }
+        function walletTogglePassword(){
+            const input=document.getElementById('walletPasswordInput'),btn=document.querySelector('#walletLoginArea .wallet-password-toggle');
+            input.type=input.type==='password'?'text':'password';
+            btn.innerHTML=input.type==='password'?'<i class="fas fa-eye"></i>':'<i class="fas fa-eye-slash"></i>';
+        }
+        async function walletReserveUsername(username,uid){
+            const ref=db.ref('username_index/'+walletUsernameNormalize(username));
+            const result=await ref.transaction(current=>(current===null||current===uid)?uid:undefined);
+            return !!(result.committed&&result.snapshot.val()===uid);
+        }
+        async function walletAssignGoogleUsername(user){
+            const existing=await db.ref('wallet_users/'+user.uid+'/username').once('value');
+            if(existing.val())return String(existing.val());
+            const base=walletUsernameNormalize((user.email||'').split('@')[0]).replace(/[^a-z0-9._-]/g,'').slice(0,16)||'mohab';
+            for(let n=0;n<1000;n++){
+                const candidate=n===0?base:(base.slice(0,Math.max(3,17-String(n).length))+n);
+                if(!walletUsernameValid(candidate))continue;
+                if(await walletReserveUsername(candidate,user.uid))return candidate;
+            }
+            throw new Error('تعذر إنشاء اسم مستخدم تلقائي؛ تواصل مع الدعم.');
+        }
+        async function walletSyncAccountProfile(user){
+            const ref=db.ref('wallet_users/'+user.uid);
+            const oldSnap=await ref.once('value'),old=oldSnap.val()||{};
+            const providers=(user.providerData||[]).map(p=>p.providerId);
+            const provider=providers.includes('google.com')?'google':(providers.includes('password')?'username':'other');
+            let username=old.username||'';
+            if(!username){
+                if(provider==='google')username=await walletAssignGoogleUsername(user);
+                else{
+                    username=walletUsernameNormalize((user.email||'').split('@')[0]);
+                    if(!walletUsernameValid(username))username='user'+user.uid.slice(0,8).toLowerCase();
+                    const claimed=await walletReserveUsername(username,user.uid);
+                    if(!claimed){const lookup=await db.ref('username_index/'+username).once('value');if(lookup.val()!==user.uid)throw new Error('اسم المستخدم غير متاح.');}
+                }
+            }
+            await ref.update({uid:user.uid,username,authProvider:provider,email:provider==='google'?(user.email||''):'',displayName:username,photoURL:user.photoURL||'',updatedAt:firebase.database.ServerValue.TIMESTAMP});
+            return username;
+        }
+        async function walletSubmitUsernameAuth(event){
+            event.preventDefault();
+            const username=walletUsernameNormalize(document.getElementById('walletUsernameInput').value);
+            const password=document.getElementById('walletPasswordInput').value;
+            const btn=document.getElementById('walletUsernameSubmit');
+            if(!walletUsernameValid(username)){walletAuthMessage('اسم المستخدم من 3 إلى 20 حرفًا، ويقبل الإنجليزية والأرقام والنقطة والشرطة فقط.',true);return;}
+            if(!password){walletAuthMessage('اكتب كلمة المرور أولًا.',true);return;}
+            if(walletAuthMode==='register'){
+                const checks=walletUpdatePasswordStrength();
+                if(!Object.values(checks).every(Boolean)){walletAuthMessage('كلمة المرور غير كافية. أكمل شروط القوة الأربعة.',true);return;}
+            }
+            btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i><span>جارٍ التحقق…</span>';walletAuthMessage('');
+            try{
+                const email=walletSyntheticEmail(username);
+                if(walletAuthMode==='register'){
+                    const credential=await firebase.auth().createUserWithEmailAndPassword(email,password);
+                    const claimed=await walletReserveUsername(username,credential.user.uid);
+                    if(!claimed){
+                        await credential.user.delete();
+                        throw new Error('اسم المستخدم مستخدم بالفعل. اختر اسمًا آخر.');
+                    }
+                    await db.ref('wallet_users/'+credential.user.uid).update({uid:credential.user.uid,username,authProvider:'username',email:'',displayName:username,createdAt:firebase.database.ServerValue.TIMESTAMP,updatedAt:firebase.database.ServerValue.TIMESTAMP});
+                    walletAuthMessage('تم إنشاء حسابك بنجاح.');
+                }else{
+                    const index=await db.ref('username_index/'+username).once('value');
+                    if(!index.exists()){walletAuthMessage('اسم المستخدم غير موجود. راجع الاسم أو أنشئ حسابًا جديدًا.',true);return;}
+                    await firebase.auth().signInWithEmailAndPassword(email,password);
+                }
+            }catch(e){
+                let msg='تعذر إتمام العملية. حاول مرة أخرى.';
+                if(e.code==='auth/email-already-in-use')msg='اسم المستخدم مستخدم بالفعل. اختر اسمًا آخر.';
+                else if(e.code==='auth/invalid-email')msg='اسم المستخدم غير صالح.';
+                else if(e.code==='auth/weak-password')msg='كلمة المرور ضعيفة؛ استخدم 10 أحرف مع أرقام ورموز وحروف كبيرة وصغيرة.';
+                else if(e.code==='auth/wrong-password'||e.code==='auth/user-not-found'||e.code==='auth/invalid-credential')msg='اسم المستخدم أو كلمة المرور غير صحيحة.';
+                else if(e.code==='auth/too-many-requests')msg='محاولات كثيرة. انتظر قليلًا ثم حاول مجددًا.';
+                else if(e.message)msg=e.message;
+                walletAuthMessage(msg,true);
+            }finally{btn.disabled=false;btn.innerHTML=walletAuthMode==='register'?'<i class="fas fa-user-plus"></i><span>إنشاء الحساب</span>':'<i class="fas fa-lock"></i><span>تسجيل الدخول</span>';}
+        }
+        document.addEventListener('input',e=>{if(e.target&&e.target.id==='walletPasswordInput'&&walletAuthMode==='register')walletUpdatePasswordStrength();});
+
         async function walletGoogleLogin() {
             try {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 await firebase.auth().signInWithPopup(provider);
             } catch(e) {
-                document.getElementById('walletStatus').textContent = 'تعذر تسجيل الدخول. جرّب مرة أخرى أو فعّل Google من Firebase Authentication.';
+                walletAuthMessage('تعذر تسجيل الدخول. جرّب مرة أخرى أو تأكد من تفعيل Google في Firebase Authentication.',true);
             }
         }
         async function walletGoogleLogout() {
@@ -2999,12 +3109,12 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             if(!user){
                 walletBalanceUsd=0;walletBalanceEgp=0;walletNextDiscount=null;walletRenderNextDiscount();document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
                 document.getElementById('walletTools').classList.add('wallet-hidden');
-                document.getElementById('walletUserLabel').textContent='سجّل الدخول بجوجل لتفعيل المحفظة.';
+                document.getElementById('walletUserLabel').textContent='سجّل الدخول لتفعيل المحفظة.';
                 const profile=document.getElementById('walletProfile');if(profile)profile.style.display='none';
                 walletDisplayBalance();return;
             }
             walletShowTools();
-            db.ref(`wallet_users/${user.uid}`).update({email:user.email||'',displayName:user.displayName||'',photoURL:user.photoURL||'',uid:user.uid,updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(e=>console.warn('تعذر تحديث بيانات المحفظة',e));
+            walletSyncAccountProfile(user).then(username=>{const profileEmail=document.getElementById('walletProfileEmail');if(profileEmail)profileEmail.textContent=username;}).catch(e=>console.warn('تعذر مزامنة بيانات الحساب:',e));
             const fn=snap=>{const data=snap.val()||{};walletBalanceUsd=Number(data.balanceUsd||0);walletBalanceEgp=Number.isFinite(Number(data.balanceEgp))?Number(data.balanceEgp):walletBalanceUsd*walletFxRate;walletNextDiscount=data.nextDiscount||null;if(walletNextDiscount&&walletNextDiscount.status==='available'&&!Number(walletNextDiscount.expiresAt)){const earned=Number(walletNextDiscount.earnedAt)||Date.now();const hours=Math.max(1,Math.min(8760,Number(walletDiscountSettings&&walletDiscountSettings.expiryHours)||24));walletNextDiscount.expiresAt=earned+hours*3600000;db.ref(`wallet_users/${user.uid}/nextDiscount`).update({expiresAt:walletNextDiscount.expiresAt}).catch(()=>{});}walletDisplayBalance();};
             walletBalanceListener={uid:user.uid,fn};
             db.ref(`wallet_users/${user.uid}`).on('value',fn);
@@ -3400,9 +3510,23 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             <div id="walletLoginArtFallback" class="wallet-login-fallback" aria-hidden="true"><i class="fas fa-wallet"></i></div>
             <img id="walletLoginArt" class="wallet-login-art" src="" alt="أيقونة محفظة MOHAB STORE" style="display:none">
             <div class="wallet-login-heading">محفظتك الرقمية في MOHAB STORE</div>
-            <div class="wallet-login-caption">سجّل الدخول بأمان لمتابعة رصيدك وطلباتك وإيداعاتك</div>
+            <div class="wallet-login-caption">سجّل الدخول أو أنشئ حسابًا لمتابعة رصيدك وطلباتك وإيداعاتك</div>
           </div>
-          <button class="wallet-primary wallet-google-login" onclick="walletGoogleLogin()"><svg class="wallet-google-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"/><path fill="#EA4335" d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z"/></svg><span>تسجيل الدخول باستخدام Google</span></button><div class="wallet-history" style="margin:12px 0 16px;line-height:1.9"><h3>إزاي تستخدم محفظة MOHAB STORE؟</h3><p>• استخدم الموقع وتصفّح الأسعار بشكل عادي بدون تسجيل دخول.</p><p>• سجّل الدخول لمتابعة طلباتك وحالة الشحن ورصيدك.</p><p>• الطلب المدفوع من المحفظة يتم خصم قيمته عند التأكيد، وبعدها تتابع حالة الشحن من «طلباتي».</p><p>• تقدر تبعت طلب واتساب غير مدفوع؛ هيتسجل للمراجعة لو سجلت الدخول، والدفع بيكون عبر واتساب. الطلب غير المدفوع لا يضمن بدء الشحن قبل تأكيد الدفع.</p><p>• الإيداعات تظل معلقة حتى مراجعة الإدارة، ولا يُضاف الرصيد قبل الموافقة.</p></div></div>
+          <div class="wallet-auth-switch" role="tablist" aria-label="طريقة الدخول">
+            <button type="button" class="active" id="walletLoginTab" onclick="walletSetAuthMode('login')"><i class="fas fa-right-to-bracket"></i> تسجيل الدخول</button>
+            <button type="button" id="walletRegisterTab" onclick="walletSetAuthMode('register')"><i class="fas fa-user-plus"></i> إنشاء حساب</button>
+          </div>
+          <form id="walletUsernameForm" class="wallet-username-form" onsubmit="walletSubmitUsernameAuth(event)" novalidate>
+            <label for="walletUsernameInput">اسم المستخدم</label>
+            <div class="wallet-auth-input-wrap"><i class="fas fa-user"></i><input id="walletUsernameInput" type="text" autocomplete="username" minlength="3" maxlength="20" placeholder="مثال: mohab11" required></div>
+            <label for="walletPasswordInput">كلمة المرور</label>
+            <div class="wallet-auth-input-wrap"><i class="fas fa-lock"></i><input id="walletPasswordInput" type="password" autocomplete="current-password" placeholder="اكتب كلمة المرور" required><button type="button" class="wallet-password-toggle" onclick="walletTogglePassword()" aria-label="إظهار كلمة المرور"><i class="fas fa-eye"></i></button></div>
+            <div id="walletPasswordStrength" class="wallet-password-strength" hidden><div class="wallet-strength-track"><span id="walletStrengthBar"></span></div><small id="walletStrengthText">قوة كلمة المرور</small><ul><li id="walletRuleLength">10 أحرف على الأقل</li><li id="walletRuleUpper">حرف كبير وحرف صغير</li><li id="walletRuleNumber">رقم واحد على الأقل</li><li id="walletRuleSymbol">رمز خاص مثل ! أو @</li></ul></div>
+            <button type="submit" class="wallet-primary wallet-auth-submit" id="walletUsernameSubmit"><i class="fas fa-lock"></i><span>تسجيل الدخول</span></button>
+          </form>
+          <div class="wallet-auth-or"><span></span><b>OR</b><span></span></div>
+          <button class="wallet-primary wallet-google-login" onclick="walletGoogleLogin()"><svg class="wallet-google-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"/><path fill="#EA4335" d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z"/></svg><span>تسجيل الدخول باستخدام Google</span></button>
+          <div id="walletAuthStatus" class="wallet-auth-status" role="status" aria-live="polite"></div><div class="wallet-history" style="margin:12px 0 16px;line-height:1.9"><h3>إزاي تستخدم محفظة MOHAB STORE؟</h3><p>• استخدم الموقع وتصفّح الأسعار بشكل عادي بدون تسجيل دخول.</p><p>• سجّل الدخول لمتابعة طلباتك وحالة الشحن ورصيدك.</p><p>• الطلب المدفوع من المحفظة يتم خصم قيمته عند التأكيد، وبعدها تتابع حالة الشحن من «طلباتي».</p><p>• تقدر تبعت طلب واتساب غير مدفوع؛ هيتسجل للمراجعة لو سجلت الدخول، والدفع بيكون عبر واتساب. الطلب غير المدفوع لا يضمن بدء الشحن قبل تأكيد الدفع.</p><p>• الإيداعات تظل معلقة حتى مراجعة الإدارة، ولا يُضاف الرصيد قبل الموافقة.</p></div></div>
         <div id="walletTools" class="wallet-hidden">
           <div class="wallet-tabs"><button class="wallet-tab active" id="walletDepositTab" onclick="walletShowTab('deposit')">إيداع رصيد</button><button class="wallet-tab" id="walletHistoryTab" onclick="walletShowTab('history')">سجل الإيداع</button></div>
           <div id="walletDepositPane">
@@ -3530,6 +3654,36 @@ body.light-theme #walletOrdersPage .wallet-close{background:#f1f5f9;color:#33415
 body.light-theme #walletOrdersPage .wallet-row{color:#172033;border-color:#e2e8f0}
 body.light-theme #walletOrdersPage .wallet-row small{color:#526174}
 body.light-theme #walletPage .wallet-google-login{background:#fff!important;color:#202124!important;border-color:#d1d5db!important}
+
+
+        /* واجهة دخول المحفظة الجديدة */
+        #walletLoginArea .wallet-auth-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;margin:0 0 16px;border:1px solid rgba(148,163,184,.18);border-radius:15px;background:rgba(148,163,184,.07)}
+        #walletLoginArea .wallet-auth-switch button{border:0;border-radius:11px;padding:12px 8px;background:transparent;color:var(--text-muted,#94a3b8);font:800 .84rem 'Almarai',sans-serif;cursor:pointer;transition:.2s}
+        #walletLoginArea .wallet-auth-switch button.active{color:#fff;background:linear-gradient(135deg,#0891b2,#2563eb);box-shadow:0 5px 16px rgba(6,182,212,.2)}
+        #walletLoginArea .wallet-username-form{display:grid;gap:8px;margin-bottom:8px}
+        #walletLoginArea .wallet-username-form label{font-size:.78rem;font-weight:800;color:#cbd5e1;margin-top:4px}
+        #walletLoginArea .wallet-auth-input-wrap{position:relative;display:flex;align-items:center}
+        #walletLoginArea .wallet-auth-input-wrap>i{position:absolute;right:15px;color:#67e8f9;font-size:.9rem;pointer-events:none}
+        #walletLoginArea .wallet-auth-input-wrap input{width:100%;height:49px;padding:0 43px 0 46px;border:1px solid rgba(148,163,184,.23);border-radius:13px;background:rgba(15,23,42,.68);color:#fff;font:700 .88rem 'Almarai',sans-serif;outline:none;direction:ltr;text-align:left;transition:.2s}
+        #walletLoginArea .wallet-auth-input-wrap input:focus{border-color:#06b6d4;box-shadow:0 0 0 3px rgba(6,182,212,.12)}
+        #walletLoginArea .wallet-password-toggle{position:absolute;left:8px;width:34px;height:34px;border:0;border-radius:9px;background:transparent;color:#94a3b8;cursor:pointer}
+        #walletLoginArea .wallet-auth-submit{margin:9px 0 0;min-height:49px;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:900}
+        #walletLoginArea .wallet-auth-submit:disabled{opacity:.65;cursor:wait}
+        #walletLoginArea .wallet-auth-or{display:flex;align-items:center;gap:12px;margin:15px 0;color:#94a3b8;font-size:.7rem;font-weight:900;letter-spacing:2px}
+        #walletLoginArea .wallet-auth-or span{height:1px;flex:1;background:rgba(148,163,184,.2)}
+        #walletLoginArea .wallet-auth-status{min-height:20px;margin:8px 0 4px;text-align:center;color:#67e8f9;font-size:.76rem;line-height:1.7}
+        #walletLoginArea .wallet-auth-status.error{color:#fca5a5}
+        #walletLoginArea .wallet-password-strength{padding:10px 12px;border-radius:12px;background:rgba(15,23,42,.52);border:1px solid rgba(148,163,184,.16);direction:rtl}
+        #walletLoginArea .wallet-strength-track{height:5px;border-radius:8px;background:rgba(148,163,184,.2);overflow:hidden}
+        #walletLoginArea .wallet-strength-track span{display:block;height:100%;width:0;background:#ef4444;transition:width .2s,background .2s}
+        #walletLoginArea .wallet-password-strength small{display:block;margin:7px 0;color:#cbd5e1;font-size:.7rem}
+        #walletLoginArea .wallet-password-strength ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0;margin:0}
+        #walletLoginArea .wallet-password-strength li{font-size:.63rem;color:#94a3b8}
+        #walletLoginArea .wallet-password-strength li.ok{color:#6ee7b7}
+        #walletLoginArea .wallet-password-strength li:before{content:'○';margin-left:5px}
+        #walletLoginArea .wallet-password-strength li.ok:before{content:'✓'}
+        #walletLoginArea .wallet-google-login{margin-top:2px!important}
+        @media(max-width:480px){#walletLoginArea .wallet-password-strength ul{grid-template-columns:1fr 1fr}}
 
 </style>
 
