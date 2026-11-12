@@ -2,9 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
     <!-- MOHAB STORE: Website favicon -->
-    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png">
-    <link rel="shortcut icon" type="image/png" href="/favicon.png">
-    <link rel="apple-touch-icon" href="/favicon.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.jpg">
+    <link rel="shortcut icon" type="image/png" href="/favicon.jpg">
+    <link rel="apple-touch-icon" href="/favicon.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MOHAB STORE | المتجر الرسمي</title>
@@ -1319,8 +1319,47 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-login::before{displ
 body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!important}
 </style>
 
+
+<style id="mohab-initial-loader-styles">
+  #mohabInitialLoader{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 50% 38%,rgba(6,182,212,.13),transparent 48%),#090d16;opacity:1;visibility:visible;transition:opacity .38s ease,visibility .38s ease}
+  #mohabInitialLoader.mohab-loader-hidden{opacity:0;visibility:hidden;pointer-events:none}
+  #mohabInitialLoader .mohab-loader-card{width:min(360px,100%);text-align:center;padding:30px 24px;border:1px solid rgba(255,255,255,.09);border-radius:24px;background:linear-gradient(145deg,rgba(19,28,46,.96),rgba(10,17,30,.96));box-shadow:0 22px 70px rgba(0,0,0,.38),0 0 38px rgba(6,182,212,.07)}
+  #mohabInitialLoader .mohab-loader-mark{width:58px;height:58px;margin:0 auto 18px;border-radius:18px;display:grid;place-items:center;color:#fff;font-size:25px;background:linear-gradient(135deg,#0891b2,#2563eb);box-shadow:0 8px 28px rgba(6,182,212,.24)}
+  #mohabInitialLoader h2{font-size:19px;font-weight:800;color:#f8fafc;margin:0 0 9px}
+  #mohabInitialLoader p{font-size:13px;line-height:1.8;color:#9caec3;margin:0 0 19px}
+  #mohabInitialLoader .mohab-loader-track{height:6px;width:100%;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.09)}
+  #mohabInitialLoader .mohab-loader-progress{height:100%;width:8%;border-radius:99px;background:linear-gradient(90deg,#06b6d4,#3b82f6);transition:width .3s ease}
+  #mohabInitialLoader .mohab-loader-percent{display:block;margin-top:10px;color:#67e8f9;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+  #mohabInitialLoader .mohab-loader-error{display:none;margin-top:14px;color:#fbbf24;font-size:12px;line-height:1.7}
+  @media(prefers-reduced-motion:reduce){#mohabInitialLoader,#mohabInitialLoader .mohab-loader-progress{transition:none}}
+</style>
+
 </head>
 <body>
+
+<div id="mohabInitialLoader" role="status" aria-live="polite" aria-label="تحميل المتجر">
+  <div class="mohab-loader-card">
+    <div class="mohab-loader-mark"><i class="fas fa-gamepad" aria-hidden="true"></i></div>
+    <h2>MOHAB STORE</h2>
+    <p id="mohabLoaderMessage">بنجهّز المتجر ليك… بنحمّل الألعاب والصور الأساسية</p>
+    <div class="mohab-loader-track"><div class="mohab-loader-progress" id="mohabLoaderProgress"></div></div>
+    <span class="mohab-loader-percent" id="mohabLoaderPercent">8%</span>
+    <div class="mohab-loader-error" id="mohabLoaderError"></div>
+  </div>
+</div>
+<script id="mohab-initial-loader-controller">
+(function(){
+  const started=Date.now();let finished=false;
+  const overlay=()=>document.getElementById('mohabInitialLoader');
+  function progress(value,message){const bar=document.getElementById('mohabLoaderProgress'),pct=document.getElementById('mohabLoaderPercent'),label=document.getElementById('mohabLoaderMessage');if(bar)bar.style.width=Math.max(0,Math.min(100,value))+'%';if(pct)pct.textContent=Math.round(value)+'%';if(label&&message)label.textContent=message;}
+  function hide(){if(finished)return;finished=true;const wait=Math.max(0,520-(Date.now()-started));setTimeout(()=>{const el=overlay();if(el){el.classList.add('mohab-loader-hidden');setTimeout(()=>el.remove(),450);}},wait);}
+  window.mohabFinishInitialLoad=async function(games){if(finished)return;progress(58,'تم تحميل بيانات المتجر… بنجهّز صور الألعاب');const urls=[...new Set((games||[]).map(g=>String(g&&g.img||'').trim()).filter(u=>/^https?:\/\//i.test(u)))];if(!urls.length){progress(92,'المتجر جاهز تقريبًا…');hide();return;}let done=0;const update=()=>progress(62+(done/urls.length)*29,'بنحمّل صور الألعاب الأساسية ('+done+' من '+urls.length+')');update();const checks=urls.map(url=>new Promise(resolve=>{let settled=false;const finish=()=>{if(settled)return;settled=true;done++;update();resolve();};const img=new Image();img.onload=finish;img.onerror=finish;img.src=url;if(img.complete)finish();setTimeout(finish,6500);}));await Promise.race([Promise.all(checks),new Promise(resolve=>setTimeout(resolve,7200))]);if(finished)return;progress(96,'اكتمل تجهيز المحتوى الأساسي…');hide();};
+  window.mohabInitialLoadFailed=function(){if(finished)return;const msg=document.getElementById('mohabLoaderMessage'),err=document.getElementById('mohabLoaderError');if(msg)msg.textContent='فيه تأخير في الاتصال ببيانات المتجر';if(err){err.textContent='هنعرض الموقع بدل ما نفضل على شاشة التحميل. لو الألعاب ما ظهرتش، حدّث الصفحة بعد التأكد من الإنترنت.';err.style.display='block';}progress(100,'');setTimeout(hide,1400);};
+  // Safety net: never leave visitors stuck behind the loading screen.
+  setTimeout(()=>{if(!finished){window.mohabInitialLoadFailed();}},13000);
+})();
+</script>
+
 
     <nav>
         <div class="nav-content">
@@ -2146,7 +2185,11 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             const grid = document.getElementById('gamesGrid');
             let gamesArray = Object.keys(globalGames).map(key => ({ key: key, ...globalGames[key] }));
             gamesArray.sort((a, b) => (a.order || 99) - (b.order || 99));
-            if(gamesArray.length === 0) { grid.innerHTML = '<div class="empty-msg">لا توجد منتجات مضافة حالياً</div>'; return; }
+            if(gamesArray.length === 0) {
+                grid.innerHTML = '<div class="empty-msg">لا توجد منتجات مضافة حالياً</div>';
+                if(window.mohabFinishInitialLoad) window.mohabFinishInitialLoad([]);
+                return;
+            }
             let htmlString = '';
             gamesArray.forEach(g => {
                 const safeName = String(g.name || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -2159,6 +2202,12 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             grid.innerHTML = htmlString;
             applyPublicGameFilters();
             mohabApplyInitialRoute();
+            // Wait only for the first games snapshot and its essential card images.
+            // Secondary widgets, videos, and below-the-fold lazy images never block the visitor.
+            if(window.mohabFinishInitialLoad) window.mohabFinishInitialLoad(gamesArray);
+        }, error => {
+            console.error('Initial games load failed:', error);
+            if(window.mohabInitialLoadFailed) window.mohabInitialLoadFailed();
         });
 
         function decodeExternalTarget(item) {
