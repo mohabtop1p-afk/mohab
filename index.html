@@ -4056,6 +4056,20 @@ body.light-theme #walletPage .wallet-google-login{background:#fff!important;colo
         #walletLoginArea .wallet-google-login{margin-top:2px!important}
         @media(max-width:480px){#walletLoginArea .wallet-password-strength ul{grid-template-columns:1fr 1fr}}
 
+
+/* بطاقة الجمعة المباركة — تظهر فقط يوم الجمعة حسب توقيت القاهرة */
+.friday-blessing-widget{position:fixed;top:calc(env(safe-area-inset-top,0px) + 88px);right:12px;z-index:650;display:none;align-items:center;gap:9px;max-width:min(270px,calc(100vw - 24px));padding:9px 13px;border:1px solid rgba(34,211,238,.38);border-radius:16px;background:linear-gradient(135deg,rgba(8,47,73,.96),rgba(15,23,42,.96));color:#f8fafc;box-shadow:0 10px 28px rgba(2,8,23,.24),inset 0 1px 0 rgba(255,255,255,.10);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);direction:rtl;animation:fridayBlessingIn .45s cubic-bezier(.2,.8,.2,1) both}
+.friday-blessing-widget.is-visible{display:flex}
+.friday-blessing-widget img{width:35px;height:35px;flex:0 0 35px;object-fit:contain;border-radius:10px;background:rgba(255,255,255,.08)}
+.friday-blessing-fallback{width:35px;height:35px;flex:0 0 35px;display:grid;place-items:center;border-radius:10px;background:rgba(34,211,238,.15);color:#67e8f9;font-size:1.15rem}
+.friday-blessing-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+.friday-blessing-copy strong{font-size:.84rem;font-weight:900;white-space:nowrap}
+.friday-blessing-copy span{font-size:.66rem;color:#bae6fd;white-space:nowrap}
+@keyframes fridayBlessingIn{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+body.light-theme .friday-blessing-widget{background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(239,246,255,.98));color:#172033;border-color:#bae6fd;box-shadow:0 10px 26px rgba(15,23,42,.14)}
+body.light-theme .friday-blessing-copy span{color:#0e7490}
+body.light-theme .friday-blessing-fallback{background:#e0f2fe;color:#0369a1}
+@media(max-width:480px){.friday-blessing-widget{top:calc(env(safe-area-inset-top,0px) + 78px);right:9px;padding:8px 11px}.friday-blessing-copy strong{font-size:.78rem}.friday-blessing-copy span{font-size:.62rem}}
 </style>
 
 <script>
@@ -4116,6 +4130,41 @@ body.light-theme #walletPage .wallet-google-login{background:#fff!important;colo
     <div id="walletBannedScreen" class="wallet-banned-screen" style="display:none" role="alertdialog" aria-modal="true">
       <div class="wallet-banned-card"><img id="walletBannedImage" src="" alt="أيقونة الحساب المحظور" style="display:none"><h2>تم حظر حسابك في الموقع</h2><p>تم إيقاف إمكانية استخدام حسابك. إذا كنت تعتقد أن هذا الإجراء تم بالخطأ، تواصل مع الدعم الفني.</p><a href="https://wa.me/201125808758" target="_blank" rel="noopener" class="wallet-banned-contact"><i class="fab fa-whatsapp"></i> التواصل مع الدعم</a><button type="button" onclick="(function(){const screen=document.getElementById('walletBannedScreen');if(screen)screen.style.display='none';firebase.auth().signOut();})()" class="wallet-banned-logout">تسجيل الخروج</button></div>
     </div>
+
+
+<div id="fridayBlessingWidget" class="friday-blessing-widget" role="status" aria-live="polite" aria-label="جمعة مباركة">
+  <img id="fridayBlessingImage" alt="أيقونة الجمعة" hidden>
+  <span id="fridayBlessingFallback" class="friday-blessing-fallback" aria-hidden="true"><i class="fas fa-mosque"></i></span>
+  <span class="friday-blessing-copy"><strong>جمعة مباركة</strong><span>اللهم صلِّ وسلم على نبينا محمد</span></span>
+</div>
+<script>
+(function(){
+  const root=document.getElementById('fridayBlessingWidget');
+  const image=document.getElementById('fridayBlessingImage');
+  const fallback=document.getElementById('fridayBlessingFallback');
+  if(!root||!window.firebase||!firebase.apps||!firebase.apps.length||!firebase.database)return;
+  let config={enabled:false,image:''};
+  function isFridayInCairo(){
+    try{const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Africa/Cairo',weekday:'short'}).formatToParts(new Date());
+      return parts.some(p=>p.type==='weekday'&&p.value==='Fri');
+    }catch(e){return new Date().getDay()===5;}
+  }
+  function render(){
+    const visible=config.enabled===true&&isFridayInCairo();
+    root.classList.toggle('is-visible',visible);
+    if(!visible)return;
+    const src=typeof config.image==='string'?config.image.trim():'';
+    if(src){image.src=src;image.hidden=false;fallback.hidden=true;}
+    else{image.removeAttribute('src');image.hidden=true;fallback.hidden=false;}
+  }
+  firebase.database().ref('settings/fridayBlessing').on('value',snap=>{
+    const value=snap.val()||{};config={enabled:value.enabled===true,image:value.image||''};render();
+  },err=>{console.warn('Friday blessing settings:',err);root.classList.remove('is-visible');});
+  render();
+  setInterval(render,60000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
+})();
+</script>
 
 </body>
 </html>
