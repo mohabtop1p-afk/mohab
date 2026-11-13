@@ -1410,6 +1410,69 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
   }
 </style>
 
+
+<style id="mohab-professional-wallet-refresh">
+#walletPage .wallet-card{background:linear-gradient(160deg,#111827 0%,#0b1220 100%);border:1px solid rgba(148,163,184,.22);box-shadow:0 24px 70px rgba(0,0,0,.28)}
+#walletPage #walletLoginArea{max-width:100%;padding:4px 2px 8px}
+#walletPage #walletLoginArea .wallet-login-heading{font-size:1.12rem;letter-spacing:-.25px;font-weight:850}
+#walletPage #walletLoginArea .wallet-login-caption{max-width:340px;font-size:.82rem;line-height:1.85}
+#walletPage #walletLoginArea .wallet-auth-switch{border-radius:16px;padding:6px;gap:6px}
+#walletPage #walletLoginArea .wallet-auth-switch button{min-height:46px;border-radius:12px;font-size:.88rem;font-weight:800}
+#walletPage #walletLoginArea .wallet-field{margin:9px 0 14px;gap:6px}
+#walletPage #walletLoginArea .wallet-field label{font-size:.78rem;font-weight:800}
+#walletPage #walletLoginArea .wallet-auth-input-wrap{min-height:56px;border-radius:14px;box-shadow:none}
+#walletPage #walletLoginArea .wallet-auth-input-wrap input{font-size:.94rem;font-weight:650}
+#walletPage #walletLoginArea .wallet-primary{min-height:54px;border-radius:14px;font-size:.96rem}
+#walletPage #walletLoginArea .wallet-google-login{min-height:52px;border-radius:14px!important;font-size:.86rem;font-weight:800;box-shadow:0 5px 16px rgba(0,0,0,.13)!important}
+#walletPage #walletLoginArea .wallet-google-login::before{display:none}
+#walletPage .wallet-profile-title,#walletPage .wallet-profile-email{color:#f8fafc!important;font-weight:900}
+.wallet-username-line{justify-content:center;gap:10px;flex-wrap:wrap}
+.wallet-username-line b{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:7px 16px;border:1px solid rgba(6,182,212,.42);border-radius:13px;background:rgba(6,182,212,.10);color:#f8fafc!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.wallet-copy-username{min-width:44px;min-height:42px;display:inline-grid;place-items:center}
+.wallet-security-badge{display:inline-flex;align-items:center;margin-inline-start:auto;padding:4px 9px;border-radius:999px;background:#f1f5f9;color:#64748b;font-size:.68rem;font-weight:850}
+.wallet-security-badge.is-active{background:#dcfce7;color:#15803d}
+.wallet-account-settings-section input:disabled{opacity:.58;cursor:not-allowed}
+.wallet-banned-screen{background:rgba(15,23,42,.76);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.wallet-banned-card{background:linear-gradient(155deg,#172338,#0b1220);border:1px solid rgba(148,163,184,.28);border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.38)}
+.wallet-banned-card h2{color:#f8fafc}.wallet-banned-card p{color:#cbd5e1}
+.wallet-banned-icon{width:64px;height:64px;margin:auto;border-radius:19px;display:grid;place-items:center;background:rgba(239,68,68,.13);color:#f87171}
+.wallet-banned-contact,.wallet-banned-logout{min-height:46px;border-radius:13px}
+.wallet-banned-logout{background:rgba(148,163,184,.10);border-color:rgba(148,163,184,.3)}
+.wallet-notice-icon{position:relative;animation:walletSuccessPop .42s cubic-bezier(.2,.8,.2,1) both}
+.wallet-notice-icon.is-success{border-radius:50%;background:linear-gradient(135deg,#16a34a,#059669)!important;box-shadow:0 8px 25px rgba(16,185,129,.28)!important}
+.wallet-notice-icon.is-success::after{content:"";position:absolute;inset:-5px;border:2px solid rgba(16,185,129,.35);border-radius:50%;animation:walletSuccessRing .7s ease-out both}
+@keyframes walletSuccessPop{0%{opacity:0;transform:scale(.55) rotate(-18deg)}65%{opacity:1;transform:scale(1.12) rotate(4deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes walletSuccessRing{0%{transform:scale(.7);opacity:0}45%{opacity:.9}100%{transform:scale(1.25);opacity:0}}
+body.light-theme #walletPage .wallet-card{background:linear-gradient(160deg,#fff 0%,#f7fafe 100%);border-color:#d6e0ea;box-shadow:0 20px 60px rgba(15,23,42,.15);color:#172033}
+body.light-theme #walletPage .wallet-profile{background:linear-gradient(145deg,#fff,#f1f7fc);border-color:#cbdff0}
+body.light-theme #walletPage .wallet-profile-title,body.light-theme #walletPage .wallet-profile-email{color:#172033!important}
+body.light-theme #walletPage .wallet-username-line b{color:#172033!important;background:linear-gradient(135deg,#f0f9ff,#fff);border-color:#b9dce9;box-shadow:0 3px 10px rgba(15,23,42,.06)}
+body.light-theme #walletPage #walletLoginArea .wallet-login-heading{color:#172033!important}
+body.light-theme #walletPage #walletLoginArea .wallet-login-caption{color:#64748b!important}
+body.light-theme #walletPage #walletLoginArea .wallet-field label{color:#334155!important}
+body.light-theme #walletPage #walletLoginArea .wallet-auth-input-wrap{background:#fff!important;border:1px solid #d6e0ea!important;box-shadow:0 2px 7px rgba(15,23,42,.035)!important}
+body.light-theme #walletPage #walletLoginArea .wallet-auth-input-wrap input{color:#172033!important}
+body.light-theme #walletPage #walletLoginArea .wallet-auth-switch{background:#f1f5f9!important;border:1px solid #dbe3eb!important}
+body.light-theme #walletPage #walletLoginArea .wallet-auth-switch button{color:#475569!important}
+body.light-theme #walletPage #walletLoginArea .wallet-auth-switch button.active{color:#fff!important}
+body.light-theme #walletAccountSettingsPage{background:rgba(226,232,240,.72)!important;backdrop-filter:blur(9px)}
+body.light-theme #walletAccountSettingsPage .wallet-account-settings-card{background:#fff!important;color:#172033!important;border-color:#d6e0ea!important}
+body.light-theme #walletAccountSettingsPage .wallet-account-settings-section input{background:#f8fafc!important;color:#172033!important;border-color:#cbd5e1!important}
+body.light-theme .wallet-banned-screen{background:rgba(226,232,240,.78)!important;backdrop-filter:blur(10px)}
+body.light-theme .wallet-banned-card{background:linear-gradient(155deg,#fff,#f3f7fb)!important;color:#172033!important;border-color:#cbd5e1!important;box-shadow:0 22px 60px rgba(15,23,42,.18)!important}
+body.light-theme .wallet-banned-card h2{color:#172033!important}
+body.light-theme .wallet-banned-card p{color:#475569!important}
+body.light-theme .wallet-banned-logout{background:#f1f5f9!important;color:#334155!important;border-color:#cbd5e1!important}
+body.light-theme #walletSecurityGateInput{background:#fff!important;color:#172033!important;border-color:#cbd5e1!important;box-shadow:0 2px 8px rgba(15,23,42,.05)}
+body.light-theme #walletSecurityGateStatus{color:#475569!important}
+body.light-theme #walletCustomNotice{background:rgba(226,232,240,.72)!important}
+body.light-theme .wallet-notice-card{background:linear-gradient(150deg,#fff,#f4f8fc)!important;color:#172033!important;border-color:#d5e0eb!important;box-shadow:0 24px 70px rgba(15,23,42,.2)!important}
+body.light-theme .wallet-notice-message{color:#475569!important}
+body.light-theme .wallet-notice-cancel{background:#e2e8f0!important;color:#334155!important;border-color:#cbd5e1!important}
+@media(max-width:420px){#walletPage #walletLoginArea .wallet-login-heading{font-size:1rem}#walletPage #walletLoginArea .wallet-auth-input-wrap{min-height:53px}#walletPage #walletLoginArea .wallet-google-login{font-size:.80rem;gap:8px}}
+@media(prefers-reduced-motion:reduce){.wallet-notice-icon,.wallet-notice-icon.is-success::after{animation:none!important}}
+</style>
+
 </head>
 <body>
 
@@ -2685,12 +2748,31 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         function walletSecuritySettingsRefresh(){
             const user=firebase.auth().currentUser;if(!user)return;
             db.ref('wallet_users/'+user.uid+'/securityCode').once('value').then(s=>{
-                const enabled=!!(s.val()&&s.val().enabled&&s.val().hash&&s.val().salt);
+                const cfg=s.val()||{}, enabled=!!(cfg.enabled&&cfg.hash&&cfg.salt);
                 const status=document.getElementById('walletSecurityCodeStatus');
-                if(status)status.textContent=enabled?'رمز الأمان مفعّل وسيُطلب عند كل تسجيل دخول.':'رمز الأمان غير مفعّل.';
-                const toggle=document.getElementById('walletSecurityCodeEnabled');if(toggle)toggle.checked=enabled;
-                const fields=document.getElementById('walletSecurityCodeFields');if(fields)fields.classList.toggle('wallet-hidden',!toggle?.checked);
+                const toggle=document.getElementById('walletSecurityCodeEnabled');
+                const fields=document.getElementById('walletSecurityCodeFields');
+                const codeInput=document.getElementById('walletSecurityCodeValue');
+                const confirmInput=document.getElementById('walletSecurityCodeConfirm');
+                const badge=document.getElementById('walletSecurityCodeBadge');
+                const changedAt=Number(cfg.changedAt||cfg.createdAt||cfg.updatedAt||0);
+                const remaining=Math.max(0,90*86400000-(Date.now()-changedAt));
+                const canChange=!cfg.hash||!changedAt||remaining<=0;
+                if(toggle)toggle.checked=enabled;
+                if(fields)fields.classList.toggle('wallet-hidden',!enabled);
+                if(codeInput)codeInput.disabled=!!cfg.hash&&!canChange;
+                if(confirmInput)confirmInput.disabled=!!cfg.hash&&!canChange;
+                if(badge){badge.textContent=enabled?'مفعّل':'غير مفعّل';badge.classList.toggle('is-active',enabled);}
+                if(status){
+                    if(enabled) status.textContent=canChange?'رمز الأمان مفعّل. يمكنك تغييره الآن أو إيقافه.':'رمز الأمان مفعّل. يمكنك إيقافه في أي وقت، لكن تغييره متاح بعد '+Math.ceil(remaining/86400000)+' يومًا.';
+                    else if(cfg.hash) status.textContent=canChange?'رمز الأمان متوقف. يمكنك إعادة تفعيله أو تعيين رمز جديد.':'رمز الأمان متوقف. يمكنك إعادة تفعيله بالرمز السابق، أما تغييره فيتاح بعد '+Math.ceil(remaining/86400000)+' يومًا.';
+                    else status.textContent='رمز الأمان غير مفعّل. يمكنك تفعيله اختياريًا.';
+                }
             }).catch(()=>{});
+        }
+        function walletSecurityToggleChanged(toggle){
+            const fields=document.getElementById('walletSecurityCodeFields');
+            if(fields)fields.classList.toggle('wallet-hidden',!toggle.checked);
         }
         async function walletSaveSecurityCode(){
             const user=firebase.auth().currentUser;if(!user)return;
@@ -2700,15 +2782,33 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             if(btn){btn.disabled=true;btn.textContent='جارٍ الحفظ…';}
             try{
                 const ref=db.ref('wallet_users/'+user.uid+'/securityCode');
-                if(!enabled){await ref.remove();if(status)status.textContent='تم إيقاف رمز الأمان.';document.getElementById('walletSecurityCodeValue').value='';document.getElementById('walletSecurityCodeConfirm').value='';return;}
+                const oldSnap=await ref.once('value'), old=oldSnap.val()||{};
+                const changedAt=Number(old.changedAt||old.createdAt||old.updatedAt||0);
+                const remaining=Math.max(0,90*86400000-(Date.now()-changedAt));
+                const canChange=!old.hash||!changedAt||remaining<=0;
+                if(!enabled){
+                    if(old.hash)await ref.update({enabled:false,disabledAt:firebase.database.ServerValue.TIMESTAMP});
+                    if(status)status.textContent='تم إيقاف رمز الأمان. يمكنك إعادة تفعيله في أي وقت.';
+                    document.getElementById('walletSecurityCodeValue').value='';
+                    document.getElementById('walletSecurityCodeConfirm').value='';
+                    walletSecuritySettingsRefresh();return;
+                }
                 const code=document.getElementById('walletSecurityCodeValue')?.value||'';
                 const confirmCode=document.getElementById('walletSecurityCodeConfirm')?.value||'';
+                if(old.hash&&!code){
+                    await ref.update({enabled:true,disabledAt:null});
+                    if(status)status.textContent='تم تفعيل رمز الأمان المحفوظ بنجاح.';
+                    walletSecuritySettingsRefresh();return;
+                }
+                if(old.hash&&!canChange)throw new Error('لا يمكن تغيير رمز الأمان قبل مرور 90 يومًا من آخر تعيين. يمكنك إيقافه أو إعادة تفعيله بالرمز السابق.');
                 if(!/^[A-Za-z0-9]{6,12}$/.test(code))throw new Error('اختر رمزًا من 6 إلى 12 حرفًا أو رقمًا باللغة الإنجليزية.');
                 if(code!==confirmCode)throw new Error('تأكيد رمز الأمان غير مطابق.');
                 const salt=walletRandomSalt(),iterations=120000,hash=await walletSecurityHash(code,salt,iterations);
-                await ref.set({enabled:true,salt,hash,iterations,updatedAt:firebase.database.ServerValue.TIMESTAMP});
-                document.getElementById('walletSecurityCodeValue').value='';document.getElementById('walletSecurityCodeConfirm').value='';
-                if(status)status.textContent='تم تفعيل رمز الأمان بنجاح.';
+                await ref.set({enabled:true,salt,hash,iterations,createdAt:old.createdAt||firebase.database.ServerValue.TIMESTAMP,changedAt:firebase.database.ServerValue.TIMESTAMP,updatedAt:firebase.database.ServerValue.TIMESTAMP});
+                document.getElementById('walletSecurityCodeValue').value='';
+                document.getElementById('walletSecurityCodeConfirm').value='';
+                if(status)status.textContent=old.hash?'تم تحديث رمز الأمان بنجاح. التغيير التالي متاح بعد 90 يومًا.':'تم تفعيل رمز الأمان بنجاح.';
+                walletSecuritySettingsRefresh();
             }catch(e){if(status)status.textContent=e.message||'تعذر حفظ رمز الأمان. تحقق من اتصالك وصلاحيات قاعدة البيانات.';}
             finally{if(btn){btn.disabled=false;btn.textContent='حفظ إعدادات رمز الأمان';}}
         }
@@ -3106,7 +3206,9 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
                 const card=overlay.querySelector('.wallet-notice-card');
                 overlay.querySelector('.wallet-notice-title').textContent=title;
                 overlay.querySelector('.wallet-notice-message').textContent=message;
-                overlay.querySelector('.wallet-notice-icon').textContent=type==='success'?'✓':type==='warning'?'!':'✦';
+                const noticeIcon=overlay.querySelector('.wallet-notice-icon');
+                noticeIcon.textContent=type==='success'?'✓':type==='warning'?'!':'✦';
+                noticeIcon.classList.toggle('is-success',type==='success');
                 overlay.querySelector('.wallet-notice-cancel').style.display=confirmMode?'':'none';
                 overlay.querySelector('.wallet-notice-ok').textContent=confirmMode?'تأكيد الطلب':'حسنًا';
                 overlay.style.display='flex';
@@ -3703,8 +3805,8 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         </div>
         <div class="wallet-account-settings-section" id="walletSecurityCodeSettings">
           <h4><i class="fas fa-shield-alt"></i> رمز الأمان الاختياري</h4>
-          <p class="wallet-settings-note">فعّل رمزًا إضافيًا من اختيارك. سيُطلب منك بعد تسجيل الدخول. استخدم 6 إلى 12 حرفًا أو رقمًا إنجليزيًا.</p>
-          <label style="display:flex;align-items:center;gap:9px"><input id="walletSecurityCodeEnabled" type="checkbox" onchange="document.getElementById('walletSecurityCodeFields').classList.toggle('wallet-hidden',!this.checked)" style="width:18px;height:18px"> تفعيل رمز الأمان</label>
+          <p class="wallet-settings-note">فعّل رمزًا إضافيًا من اختيارك. سيُطلب منك بعد تسجيل الدخول. استخدم 6 إلى 12 حرفًا أو رقمًا إنجليزيًا. يمكنك إيقاف الرمز في أي وقت، أما تغيير الرمز نفسه فيتاح مرة كل 90 يومًا.</p>
+          <label style="display:flex;align-items:center;gap:9px"><input id="walletSecurityCodeEnabled" type="checkbox" onchange="walletSecurityToggleChanged(this)" style="width:18px;height:18px"> تفعيل رمز الأمان <span id="walletSecurityCodeBadge" class="wallet-security-badge">غير مفعّل</span></label>
           <div id="walletSecurityCodeFields" class="wallet-hidden">
             <label for="walletSecurityCodeValue">رمز الأمان</label>
             <input id="walletSecurityCodeValue" type="password" inputmode="text" autocomplete="new-password" maxlength="12" placeholder="من 6 إلى 12 حرفًا أو رقمًا">
@@ -3975,7 +4077,7 @@ body.light-theme #walletPage .wallet-google-login{background:#fff!important;colo
       </div>
     </div>
     <div id="walletBannedScreen" class="wallet-banned-screen" style="display:none" role="alertdialog" aria-modal="true">
-      <div class="wallet-banned-card"><img id="walletBannedImage" src="" alt="" style="display:none"><div class="wallet-banned-icon"><i class="fas fa-user-lock"></i></div><h2>تم حظر حسابك في الموقع</h2><p>تم إيقاف إمكانية استخدام حسابك. إذا كنت تعتقد أن هذا الإجراء تم بالخطأ، تواصل مع الدعم الفني.</p><a href="https://wa.me/201125808758" target="_blank" rel="noopener" class="wallet-banned-contact"><i class="fab fa-whatsapp"></i> التواصل مع الدعم</a><button type="button" onclick="firebase.auth().signOut()" class="wallet-banned-logout">تسجيل الخروج</button></div>
+      <div class="wallet-banned-card"><img id="walletBannedImage" src="" alt="" style="display:none"><div class="wallet-banned-icon"><i class="fas fa-user-lock"></i></div><h2>تم حظر حسابك في الموقع</h2><p>تم إيقاف إمكانية استخدام حسابك. إذا كنت تعتقد أن هذا الإجراء تم بالخطأ، تواصل مع الدعم الفني.</p><a href="https://wa.me/201125808758" target="_blank" rel="noopener" class="wallet-banned-contact"><i class="fab fa-whatsapp"></i> التواصل مع الدعم</a><button type="button" onclick="(function(){const screen=document.getElementById('walletBannedScreen');if(screen)screen.style.display='none';firebase.auth().signOut();})()" class="wallet-banned-logout">تسجيل الخروج</button></div>
     </div>
 
 </body>
