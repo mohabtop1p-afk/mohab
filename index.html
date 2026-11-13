@@ -1088,6 +1088,38 @@
         .wallet-field{display:flex;flex-direction:column;gap:7px;margin:11px 0}.wallet-auth-hint{display:block;margin:-3px 0 7px;color:#94a3b8;font-size:.72rem;line-height:1.7;text-align:right}.wallet-field label{font-size:.78rem;color:#cbd5e1;font-weight:700}.wallet-field input,.wallet-field select{width:100%;background:#0b1220;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:12px;outline:none;font:inherit;font-size:.84rem}.wallet-field input:focus,.wallet-field select:focus{border-color:var(--primary)}
         .wallet-methods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.wallet-method{padding:11px 8px;border:1px solid var(--surface-border);border-radius:12px;background:var(--surface);color:#fff;cursor:pointer;font:inherit;font-size:.76rem}.wallet-method.active{border-color:var(--primary);background:rgba(6,182,212,.12)}
         .wallet-primary{width:100%;padding:13px;border:0;border-radius:13px;background:linear-gradient(135deg,var(--primary),var(--accent));color:white;font:inherit;font-weight:800;cursor:pointer;margin-top:10px}.wallet-muted{font-size:.72rem;color:var(--text-muted);line-height:1.8;margin:10px 0}.wallet-status{font-size:.78rem;line-height:1.8;margin-top:10px;color:var(--primary);overflow-wrap:anywhere}.wallet-history{margin-top:18px}.wallet-history h3{font-size:.88rem;margin-bottom:10px}.wallet-row{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--surface-border);font-size:.75rem}.wallet-row small{display:block;color:var(--text-muted);margin-top:4px}.wallet-hidden{display:none!important}
+
+        .wallet-account-settings-page{position:fixed;inset:0;z-index:720;background:rgba(3,7,18,.96);display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
+        .wallet-account-settings-page.wallet-hidden{display:none!important}
+        .wallet-account-settings-card{width:min(520px,100%);max-height:92vh;overflow:auto;border:1px solid rgba(6,182,212,.28);border-radius:20px;padding:18px;background:var(--surface,#131c2e);color:var(--text-main,#f8fafc);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+        .wallet-account-settings-head{display:flex;align-items:center;gap:12px;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--surface-border,rgba(255,255,255,.1))}
+        .wallet-account-settings-head h3{margin:0;font-size:1rem}
+        .wallet-account-settings-back{width:40px;height:40px;border:1px solid var(--surface-border);border-radius:12px;background:var(--surface-hover);color:inherit;cursor:pointer}
+        .wallet-account-settings-section{padding:14px 0;border-bottom:1px solid var(--surface-border)}
+        .wallet-account-settings-section:last-child{border-bottom:0}
+        .wallet-account-settings-section h4{margin:0 0 13px;font-size:.9rem}
+        .wallet-account-settings-section label{display:block;margin:12px 0 6px;font-size:.8rem;font-weight:800}
+        .wallet-account-settings-section input{width:100%;box-sizing:border-box;padding:13px;border:1px solid var(--surface-border);border-radius:12px;background:var(--bg-deep,#090d16);color:var(--text-main,#f8fafc);font:inherit}
+        .wallet-settings-note{font-size:.76rem;line-height:1.85;color:var(--text-muted,#94a3b8);margin:8px 0}
+        #walletLoginArea .wallet-google-login{width:100%;min-height:50px;padding:11px 14px;margin:0 0 14px!important;display:flex;align-items:center;justify-content:center;gap:9px;white-space:nowrap;font-size:.88rem;line-height:1.2}
+        #walletLoginArea .wallet-google-login span{white-space:nowrap;display:inline-block}
+        #walletLoginArea .wallet-google-icon{width:22px;height:22px;flex:0 0 22px}
+        #walletLoginArea .wallet-auth-hint{display:none!important}
+        body.light-theme #walletAccountSettingsPage{background:rgba(15,23,42,.42)}
+        body.light-theme #walletAccountSettingsPage .wallet-account-settings-card{background:#fff;color:#172033;border-color:#cbd5e1;box-shadow:0 18px 50px rgba(15,23,42,.18)}
+        body.light-theme #walletAccountSettingsPage .wallet-account-settings-head{border-color:#e2e8f0}
+        body.light-theme #walletAccountSettingsPage .wallet-account-settings-back{background:#f1f5f9;color:#334155;border-color:#cbd5e1}
+        body.light-theme #walletAccountSettingsPage .wallet-account-settings-section{border-color:#e2e8f0}
+        body.light-theme #walletAccountSettingsPage input{background:#f8fafc;color:#172033;border-color:#cbd5e1}
+        body.light-theme #walletAccountSettingsPage .wallet-settings-note{color:#64748b}
+        body.light-theme #walletPage #walletLoginArea .wallet-auth-input-wrap{background:#fff!important;border-color:#cbd5e1!important}
+        body.light-theme #walletPage #walletLoginArea .wallet-auth-input-wrap input{color:#172033!important;background:transparent!important}
+        body.light-theme #walletPage #walletLoginArea .wallet-auth-input-wrap>i{color:#0891b2!important}
+        body.light-theme #walletPage #walletLoginArea .wallet-password-toggle{color:#64748b!important}
+        body.light-theme #walletPage #walletLoginArea .wallet-auth-switch{background:#f1f5f9!important;border-color:#cbd5e1!important}
+        body.light-theme #walletPage #walletLoginArea .wallet-auth-switch button{color:#475569!important}
+        body.light-theme #walletPage #walletLoginArea .wallet-auth-switch button.active{color:#fff!important}
+
         .wallet-username-line{display:flex;align-items:center;gap:9px;direction:ltr}.wallet-username-line b{font-size:1rem;color:#67e8f9}.wallet-copy-username,.wallet-profile-settings{border:1px solid rgba(6,182,212,.4);background:rgba(6,182,212,.12);color:inherit;border-radius:10px;padding:8px 11px;cursor:pointer}.wallet-profile-settings{margin:2px 0 8px}.wallet-profile-settings-panel{width:100%;max-width:360px;text-align:right}.wallet-profile-settings-panel input{width:100%;box-sizing:border-box;margin:6px 0 10px;padding:11px;border-radius:10px;border:1px solid var(--surface-border);background:var(--surface);color:inherit}.wallet-username-inline-status{display:block;min-height:18px;margin:4px 2px 9px}.wallet-username-inline-status.error{color:#ef4444}.wallet-username-inline-status.ok{color:#10b981}.wallet-input-invalid{border-color:#ef4444!important;box-shadow:0 0 0 2px rgba(239,68,68,.12)!important}.wallet-banned-screen{position:fixed;inset:0;z-index:999999;background:rgba(3,7,18,.96);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}.wallet-banned-card{width:min(440px,100%);padding:28px 22px;text-align:center;border:1px solid rgba(239,68,68,.4);border-radius:24px;background:linear-gradient(145deg,#172033,#080d18);color:#fff;box-shadow:0 20px 70px #0008}.wallet-banned-card img{max-width:100%;max-height:180px;object-fit:contain;margin:0 auto 15px;border-radius:14px}.wallet-banned-icon{font-size:42px;color:#f87171}.wallet-banned-card h2{margin:14px 0;color:#fecaca}.wallet-banned-card p{line-height:1.9;color:#cbd5e1}.wallet-banned-contact,.wallet-banned-logout{display:block;margin:12px auto 0;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:800}.wallet-banned-contact{background:#16a34a;color:white}.wallet-banned-logout{border:1px solid #64748b;background:transparent;color:white;cursor:pointer}
         @media(max-width:390px){.wallet-nav-btn{padding:5px 6px;gap:4px;min-height:42px}.wallet-nav-btn img,.wallet-nav-btn>i{width:24px;height:24px}.wallet-nav-btn b{font-size:.58rem}.wallet-nav-btn small{font-size:.5rem}.wallet-card{padding:15px}}
 
@@ -2585,8 +2617,60 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             if(profile)profile.style.display=tab==='profile'?'flex':'none';
         }
         function walletCopyUsername(){const el=document.getElementById('walletProfileUsername');const value=(el?.textContent||'').replace(/^@/,'').trim();if(!value)return; if(navigator.clipboard?.writeText)navigator.clipboard.writeText('@'+value).then(()=>walletShowNotice('تم النسخ','تم نسخ اسم المستخدم.','success')).catch(()=>alert('تعذر النسخ تلقائيًا.'));else alert('@'+value);}
-        function walletToggleProfileSettings(){document.getElementById('walletProfileSettings')?.classList.toggle('wallet-hidden');}
-        async function walletChangePassword(){const status=document.getElementById('walletPasswordChangeStatus');const current=document.getElementById('walletCurrentPassword').value;const next=document.getElementById('walletNewPassword').value;if(!walletUser||!walletUser.email)return;if(next.length<10||!/[A-Z]/.test(next)||!/[a-z]/.test(next)||!/[0-9]/.test(next)||!/[!@#$%^&*(),.?":{}|<>_\-]/.test(next)){status.textContent='كلمة المرور يجب أن تحتوي على 10 أحرف على الأقل وحروف كبيرة وصغيرة ورقم ورمز.';return;}try{const cred=firebase.auth.EmailAuthProvider.credential(walletUser.email,current);await walletUser.reauthenticateWithCredential(cred);await walletUser.updatePassword(next);status.textContent='تم تغيير كلمة المرور بنجاح.';document.getElementById('walletCurrentPassword').value='';document.getElementById('walletNewPassword').value='';}catch(e){status.textContent=e.code==='auth/wrong-password'?'كلمة المرور الحالية غير صحيحة.':'تعذر تغيير كلمة المرور: '+(e.message||'');}}
+        function walletToggleProfileSettings(){
+            const page=document.getElementById('walletAccountSettingsPage');
+            if(!page)return;
+            page.classList.remove('wallet-hidden');
+            page.setAttribute('aria-hidden','false');
+        }
+        function walletCloseAccountSettings(){
+            const page=document.getElementById('walletAccountSettingsPage');
+            if(!page)return;
+            page.classList.add('wallet-hidden');
+            page.setAttribute('aria-hidden','true');
+        }
+        async function walletChangePassword(){
+            const status=document.getElementById('walletPasswordChangeStatus');
+            const current=document.getElementById('walletCurrentPassword')?.value||'';
+            const next=document.getElementById('walletNewPassword')?.value||'';
+            const user=firebase.auth().currentUser;
+            if(!user){status.textContent='انتهت جلسة الدخول. سجّل الدخول مرة أخرى.';return;}
+            if(!(user.providerData||[]).some(p=>p.providerId==='password')){
+                status.textContent='هذا الحساب مرتبط بـ Google؛ أدر كلمة مروره من حساب Google.';
+                return;
+            }
+            if(!current){status.textContent='اكتب كلمة المرور الحالية.';return;}
+            if(next.length<10||!/[A-Z]/.test(next)||!/[a-z]/.test(next)||!/[0-9]/.test(next)||!/[!@#$%^&*(),.?":{}|_\\-]/.test(next)){
+                status.textContent='كلمة المرور الجديدة يجب أن تحتوي على 10 أحرف على الأقل وحروف كبيرة وصغيرة ورقم ورمز.';
+                return;
+            }
+            if(current===next){status.textContent='اختر كلمة مرور جديدة مختلفة عن الحالية.';return;}
+            const btn=document.getElementById('walletChangePasswordBtn');
+            if(btn){btn.disabled=true;btn.textContent='جارٍ تغيير كلمة المرور…';}
+            status.textContent='';
+            try{
+                const credential=firebase.auth.EmailAuthProvider.credential(user.email,current);
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(next);
+                status.textContent='تم تغيير كلمة المرور بنجاح.';
+                document.getElementById('walletCurrentPassword').value='';
+                document.getElementById('walletNewPassword').value='';
+            }catch(e){
+                const code=String(e&&e.code||'');
+                if(['auth/wrong-password','auth/invalid-credential','auth/invalid-login-credentials'].includes(code))
+                    status.textContent='كلمة المرور الحالية غير صحيحة. تأكد منها ثم حاول مرة أخرى.';
+                else if(code==='auth/requires-recent-login')
+                    status.textContent='انتهت صلاحية التحقق. سجّل الخروج ثم الدخول مجددًا وحاول مرة أخرى.';
+                else if(code==='auth/weak-password')
+                    status.textContent='كلمة المرور الجديدة ضعيفة. استخدم 10 أحرف على الأقل مع حروف كبيرة وصغيرة ورقم ورمز.';
+                else if(code==='auth/too-many-requests')
+                    status.textContent='تم إجراء محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.';
+                else status.textContent='تعذر تغيير كلمة المرور حاليًا. تحقق من اتصالك وحاول مرة أخرى.';
+                console.error('Wallet password update failed:',e);
+            }finally{
+                if(btn){btn.disabled=false;btn.textContent='حفظ كلمة المرور الجديدة';}
+            }
+        }
         function walletShowTools() {
             document.getElementById('walletLoginArea').classList.add('wallet-hidden');
             document.getElementById('walletTools').classList.remove('wallet-hidden');
@@ -2705,8 +2789,18 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
                 walletAuthMessage(msg,true);if(/اسم المستخدم مستخدم بالفعل/.test(msg)){const input=document.getElementById('walletUsernameInput'),inline=document.getElementById('walletUsernameInlineStatus');if(input)input.classList.add('wallet-input-invalid');if(inline){inline.textContent=msg;inline.classList.add('error');}}
             }finally{btn.disabled=false;btn.innerHTML=walletAuthMode==='register'?'<i class="fas fa-user-plus"></i><span>إنشاء الحساب</span>':'<i class="fas fa-lock"></i><span>تسجيل الدخول</span>';}
         }
-        let walletUsernameCheckTimer=null;
-        document.addEventListener('input',e=>{if(e.target&&e.target.id==='walletPasswordInput'&&walletAuthMode==='register')walletUpdatePasswordStrength();if(e.target&&e.target.id==='walletUsernameInput'){const input=e.target,box=document.getElementById('walletUsernameInlineStatus');input.classList.remove('wallet-input-invalid');if(box){box.textContent='';box.classList.remove('error','ok');}if(walletAuthMode==='register'){clearTimeout(walletUsernameCheckTimer);walletUsernameCheckTimer=setTimeout(async()=>{const name=walletUsernameNormalize(input.value);if(!walletUsernameValid(name))return;try{const snap=await db.ref('username_index/'+name).once('value');if(snap.exists()){input.classList.add('wallet-input-invalid');box.textContent='اسم المستخدم مستخدم بالفعل، اختر اسمًا آخر.';box.classList.add('error');}else{box.textContent='اسم المستخدم متاح.';box.classList.add('ok');}}catch(_){box.textContent='تعذر التحقق الآن.';box.classList.add('error');}},450);}}});
+        // لا نستعلم عن username_index أثناء الكتابة؛ الحجز النهائي يتم عند إرسال التسجيل.
+        document.addEventListener('input',e=>{
+            if(e.target&&e.target.id==='walletPasswordInput'&&walletAuthMode==='register')walletUpdatePasswordStrength();
+            if(e.target&&e.target.id==='walletUsernameInput'){
+                const input=e.target,box=document.getElementById('walletUsernameInlineStatus');
+                input.classList.remove('wallet-input-invalid');
+                if(box){box.textContent='';box.classList.remove('error','ok');}
+                if(walletAuthMode==='register'&&walletUsernameValid(walletUsernameNormalize(input.value))){
+                    if(box){box.textContent='سيتم تأكيد توفر الاسم عند إنشاء الحساب.';box.classList.add('ok');}
+                }
+            }
+        });
 
         async function walletGoogleLogin() {
             try {
@@ -3499,6 +3593,33 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
         body.light-theme .wallet-logout-dialog{background:linear-gradient(145deg,#fff,#eff6ff);color:#111827}body.light-theme .wallet-logout-dialog p{color:#475569}body.light-theme .wallet-logout-cancel{background:#e2e8f0;color:#1e293b}
         @media(max-width:420px){.wallet-orders-page{padding:10px}.wallet-orders-page .wallet-card{max-height:84vh}.wallet-orders-page .wallet-row{align-items:flex-start}.wallet-orders-page .wallet-row>div:last-child{max-width:46%}.wallet-card-head h2{font-size:1.05rem}}
         </style>
+
+    <section id="walletAccountSettingsPage" class="wallet-account-settings-page wallet-hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="walletAccountSettingsTitle">
+      <div class="wallet-account-settings-card">
+        <header class="wallet-account-settings-head">
+          <button type="button" class="wallet-account-settings-back" onclick="walletCloseAccountSettings()" aria-label="رجوع"><i class="fas fa-arrow-right"></i></button>
+          <h3 id="walletAccountSettingsTitle">إعدادات الحساب</h3>
+        </header>
+        <div id="walletPasswordChangeArea" class="wallet-account-settings-section wallet-hidden">
+          <h4><i class="fas fa-lock"></i> تغيير كلمة المرور</h4>
+          <label for="walletCurrentPassword">كلمة المرور الحالية</label>
+          <input id="walletCurrentPassword" type="password" autocomplete="current-password" placeholder="اكتب كلمة المرور الحالية">
+          <label for="walletNewPassword">كلمة المرور الجديدة</label>
+          <input id="walletNewPassword" type="password" autocomplete="new-password" placeholder="اكتب كلمة المرور الجديدة">
+          <p class="wallet-settings-note">استخدم 10 أحرف على الأقل، مع حرف كبير وحرف صغير ورقم ورمز.</p>
+          <button type="button" id="walletChangePasswordBtn" class="wallet-primary" onclick="walletChangePassword()">حفظ كلمة المرور الجديدة</button>
+          <div id="walletPasswordChangeStatus" class="wallet-muted" role="status" aria-live="polite"></div>
+        </div>
+        <div id="walletGooglePasswordNote" class="wallet-account-settings-section wallet-hidden">
+          <h4><i class="fab fa-google"></i> حساب Google</h4>
+          <p class="wallet-settings-note">هذا الحساب يستخدم تسجيل الدخول من Google. تغيير كلمة المرور يتم من إعدادات حساب Google نفسه.</p>
+        </div>
+        <div class="wallet-account-settings-section">
+          <h4><i class="fas fa-shield-alt"></i> حماية الحساب</h4>
+          <p class="wallet-settings-note">لن نطلب منك مشاركة كلمة المرور مع أي شخص. إضافة رمز أمان ثانٍ تحتاج إلى تحقق موثوق من الخادم حتى لا يمكن تجاوزه من المتصفح.</p>
+        </div>
+      </div>
+    </section>
     <section id="walletPage" aria-hidden="true" role="dialog" aria-modal="true" aria-label="محفظة مهاب ستور">
       <div class="wallet-card">
         <div class="wallet-head"><h2><i class="fas fa-wallet" style="color:var(--primary)"></i> محفظة MOHAB STORE</h2><button class="close-modal" onclick="closeWallet()" aria-label="إغلاق"><i class="fas fa-times"></i></button></div>
@@ -3511,10 +3632,7 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
           <div class="wallet-profile-title">اسم المستخدم الخاص بك</div>
           <div class="wallet-username-line"><b id="walletProfileUsername">@—</b><button type="button" class="wallet-copy-username" onclick="walletCopyUsername()" title="نسخ اسم المستخدم"><i class="fas fa-copy"></i></button></div>
           <button type="button" id="walletProfileSettingsBtn" class="wallet-profile-settings" onclick="walletToggleProfileSettings()"><i class="fas fa-cog"></i> إعدادات الحساب</button>
-          <div id="walletProfileSettings" class="wallet-profile-settings-panel wallet-hidden">
-            <div id="walletPasswordChangeArea" class="wallet-hidden"><label>كلمة المرور الحالية</label><input id="walletCurrentPassword" type="password" autocomplete="current-password"><label>كلمة المرور الجديدة</label><input id="walletNewPassword" type="password" autocomplete="new-password"><button type="button" class="wallet-primary" onclick="walletChangePassword()">تغيير كلمة المرور</button><div id="walletPasswordChangeStatus" class="wallet-muted" aria-live="polite"></div></div>
-            <div id="walletGooglePasswordNote" class="wallet-muted wallet-hidden">حسابات Google لا تحتاج إلى كلمة مرور منفصلة داخل الموقع.</div>
-          </div>
+
           <div id="walletProfileEmail" class="wallet-profile-email" style="display:none">—</div>
           <div class="wallet-profile-hint"><i class="fas fa-shield-alt"></i> حسابك المسجل في MOHAB STORE</div>
           <div class="wallet-balance"><small><i class="fas fa-wallet"></i> الرصيد المتاح في محفظتك</small><strong id="walletBalanceMain">0.00 USD</strong><div class="wallet-muted" id="walletUserLabel">سجّل الدخول بجوجل لتفعيل المحفظة.</div></div>
@@ -3532,7 +3650,7 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
             <button type="button" id="walletRegisterTab" onclick="walletSetAuthMode('register')"><i class="fas fa-user-plus"></i> إنشاء حساب</button>
           </div>
           <form id="walletUsernameForm" class="wallet-username-form" onsubmit="walletSubmitUsernameAuth(event)" novalidate>
-            <label for="walletUsernameInput">اسم المستخدم الخاص بك</label><small class="wallet-auth-hint">اكتب اسم المستخدم الذي اخترته، أو الجزء الذي يسبق @ في بريد Gmail عند تسجيل الدخول بجوجل.</small>
+            <label for="walletUsernameInput">اسم المستخدم</label>
             <div class="wallet-auth-input-wrap"><i class="fas fa-user"></i><input id="walletUsernameInput" type="text" autocomplete="username" minlength="3" maxlength="20" placeholder="مثال: mohab11" required></div><small id="walletUsernameInlineStatus" class="wallet-username-inline-status" aria-live="polite"></small>
             <label for="walletPasswordInput">كلمة المرور</label>
             <div class="wallet-auth-input-wrap"><i class="fas fa-lock"></i><input id="walletPasswordInput" type="password" autocomplete="current-password" placeholder="اكتب كلمة المرور" required><button type="button" class="wallet-password-toggle" onclick="walletTogglePassword()" aria-label="إظهار كلمة المرور"><i class="fas fa-eye"></i></button></div>
