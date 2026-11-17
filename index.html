@@ -2672,16 +2672,24 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
             document.getElementById('stepSelection').classList.remove('active');document.getElementById('stepPrices').classList.add('active');document.getElementById('modalScrollBox').scrollTop=0;
             const title=document.querySelector('#stepPrices .prices-top-bar span');if(title)title.textContent='باقات الشحن التلقائي';const shareBtn=document.querySelector('#stepPrices .prices-share-btn');if(shareBtn)shareBtn.style.visibility='hidden';
         }
+        function autoTopupIsFreeFire(game){
+            const code=String(game?.auto_game_code||'').toLowerCase().replace(/[\s_-]/g,'');
+            const name=String(game?.name||'').toLowerCase();
+            return code==='freefire'||name.includes('فري فاير')||name.includes('free fire')||name.includes('freefire');
+        }
         function selectAutoTopupPack(index){
             const pack=autoTopupSelectedGame?._autoParsedPacks?.[index];if(!pack)return;
             autoTopupSelectedPack=pack;
             const game=autoTopupSelectedGame;
             document.getElementById('autoTopupPackSummary').textContent=`${game.name} • ${pack.name} • ${pack.price}`;
-            document.getElementById('autoTopupPlayerLabel').textContent=game.auto_player_label||'Player ID';
-            document.getElementById('autoTopupPlayerId').placeholder='أدخل '+(game.auto_player_label||'Player ID');
-            document.getElementById('autoTopupZoneLabel').textContent=game.auto_zone_label||'Zone ID';
-            document.getElementById('autoTopupZoneWrap').style.display=game.auto_zone_required||game.auto_zone_label?'block':'none';
-            document.getElementById('autoTopupZoneId').placeholder='أدخل '+(game.auto_zone_label||'Zone ID');
+            const isFreeFire=autoTopupIsFreeFire(game);
+            const playerLabel=isFreeFire?'Player ID':(game.auto_player_label||'Player ID');
+            const zoneLabel=game.auto_zone_label||'Zone ID';
+            document.getElementById('autoTopupPlayerLabel').textContent=playerLabel;
+            document.getElementById('autoTopupPlayerId').placeholder='أدخل '+playerLabel;
+            document.getElementById('autoTopupZoneLabel').textContent=zoneLabel;
+            document.getElementById('autoTopupZoneWrap').style.display=!isFreeFire&&(game.auto_zone_required||game.auto_zone_label)?'block':'none';
+            document.getElementById('autoTopupZoneId').placeholder='أدخل '+zoneLabel;
             document.getElementById('autoTopupZoneId').value='';document.getElementById('autoTopupPlayerId').value='';
             document.getElementById('autoTopupCheckResult').textContent=game.auto_game_code?'سيتم التحقق من اسم اللاعب قبل متابعة الطلب.':'راجع رقم اللاعب جيداً قبل المتابعة.';
             document.getElementById('autoTopupStatus').textContent='';
@@ -2690,11 +2698,18 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
         function closeAutoTopupCheckout(){const box=document.getElementById('autoTopupCheckout');if(box){box.style.display='none';box.setAttribute('aria-hidden','true');}}
         async function confirmAutoTopupDetails(){
             const game=autoTopupSelectedGame,pack=autoTopupSelectedPack;if(!game||!pack)return;
-            const playerId=document.getElementById('autoTopupPlayerId').value.trim();
-            const zoneId=document.getElementById('autoTopupZoneId').value.trim();
+            const isFreeFire=autoTopupIsFreeFire(game);
+            const playerInput=document.getElementById('autoTopupPlayerId');
+            let playerId=String(playerInput.value||'').trim();
+            if(isFreeFire){
+                const arabicDigits='٠١٢٣٤٥٦٧٨٩',persianDigits='۰۱۲۳۴۵۶۷۸۹';
+                playerId=playerId.replace(/[٠-٩۰-۹]/g,ch=>{const a=arabicDigits.indexOf(ch);return String(a>=0?a:persianDigits.indexOf(ch));}).replace(/[\s\u200B-\u200D\uFEFF]/g,'');
+            }
+            const zoneId=isFreeFire?'':document.getElementById('autoTopupZoneId').value.trim();
             const status=document.getElementById('autoTopupStatus');const btn=document.getElementById('autoTopupContinueBtn');
             if(!playerId){status.textContent='من فضلك أدخل ID اللاعب.';return;}
-            if(game.auto_zone_required&&!zoneId){status.textContent='من فضلك أدخل '+(game.auto_zone_label||'Zone ID')+'.';return;}
+            if(isFreeFire&&!/^\d{5,15}$/.test(playerId)){status.textContent='ID فري فاير يجب أن يكون أرقاماً فقط من 5 إلى 15 رقمًا. انسخ Player ID من ملفك داخل اللعبة.';return;}
+            if(!isFreeFire&&game.auto_zone_required&&!zoneId){status.textContent='من فضلك أدخل '+(game.auto_zone_label||'Zone ID')+'.';return;}
             if(!walletUser){status.textContent='سجّل الدخول أولاً لاستخدام الشحن التلقائي والدفع من المحفظة.';return;}
             const settingsSnap=await db.ref('settings/autoTopupApi').once('value');const apiSettings=settingsSnap.val()||{};
             if(apiSettings.enabled===false||!apiSettings.workerUrl){status.textContent='الشحن التلقائي غير متاح حالياً. يرجى المحاولة لاحقاً.';return;}
@@ -2702,18 +2717,30 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
             try{
                 let nickname='';
                 if(game.auto_game_code){
-                    const checkRes=await fetch(apiSettings.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'check_player',game_code:game.auto_game_code,player_id:playerId})});
-                    const checkData=await checkRes.json();
-                    if(!checkRes.ok||checkData.status!==true)throw new Error(checkData.message||'تعذر التحقق من اللاعب.');
+                    const currentUser=firebase.auth().currentUser;
+                    if(!currentUser)throw new Error('انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.');
+                    const idToken=await currentUser.getIdToken();
+                    const checkRes=await fetch(apiSettings.workerUrl,{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},
+                        body:JSON.stringify({action:'check_player',game_code:isFreeFire?'freefire':game.auto_game_code,player_id:playerId})
+                    });
+                    const raw=await checkRes.text();let checkData={};
+                    try{checkData=JSON.parse(raw);}catch(_){throw new Error('خدمة التحقق أرسلت استجابة غير مفهومة. حاول مرة أخرى لاحقاً.');}
+                    if(!checkRes.ok||checkData.status!==true)throw new Error(checkData.message||'تعذر التحقق من اللاعب حالياً.');
                     nickname=String(checkData.nickname||'');
-                    document.getElementById('autoTopupCheckResult').textContent=nickname?'اسم اللاعب: '+nickname:'تم التحقق من رقم اللاعب.';
+                    const region=String(checkData.region||'');
+                    document.getElementById('autoTopupCheckResult').textContent=nickname?'اسم اللاعب: '+nickname+(region?' • المنطقة: '+region:''):'تم التحقق من رقم اللاعب.';
                 }
                 const summary=nickname?`\nاسم اللاعب: ${nickname}`:'';
                 if(!await walletShowNotice('تأكيد الشحن التلقائي',`اللعبة: ${game.name}\nالباقة: ${pack.name}\nالسعر: ${pack.price}\n${game.auto_player_label||'Player ID'}: ${playerId}${zoneId?'\n'+(game.auto_zone_label||'Zone ID')+': '+zoneId:''}${summary}\n\nسيتم خصم قيمة الباقة من محفظتك ثم إرسال طلب الشحن تلقائياً. هل تريد المتابعة؟`,'warning',true))return;
                 const order={gameName:game.name,packName:pack.name,price:pack.price,method:'شحن تلقائي بالـ ID',autoTopup:{service:pack.service,player_id:playerId,zone_id:zoneId,parameters:pack.parameters||{},workerUrl:apiSettings.workerUrl,nickname}};
                 closeAutoTopupCheckout();
                 await walletConfirmPurchase(order,()=>{});
-            }catch(e){status.textContent=e.message||'حدث خطأ أثناء التحقق.';}
+            }catch(e){
+                status.textContent=e.message||'حدث خطأ أثناء التحقق.';
+                if(isFreeFire)document.getElementById('autoTopupCheckResult').textContent='لم يتم تأكيد صحة الـ ID. إذا كانت خدمة التحقق متوقفة فهذا لا يعني أن الرقم خطأ.';
+            }
             finally{btn.disabled=false;btn.textContent='متابعة';}
         }
 
