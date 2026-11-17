@@ -2726,6 +2726,14 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                 return {player,recent};
             }catch(error){console.warn('تعذر تحميل حساب الشحن المحفوظ',error);return null;}
         }
+        function autoTopupRecentMenuMarkup(list){
+            const values=Array.isArray(list)?list:[];
+            const items=values.map(id=>{
+                const safe=autoTopupEscape(String(id));
+                return `<button type="button" class="auto-topup-recent-item" data-player-id="${safe}"><span class="recent-id-icon"><i class="fas fa-gamepad"></i></span><b dir="ltr">${safe}</b><span class="recent-use-label">استخدام</span></button>`;
+            }).join('');
+            return `<div class="auto-topup-recent-title"><span><i class="fas fa-clock-rotate-left"></i> الحسابات الأخيرة</span><small>${values.length}/5</small></div>${items||'<div class="auto-topup-recent-empty"><i class="far fa-folder-open"></i><span>لا توجد معرفات محفوظة بعد</span></div>'}`;
+        }
         async function openAutoTopupPrices(){
             const game=globalGames[currentGameId]; if(!game||game.auto_available!==true)return;
             let settingsText=game.auto_prices||'';
@@ -2742,7 +2750,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
             const logged=!!saved;
             const stateText=saved?'<i class="fas fa-circle-check"></i> تم حفظ معرف اللاعب.':(walletUser?'أدخل معرف اللاعب ثم اضغط تسجيل الدخول.':'سجّل الدخول للمحفظة أولاً لحفظ حسابات الألعاب.');
             const stateClass=saved?'ok':'';
-            const recentItems=recent.map(id=>`<button type="button" class="auto-topup-recent-item" onclick="autoTopupChooseRecentId('${autoTopupEscape(id)}')">${autoTopupEscape(id)}</button>`).join('');
+            const recentItems=autoTopupRecentMenuMarkup(recent);
             const panel=`<section class="auto-topup-player-panel">
                 <div class="auto-topup-player-head"><i class="fas fa-gamepad"></i><span>حساب الشحن</span></div>
                 <label for="autoTopupInlinePlayerId" style="display:none">${autoTopupEscape(playerLabel)}</label>
@@ -2753,11 +2761,11 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                     </div>
                     <div class="auto-topup-recent-wrap">
                         <button type="button" class="auto-topup-recent-toggle" id="autoTopupRecentToggle" aria-label="الحسابات السابقة" title="الحسابات السابقة" onclick="autoTopupToggleRecent(event)"><i class="fas fa-chevron-down"></i></button>
-                        <div class="auto-topup-recent-menu" id="autoTopupRecentMenu">${recentItems||'<div style="padding:9px;color:#94a3b8;font-size:.75rem">لا توجد حسابات سابقة</div>'}</div>
+                        <div class="auto-topup-recent-menu" id="autoTopupRecentMenu">${recentItems}</div>
                     </div>
                     <button type="button" class="auto-topup-verify-btn ${logged?'logged-in':''}" id="autoTopupInlineVerifyBtn" onclick="saveAutoTopupPlayer()">${logged?'تسجيل الخروج':'تسجيل الدخول'}</button>
                 </div>
-                <div id="autoTopupInlinePlayerState" class="auto-topup-player-state ${stateClass}" aria-live="polite">${stateText}</div><div class="auto-topup-id-disclaimer">يرجى مراجعة معرف اللاعب جيداً قبل تأكيد الطلب؛ أنت مسؤول عن صحة البيانات المدخلة، وقد يتعذر استرجاع الشحنة إذا تم إرسالها إلى حساب آخر.</div>
+                <div id="autoTopupInlinePlayerState" class="auto-topup-player-state ${stateClass}" aria-live="polite">${stateText}</div><div class="auto-topup-id-disclaimer"><i class="fas fa-shield-halved"></i><span>تأكد من صحة المعرّف قبل تأكيد الشحن.</span></div>
             </section>`;
             const cards=packs.map((p,i)=>{const packIcon=String((game.package_icons&&game.package_icons[p.name])||icon||'').trim();const packIconHtml=packIcon?`<img class="price-item-icon" src="${autoTopupEscape(packIcon)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">`:'<i class="fas fa-gem" style="font-size:30px;color:#06b6d4"></i>';return `<button type="button" class="price-card-modern auto-topup-price-card" data-auto-index="${i}" onclick="selectAutoTopupPack(${i})"><div class="price-card-content">${packIconHtml}<div class="item-details"><span class="item-quantity">${autoTopupEscape(p.name)}</span></div><div class="price-area"><div class="item-price-tag">${autoTopupEscape(p.price)}</div></div></div></button>`;}).join('');
             content.classList.add('auto-topup-prices-view');content.innerHTML=panel+(cards||'<div class="empty-msg" style="grid-column:1/-1">لا توجد باقات شحن صالحة حالياً. راجع إعدادات الأسعار داخل لوحة التحكم.</div>');
@@ -2797,11 +2805,15 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                 await ref.set({currentId:playerId,nickname:'',region:'',verified:false,recent,updatedAt:firebase.database.ServerValue.TIMESTAMP});
                 if(requestId!==autoTopupCheckRequest)return;
                 autoTopupVerifiedPlayer={gameId:String(currentGameId),playerId,nickname:'',region:'',verified:false};
-                const menu=document.getElementById('autoTopupRecentMenu');if(menu)menu.innerHTML=recent.map(id=>`<button type="button" class="auto-topup-recent-item" onclick="autoTopupChooseRecentId('${autoTopupEscape(id)}')">${autoTopupEscape(id)}</button>`).join('')||'<div style="padding:9px;color:#94a3b8;font-size:.75rem">لا توجد حسابات سابقة</div>';
+                const menu=document.getElementById('autoTopupRecentMenu');if(menu)menu.innerHTML=autoTopupRecentMenuMarkup(recent);
                 autoTopupSetLoginUi(true);state.className='auto-topup-player-state ok';state.innerHTML='<i class="fas fa-circle-check"></i> تم حفظ معرف اللاعب.';
             }catch(error){if(requestId===autoTopupCheckRequest){state.className='auto-topup-player-state bad';state.textContent='تعذر حفظ المعرف. تحقق من اتصالك وصلاحيات حسابك.';}}
             finally{if(requestId===autoTopupCheckRequest){btn.disabled=false;btn.textContent=autoTopupVerifiedPlayer?'تسجيل الخروج':'تسجيل الدخول';}}
         }
+        document.addEventListener('click',function(e){
+            const item=e.target?.closest?.('.auto-topup-recent-item[data-player-id]');
+            if(item){e.preventDefault();e.stopPropagation();autoTopupChooseRecentId(item.getAttribute('data-player-id')||'');}
+        });
         async function autoTopupChooseRecentId(value){
             const playerId=autoTopupNormalizeId(value);if(!playerId)return;
             const input=document.getElementById('autoTopupInlinePlayerId');if(input)input.value=playerId;
@@ -4518,6 +4530,51 @@ body.light-theme #walletCustomNotice .wallet-notice-cancel{background:#eaf0f7;co
 body.light-theme #walletCustomNotice .wallet-notice-ok{color:#fff}
 .mohab-topup-success-mark{animation:mohabCheckPop .42s cubic-bezier(.2,.8,.2,1) both}
 @keyframes mohabCheckPop{0%{transform:scale(.55);opacity:0}70%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
+
+/* MOHAB STORE - refreshed automatic top-up account selector */
+#pricesContent.auto-topup-prices-view{width:100%;max-width:100%;min-width:0;box-sizing:border-box;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
+#pricesContent.auto-topup-prices-view>*{min-width:0;box-sizing:border-box}
+#pricesContent.auto-topup-prices-view .auto-topup-player-panel{position:relative;z-index:8;grid-column:1/-1;width:100%;min-width:0;padding:15px;border-radius:20px;border:1px solid rgba(34,211,238,.24);background:linear-gradient(145deg,#0d1a2a,#101f32);box-shadow:0 12px 28px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.035)}
+.auto-topup-player-head{display:flex;align-items:center;gap:9px;margin:0 0 12px;color:#f1f7ff;font-size:.92rem;font-weight:900}
+.auto-topup-player-head i{display:grid;place-items:center;width:31px;height:31px;border-radius:10px;background:rgba(34,211,238,.12);color:#22d3ee;font-size:14px!important}
+.auto-topup-player-row{display:flex;flex-direction:row;align-items:center;gap:8px;width:100%;min-width:0;position:relative;isolation:isolate;margin:0}
+.auto-topup-player-input-wrap{flex:1 1 0%;width:auto;min-width:0;max-width:none;position:relative}
+.auto-topup-player-row input{display:block;box-sizing:border-box;width:100%;height:48px;min-height:48px;padding:0 42px 0 13px;border-radius:14px;border:1px solid #34465d;background:#081525;color:#f8fafc;font-size:16px;line-height:1.2;direction:ltr;text-align:left;letter-spacing:.35px}
+.auto-topup-player-row input::placeholder{color:#8291a5;opacity:1}
+.auto-topup-player-row input:focus{border-color:#22c5dc;outline:0;box-shadow:0 0 0 3px rgba(34,197,220,.13)}
+.auto-topup-player-check{right:auto;left:12px;top:50%;font-size:17px;color:#34d399}
+.auto-topup-recent-wrap{position:static;flex:0 0 46px;width:46px}
+.auto-topup-recent-toggle{display:grid;place-items:center;width:46px;height:48px;min-height:48px;padding:0!important;border-radius:14px!important;background:#17283c;color:#c8eaf2;border:1px solid #34465d!important;font-size:15px!important;transition:background .18s,border-color .18s}
+.auto-topup-recent-toggle:active{background:#203b53}
+.auto-topup-recent-menu{position:absolute;top:calc(100% + 9px);right:0;left:0;width:auto;max-width:100%;max-height:min(245px,34vh);overflow:auto;overscroll-behavior:contain;padding:8px;border:1px solid rgba(34,197,220,.32);border-radius:16px;background:#0b1727;color:#edf6ff;box-shadow:0 18px 45px rgba(0,0,0,.45);display:none;z-index:10050}
+.auto-topup-recent-menu.open{display:block;animation:autoRecentIn .16s ease-out}
+@keyframes autoRecentIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.auto-topup-recent-title{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 7px 9px;color:#b8d5e5;font-size:.76rem;font-weight:900;border-bottom:1px solid rgba(148,163,184,.13);margin-bottom:5px}
+.auto-topup-recent-title span{display:flex;align-items:center;gap:7px}.auto-topup-recent-title i{color:#22c5dc}.auto-topup-recent-title small{color:#8496aa;font-size:.68rem}
+.auto-topup-recent-item{display:flex!important;align-items:center;gap:9px;width:100%;height:auto!important;min-height:45px!important;margin:3px 0;padding:7px 9px!important;border:1px solid transparent!important;border-radius:11px!important;background:transparent;color:#e7f0fa;text-align:right}
+.auto-topup-recent-item:hover,.auto-topup-recent-item:focus-visible{background:rgba(34,197,220,.09);border-color:rgba(34,197,220,.18)!important;outline:0}
+.auto-topup-recent-item .recent-id-icon{display:grid;place-items:center;flex:0 0 29px;width:29px;height:29px;border-radius:9px;background:rgba(34,197,220,.12);color:#22c5dc}
+.auto-topup-recent-item b{flex:1;min-width:0;text-align:left;font-size:.88rem;letter-spacing:.3px}.auto-topup-recent-item .recent-use-label{color:#22c5dc;font-size:.68rem;font-weight:800}
+.auto-topup-recent-empty{display:flex;align-items:center;justify-content:center;gap:8px;padding:18px 8px;color:#8496aa;font-size:.78rem}.auto-topup-recent-empty i{font-size:17px;color:#5f7890}
+.auto-topup-player-row button.auto-topup-verify-btn{flex:0 0 auto;min-width:116px;width:auto;height:48px;min-height:48px;padding:0 13px!important;border:0;border-radius:14px!important;background:linear-gradient(115deg,#0798b8,#2563eb);color:#fff;font-size:.82rem!important;font-weight:900;box-shadow:0 5px 14px rgba(37,99,235,.16)}
+.auto-topup-player-row button.auto-topup-verify-btn.logged-in{background:rgba(16,185,129,.13);color:#6ee7b7;border:1px solid rgba(16,185,129,.35);box-shadow:none}
+.auto-topup-player-state{margin:9px 2px 0;min-height:0;font-size:.75rem;line-height:1.6}.auto-topup-player-state:empty{display:none}
+.auto-topup-id-disclaimer{display:flex;align-items:center;gap:7px;margin:8px 2px 0;padding:0;color:#8fa3b8;font-size:.72rem;line-height:1.55;font-weight:500}
+.auto-topup-id-disclaimer i{color:#22c5dc;font-size:12px!important}
+#pricesContent.auto-topup-prices-view .auto-topup-price-card{min-width:0}
+body.light-theme #pricesContent.auto-topup-prices-view .auto-topup-player-panel{background:linear-gradient(145deg,#fff,#f3f8fc);border-color:#d7e4ef;box-shadow:0 10px 25px rgba(15,35,60,.07),inset 0 1px 0 #fff}
+body.light-theme .auto-topup-player-head{color:#17283c}body.light-theme .auto-topup-player-head i{background:#e4f8fb;color:#0891b2}
+body.light-theme .auto-topup-player-row input{background:#fff;color:#172033;border-color:#cbd8e5}body.light-theme .auto-topup-player-row input::placeholder{color:#8a99aa}
+body.light-theme .auto-topup-recent-toggle{background:#f0f5fa;color:#34506a;border-color:#cbd8e5!important}
+body.light-theme .auto-topup-recent-menu{background:#fff;color:#17283c;border-color:#cbd8e5;box-shadow:0 16px 38px rgba(15,35,60,.18)}
+body.light-theme .auto-topup-recent-title{color:#38516b;border-color:#e5edf4}body.light-theme .auto-topup-recent-title small{color:#8b9bad}
+body.light-theme .auto-topup-recent-item{color:#20354b}
+body.light-theme .auto-topup-recent-item:hover,body.light-theme .auto-topup-recent-item:focus-visible{background:#effaff;border-color:#d7f1f6!important}
+body.light-theme .auto-topup-recent-item .recent-id-icon{background:#e5f8fb;color:#078aa5}body.light-theme .auto-topup-recent-item .recent-use-label{color:#078aa5}
+body.light-theme .auto-topup-recent-empty{color:#75879b}body.light-theme .auto-topup-id-disclaimer{color:#718198}
+@media(max-width:420px){#pricesContent.auto-topup-prices-view .auto-topup-player-panel{padding:12px;border-radius:17px}.auto-topup-player-row{gap:6px}.auto-topup-player-row button.auto-topup-verify-btn{min-width:104px;padding:0 9px!important;font-size:.76rem!important}.auto-topup-recent-wrap{flex-basis:42px;width:42px}.auto-topup-recent-toggle{width:42px}}
+@media(max-width:350px){.auto-topup-player-row{gap:5px}.auto-topup-player-row button.auto-topup-verify-btn{min-width:91px;font-size:.7rem!important}.auto-topup-recent-wrap{flex-basis:38px;width:38px}.auto-topup-recent-toggle{width:38px}}
+
 </style>
 </body>
 </html>
