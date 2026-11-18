@@ -3708,21 +3708,41 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
         function walletSetAutoTopupLoading(show){
             const overlay=walletGetTopupOverlay();
             if(show){
+                overlay.dataset.state='loading';
+                overlay.style.zIndex='2147483000';
                 overlay.innerHTML='<div class="mohab-topup-loading-card" role="status" aria-live="polite"><div class="mohab-topup-loader"></div><b>جاري الشحن</b></div>';
                 document.getElementById('mohabTopupSuccess')?.style.setProperty('display','none','important');
                 document.getElementById('mohabTopupFailure')?.style.setProperty('display','none','important');
                 overlay.style.display='flex';
-                overlay.dataset.state='loading';
             }else{
+                // Prevent delayed cleanup from hiding a success/failure result.
+                if(overlay.dataset.state==='success'||overlay.dataset.state==='failure')return;
                 overlay.style.display='none';
                 overlay.dataset.state='hidden';
             }
+        }
+        function walletGetProviderProgress(payload,depth=0,seen=new Set()){
+            if(!payload||typeof payload!=='object'||depth>5||seen.has(payload))return null;
+            seen.add(payload);
+            if(!Array.isArray(payload)&&payload.progress!==undefined&&payload.progress!==null){
+                const n=Number(payload.progress);if(n===4||n===5)return n;
+            }
+            if(!Array.isArray(payload)){
+                const state=String(payload.order_status||payload.orderStatus||payload.state||payload.status_text||'').toLowerCase();
+                if(/^(completed|complete|success|successful|delivered|shipped|تم الشحن|مكتمل)$/.test(state))return 4;
+                if(/^(cancelled|canceled|failed|failure|rejected|فشل|ملغي)$/.test(state))return 5;
+            }
+            const values=Array.isArray(payload)?payload:Object.values(payload);
+            for(const value of values){const found=walletGetProviderProgress(value,depth+1,seen);if(found===4||found===5)return found;}
+            return null;
         }
         async function walletShowTopupResult(kind,code,orderKey,message){
             const overlay=walletGetTopupOverlay();
             const success=kind==='success';
             // The loading screen and the final result share ONE overlay. Replacing
             // its contents prevents a result modal from appearing underneath it.
+            // Update the SAME visible overlay; do not create or reveal another dialog.
+            overlay.style.zIndex='2147483000';
             overlay.innerHTML=success
                 ? `<div class="mohab-topup-success-card" role="dialog" aria-modal="true"><div class="mohab-topup-success-mark mohab-result-pop"><i class="fas fa-check"></i></div><h3>تم الشحن بنجاح</h3><p>تم تنفيذ طلبك بنجاح.</p><small class="mohab-topup-success-code"></small><div class="mohab-topup-success-actions"><button type="button" data-action="close">إغلاق</button><button type="button" data-action="receipt">عرض الوصل</button></div></div>`
                 : `<div class="mohab-topup-failure-card" role="dialog" aria-modal="true"><div class="mohab-topup-failure-mark mohab-result-pop"><i class="fas fa-xmark"></i></div><h3>لم يتم الشحن</h3><p class="mohab-topup-failure-message"></p><small class="mohab-topup-success-code"></small><div class="mohab-topup-success-actions"><button type="button" data-action="close">إغلاق</button><button type="button" data-action="receipt">عرض الطلب</button></div></div>`;
@@ -3732,6 +3752,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
             if(messageEl)messageEl.textContent=message||'تعذر تنفيذ الشحن، وتم تحديث حالة الطلب.';
             overlay.dataset.state=success?'success':'failure';
             overlay.style.display='flex';
+            overlay.setAttribute('aria-live','assertive');
             return new Promise(resolve=>{
                 let finished=false;
                 const close=()=>{if(finished)return;finished=true;overlay.style.display='none';overlay.dataset.state='hidden';resolve();};
@@ -3763,18 +3784,18 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                     try{
                         const response=await walletFetchWithTimeout(workerUrl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},body:JSON.stringify({action:'orderstatusReference',reference:code}),cache:'no-store'},Math.min(8000,remaining));
                         const data=await response.json().catch(()=>null);if(!response.ok||!data)continue;last=data;
-                        const progress=Number(data.progress);
+                        const progress=walletGetProviderProgress(data);
                         if(progress===4){
                             const delivery=String(data.result||data.msg||'تم تنفيذ طلب الشحن بنجاح.');
                             const playerNickname=walletExtractPlayerName({deliveryDetails:delivery,providerStatus:data});
                             await orderRef.update({status:'shipped',deliveryDetails:'',playerNickname:playerNickname||'',providerStatus:data,shippedAt:firebase.database.ServerValue.TIMESTAMP,updatedAt:firebase.database.ServerValue.TIMESTAMP,topupUpdatedAt:firebase.database.ServerValue.TIMESTAMP});
                             if(playerNickname)await walletPersistTopupPlayerName(orderRef,delivery,data);
-                            walletSetAutoTopupLoading(false);walletListenOrders();await walletShowTopupSuccess(code,orderKey);return 'shipped';
+                            walletListenOrders();await walletShowTopupSuccess(code,orderKey);return 'shipped';
                         }
                         if(progress===5){
                             const refunded=await walletRefundAutoTopupOnce(balanceRef,orderRef,orderKey,refundAmountEgp);
                             await orderRef.update({status:'topup_failed',topupError:'Provider confirmed delivery failure',updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(()=>{});
-                            walletSetAutoTopupLoading(false);walletListenOrders();
+                            walletListenOrders();
                             await walletShowTopupFailure(code,orderKey,refunded?'تعذر تنفيذ الشحن، وتم رد المبلغ إلى محفظتك.':'تعذر تنفيذ الشحن. يمكنك مراجعة تفاصيل الطلب.');return 'refunded';
                         }
                     }catch(error){console.warn('Auto topup status check:',error);}
