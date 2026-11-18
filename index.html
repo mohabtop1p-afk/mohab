@@ -8,6 +8,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MOHAB STORE | المتجر الرسمي</title>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
@@ -17,8 +18,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-
+    
     <style>
         :root {
             --bg-deep: #090d16; 
@@ -595,12 +595,12 @@
             border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 28px; padding: 8px 10px;
             display: flex; justify-content: space-around; align-items: center; z-index: 90; 
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05);
-            transition: transform 0.3s; will-change: transform;
+            transition: transform 0.3s;
         }
         .dock-item {
             display: flex; flex-direction: column; align-items: center; gap: 4px;
             text-decoration: none; color: var(--text-muted); transition: transform 0.2s;
-            flex: 1; text-align: center; will-change: transform;
+            flex: 1; text-align: center;
         }
         .dock-icon-wrapper {
             width: 36px; height: 36px; border-radius: 12px; 
@@ -734,7 +734,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
 
         .options-list { display: flex; flex-direction: column; gap: 12px; }
-        .option-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: transform 0.2s, background 0.2s; will-change: transform; }
+        .option-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: transform 0.2s, background 0.2s; }
         .option-card:hover { background: var(--surface-hover); border-color: var(--primary); transform: translateX(-4px) translateZ(0); }
 
         .auto-topup-option{border:1px solid rgba(16,185,129,.35)!important;background:linear-gradient(120deg,rgba(16,185,129,.12),rgba(6,182,212,.08))!important}
@@ -1666,7 +1666,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
         <a href="#luck" class="luck-feature" onclick="openLuckPage(event)" aria-label="فتح عجلة الحظ">
             <img src="https://e.top4top.io/p_3913ditnr0.png" alt="عجلة الحظ" loading="lazy" decoding="async">
             <div class="luck-feature-text">
-                <div class="luck-feature-title">🎡 عجلة الحظ</div>
+                <div class="luck-feature-title"><i class="fas fa-dharmachakra"></i> عجلة الحظ</div>
                 <div class="luck-feature-sub">جرّب حظك واكتشف المفاجأة</div>
             </div>
             <div class="luck-feature-arrow"><i class="fas fa-chevron-left"></i></div>
@@ -1677,7 +1677,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
         <a href="#chatbot" class="luck-feature chatbot-feature" onclick="openChatbotPage(event)" aria-label="فتح شات بوت المساعد الذكي">
             <img src="https://f.top4top.io/p_3916qmqqv0.png" alt="شات بوت المساعد الذكي" loading="lazy" decoding="async">
             <div class="luck-feature-text">
-                <div class="luck-feature-title">🤖 شات بوت المساعد الذكي</div>
+                <div class="luck-feature-title"><i class="fas fa-robot"></i> شات بوت المساعد الذكي</div>
                 <div class="luck-feature-sub">تواصل مع المساعد الذكي واحصل على المساعدة</div>
             </div>
             <div class="luck-feature-arrow"><i class="fas fa-chevron-left"></i></div>
@@ -2252,7 +2252,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
             try {
                 const ref = db.ref('gameRequests').push();
                 await ref.set({ gameName, createdAt: firebase.database.ServerValue.TIMESTAMP });
-                msg.textContent='تم إرسال طلبك بنجاح ❤️';
+                msg.textContent='تم إرسال طلبك بنجاح';
                 input.value='';
                 setTimeout(closeGameRequest, 850);
             } catch(e) {
@@ -2383,32 +2383,38 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 
         function renderBottomDock(socials) {
             const dock = document.getElementById('bottomDock');
-            dock.style.display = 'flex'; 
-            
-            const icons = { 'whatsapp': 'fab fa-whatsapp', 'facebook': 'fab fa-facebook-f', 'telegram': 'fab fa-telegram-plane', 'instagram': 'fab fa-instagram', 'youtube': 'fab fa-youtube', 'warranty': 'fas fa-star' };
+            dock.style.display = 'flex';
+            const sv = p => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+            const P = {
+                chat: sv('<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.2 9.4c.3 1.6 1.6 3.1 3.4 3.8l1.1-1.1a.8.8 0 0 1 .8-.2l1.4.5"/>'),
+                megaphone: sv('<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>'),
+                send: sv('<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>'),
+                box: sv('<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>'),
+                shield: sv('<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>'),
+                facebook: sv('<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>'),
+                instagram: sv('<rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><path d="M17.5 6.5h.01"/>'),
+                youtube: sv('<path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/>'),
+                star: sv('<path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/>'),
+                link: sv('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>')
+            };
+            const tones = { chat:'wa', megaphone:'wa', send:'tg', box:'ord', shield:'sh', facebook:'fb', instagram:'ig', youtube:'yt', star:'st', link:'df' };
+            const pick = s => {
+                const plat = String(s.platform || '').toLowerCase(), name = String(s.name || '');
+                if (plat === 'whatsapp') return /قنا|channel/i.test(name) ? 'megaphone' : 'chat';
+                if (plat === 'telegram') return 'send';
+                if (plat === 'warranty') return 'star';
+                return P[plat] ? plat : 'link';
+            };
+            const item = (tag, attrs, key, label, extra) =>
+                '<' + tag + ' class="dock-item mz-dk mz-dk-' + tones[key] + '" ' + attrs + '><div class="dock-icon-wrapper">' + P[key] + (extra || '') + '</div><span>' + label + '</span></' + tag + '>';
             let htmlString = '';
-            
             socials.forEach(s => {
-                htmlString += `<a href="${s.url}" target="_blank" class="dock-item"><div class="dock-icon-wrapper"><i class="${icons[s.platform] || 'fas fa-link'}"></i></div><span>${s.name}</span></a>`;
+                const key = pick(s);
+                htmlString += item('a', 'href="' + String(s.url || '').replace(/"/g, '&quot;') + '" target="_blank" rel="noopener"', key, s.name);
             });
-            
-            htmlString += `
-            <a href="https://t.me/mohabstore_1" target="_blank" class="dock-item">
-                <div class="dock-icon-wrapper">
-                    <i class="fab fa-telegram-plane"></i>
-                </div>
-                <span>قناة التليجرام</span>
-            </a>`;
-
-            htmlString += `<button class="dock-item" onclick="openWalletOrdersPage()" style="background:none;border:none;font-family:inherit;cursor:pointer;" id="walletOrdersDockBtn"><div class="dock-icon-wrapper" style="position:relative"><i class="fas fa-box-open"></i><em id="walletOrdersDockBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:99px;min-width:18px;height:18px;line-height:18px;font-size:10px;font-style:normal;font-weight:900;text-align:center;padding:0 3px">0</em></div><span>طلباتي</span></button>`;
-
-            htmlString += `<button class="dock-item" onclick="openRecovery()" style="background:none;border:none;font-family:inherit;cursor:pointer;" id="recoveryDockBtn">
-                <div class="dock-icon-wrapper">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <span>كشف الاستعادة</span>
-            </button>`;
-            
+            htmlString += item('a', 'href="https://t.me/mohabstore_1" target="_blank" rel="noopener"', 'send', 'قناة التليجرام');
+            htmlString += item('button', 'type="button" onclick="openWalletOrdersPage()" id="walletOrdersDockBtn"', 'box', 'طلباتي', '<em id="walletOrdersDockBadge" class="mz-dk-badge" style="display:none">0</em>');
+            htmlString += item('button', 'type="button" onclick="openRecovery()" id="recoveryDockBtn"', 'shield', 'كشف الاستعادة');
             dock.innerHTML = htmlString;
         }
 
@@ -2584,7 +2590,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
             const optionsList = document.getElementById('modalOptionsList'); let htmlString = ''; let hasAnyOption = false;
             
             if (game.id_available) { hasAnyOption = true; htmlString += `<div class="option-card" onclick="showPrices('id')"><div class="option-icon"><i class="fas fa-id-card"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق ID</h4></div></div>`; }
-            if (game.auto_available === true && game.auto_prices) { hasAnyOption = true; const autoTitle=String(game.auto_title||'شحن تلقائي بالـ ID').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])); const autoSub=String(game.auto_subtitle||'شحن مباشر وآمن عبر الموقع').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])); htmlString += `<div class="option-card auto-topup-option" onclick="openAutoTopupPrices()"><div class="option-icon"><i class="fas fa-bolt"></i></div><div><h4 style="color:#fff;font-size:.95rem;">${autoTitle}</h4><small style="display:block;color:var(--text-muted);margin-top:4px">${autoSub}</small><span class="auto-topup-badge"><i class="fas fa-shield-alt"></i> شحن تلقائي</span></div></div>`; }
+            if (game.auto_available === true && game.auto_prices) { hasAnyOption = true; const autoTitle=String(game.auto_title||'شحن تلقائي بالـ ID').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])); const autoSub=String(game.auto_subtitle||'شحن مباشر وآمن عبر الموقع').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])); htmlString = `<div class="option-card auto-topup-option mz-auto-card" onclick="openAutoTopupPrices()"><span class="mz-auto-ribbon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.6 13.4a.8.8 0 0 0 .64 1.28H10l-1.1 6.5a.6.6 0 0 0 1.07.46l8.6-11.5a.8.8 0 0 0-.64-1.28H13l1.1-6.4A.6.6 0 0 0 13.2 2Z"/></svg>الأسرع</span><div class="option-icon mz-auto-icon"><span class="mz-auto-ring"></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.6 13.4a.8.8 0 0 0 .64 1.28H10l-1.1 6.5a.6.6 0 0 0 1.07.46l8.6-11.5a.8.8 0 0 0-.64-1.28H13l1.1-6.4A.6.6 0 0 0 13.2 2Z"/></svg></div><div class="mz-auto-text"><h4 style="color:#fff;font-size:.98rem;">${autoTitle}</h4><small style="display:block;color:var(--text-muted);margin-top:4px">${autoSub}</small><span class="auto-topup-badge"><i class="fas fa-shield-alt"></i> شحن تلقائي</span></div><span class="mz-auto-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></span></div>` + htmlString; }
             if (game.account_available) { hasAnyOption = true; htmlString += `<div class="option-card" onclick="showPrices('account')"><div class="option-icon"><i class="fas fa-user-shield"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق الحساب</h4></div></div>`; }
             
             if (game.custom_methods && game.custom_methods.length > 0) {
@@ -3542,7 +3548,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                 overlay.querySelector('.wallet-notice-title').textContent=title;
                 overlay.querySelector('.wallet-notice-message').textContent=message;
                 const actions=overlay.querySelector('.wallet-notice-actions');
-                overlay.querySelector('.wallet-notice-icon').textContent='🛒';actions.innerHTML='<button type="button" class="wallet-notice-ok"><i class="fas fa-wallet"></i> الدفع من المحفظة</button><button type="button" class="wallet-notice-cancel"><i class="fab fa-whatsapp"></i> طلب واتساب غير مدفوع</button><button type="button" class="wallet-notice-cancel" data-cancel="1">إلغاء</button>';
+                overlay.querySelector('.wallet-notice-icon').innerHTML='<i class="fas fa-cart-shopping"></i>';actions.innerHTML='<button type="button" class="wallet-notice-ok"><i class="fas fa-wallet"></i> الدفع من المحفظة</button><button type="button" class="wallet-notice-cancel"><i class="fab fa-whatsapp"></i> طلب واتساب غير مدفوع</button><button type="button" class="wallet-notice-cancel" data-cancel="1">إلغاء</button>';
                 overlay.style.display='flex';
                 const finish=v=>{overlay.style.display='none';actions.innerHTML='<button class="wallet-notice-ok">حسنًا</button><button class="wallet-notice-cancel">إلغاء</button>';resolve(v);};
                 actions.children[0].onclick=()=>finish('paid'); actions.children[1].onclick=()=>finish('whatsapp'); actions.children[2].onclick=()=>finish(null);
@@ -3604,10 +3610,27 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                 const labels={pending_payment:'بانتظار الدفع',paid:'تم الدفع',processing:'تم إرسال الطلب',shipped:'تم الشحن',rejected:'المنتج غير متوفر الآن',topup_failed:'المنتج غير متوفر الآن',cancelled:'ملغي'};
                 const html=orderRows.length?orderRows.map(o=>{
                     const history=Object.values(o.statusHistory||{}).sort((a,b)=>Number(a.at||0)-Number(b.at||0));
-                    const historyHtml=history.length?`<div class="wallet-order-timeline"><b>سجل تحديثات الطلب</b>${history.map(h=>`<small>• ${walletEscape(labels[h.status]||h.status||'تحديث')} — ${h.at?new Date(h.at).toLocaleString('ar-EG'):'—'}${h.details?` — ${walletEscape(h.details)}`:''}</small>`).join('')}</div>`:'';
-                    const rejection=o.rejectionReason?`<small>❗ سبب الرفض: ${walletEscape(o.rejectionReason)}</small>`:'';
-                    const delivery=o.playerNickname?`<small>👤 اسم اللاعب: ${walletEscape(o.playerNickname)}</small>`:'';
-                    return `<article class="wallet-row wallet-order-detail-card"><div class="wallet-order-main"><b>${walletEscape(o.game||o.gameName||'منتج')} — ${walletEscape(o.pack||o.packName||'باقة')}</b><small>🧾 كود الطلب: ${walletEscape(o.code||o.key)}</small><small>💰 السعر: ${walletEscape(o.price||'—')}</small><small>⚙️ طريقة الشحن: ${walletEscape(o.method||'يتم التأكيد مع الدعم')}</small><small>💳 طريقة الدفع: ${walletEscape(o.paymentType==='wallet'?'محفظة MOHAB STORE':o.paymentType==='whatsapp'?'واتساب — غير مدفوع':'غير محددة')}</small>${Number(o.discountPercent)>0?`<small>🎁 الخصم المطبق: ${walletEscape(o.discountPercent)}%</small>`:''}${o.autoTopup?`<small>🎮 نوع اللعبة: ${walletEscape(o.game||o.gameName||'—')}</small><small>🆔 ${walletEscape(o.playerLabel||'معرف اللاعب')}: ${walletEscape(o.playerId||'—')}</small><small>📦 الباقة: ${walletEscape(o.pack||o.packName||'—')}</small>${o.playerNickname?`<small>👤 اسم الحساب: ${walletEscape(o.playerNickname)}</small>`:''}${o.zoneId?`<small>🌐 المنطقة: ${walletEscape(o.zoneId)}</small>`:''}<small>🔢 رقم الخدمة: ${walletEscape(o.serviceId||'—')}</small>`:''}${delivery}${rejection}${o.shippedAt?`<small>🚚 تاريخ الشحن: ${new Date(o.shippedAt).toLocaleString('ar-EG')}</small>`:''}${historyHtml}</div><div class="wallet-order-status"><b>${walletEscape(labels[o.status]||o.status||'تم تسجيل الطلب')}</b><small>تاريخ الطلب: ${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</small>${o.updatedAt?`<small>آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</small>`:''}<button type="button" class="wallet-receipt-btn" onclick="walletShowOrderReceipt('${walletEscape(o.key)}')"><i class="fas fa-receipt"></i> عرض الوصل</button></div></article>`;
+                    const historyHtml=history.length?`<div class="mz-ord-timeline"><b><i class="fas fa-clock-rotate-left"></i> سجل تحديثات الطلب</b>${history.map(h=>`<small><i class="fas fa-circle"></i><span>${walletEscape(labels[h.status]||h.status||'تحديث')} — ${h.at?new Date(h.at).toLocaleString('ar-EG'):'—'}${h.details?` — ${walletEscape(h.details)}`:''}</span></small>`).join('')}</div>`:'';
+                    const mzRow=(ic,k,v,cls)=>`<div class="mz-ord-row${cls?' '+cls:''}"><span class="mz-ord-k"><i class="fas fa-${ic}"></i>${k}</span><b class="mz-ord-v" dir="auto">${v}</b></div>`;
+                    const mzRows=[];
+                    mzRows.push(mzRow('hashtag','كود الطلب',walletEscape(o.code||o.key)));
+                    mzRows.push(mzRow('tag','السعر',walletEscape(o.price||'—')));
+                    mzRows.push(mzRow('bolt','طريقة الشحن',walletEscape(o.method||'يتم التأكيد مع الدعم')));
+                    mzRows.push(mzRow('wallet','طريقة الدفع',walletEscape(o.paymentType==='wallet'?'محفظة MOHAB STORE':o.paymentType==='whatsapp'?'واتساب — غير مدفوع':'غير محددة')));
+                    if(Number(o.discountPercent)>0)mzRows.push(mzRow('percent','الخصم المطبق',walletEscape(o.discountPercent)+'%'));
+                    if(o.autoTopup){
+                        mzRows.push(mzRow('gamepad','نوع اللعبة',walletEscape(o.game||o.gameName||'—')));
+                        mzRows.push(mzRow('id-card',walletEscape(o.playerLabel||'معرف اللاعب'),walletEscape(o.playerId||'—')));
+                        mzRows.push(mzRow('cube','الباقة',walletEscape(o.pack||o.packName||'—')));
+                        if(o.playerNickname)mzRows.push(mzRow('user','اسم الحساب',walletEscape(o.playerNickname)));
+                        if(o.zoneId)mzRows.push(mzRow('globe','المنطقة',walletEscape(o.zoneId)));
+                        mzRows.push(mzRow('gears','رقم الخدمة',walletEscape(o.serviceId||'—')));
+                    } else if(o.playerNickname){
+                        mzRows.push(mzRow('user','اسم اللاعب',walletEscape(o.playerNickname)));
+                    }
+                    if(o.rejectionReason)mzRows.push(mzRow('circle-exclamation','سبب الرفض',walletEscape(o.rejectionReason),'warn'));
+                    if(o.shippedAt)mzRows.push(mzRow('truck-fast','تاريخ الشحن',new Date(o.shippedAt).toLocaleString('ar-EG')));
+                    return `<article class="mz-ord" data-status="${walletEscape(String(o.status||'new'))}"><header class="mz-ord-head"><b class="mz-ord-title">${walletEscape(o.game||o.gameName||'منتج')} — ${walletEscape(o.pack||o.packName||'باقة')}</b><span class="mz-ord-chip">${walletEscape(labels[o.status]||o.status||'تم تسجيل الطلب')}</span></header><div class="mz-ord-body">${mzRows.join('')}</div>${historyHtml}<footer class="mz-ord-foot"><div class="mz-ord-dates"><span><i class="fas fa-calendar-days"></i>تاريخ الطلب: ${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</span>${o.updatedAt?`<span><i class="fas fa-arrows-rotate"></i>آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</span>`:''}</div><button type="button" class="wallet-receipt-btn" onclick="walletShowOrderReceipt('${walletEscape(o.key)}')"><i class="fas fa-receipt"></i> عرض الوصل</button></footer></article>`;
                 }).join(''):'لا توجد طلبات شحن حتى الآن.';
                 if(list)list.innerHTML=html;
                 if(legacy)legacy.innerHTML=html;
@@ -4938,6 +4961,125 @@ body.light-theme #pricesContent.auto-topup-prices-view .auto-topup-player-panel{
 @keyframes mzSpin{to{transform:rotate(360deg)}}
 @keyframes mzResultPop{0%{opacity:0;transform:scale(.35) rotate(-25deg)}70%{opacity:1;transform:scale(1.12) rotate(5deg)}100%{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.mz-spinner{animation-duration:1.6s!important;animation-iteration-count:infinite!important}}
+
+/* =====================================================================
+   MOHAB STORE — تحديث الستايل (سرعة + مربع الشحن التلقائي + الشريط السفلي + الطلبات)
+   ===================================================================== */
+
+/* ---------- خفة وسرعة: إلغاء blur الثقيل واستبداله بخلفيات معتمة ---------- */
+nav,.modal-overlay,#walletPage,.wallet-orders-page,#autoTopupCheckout,#mohabAutoTopupLoading,#walletCustomNotice,#mohabOrderReceipt,#mohabTopupSuccess,.wallet-logout-overlay,.announcement-ticker,.bottom-nav-dock{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body:not(.light-theme) .modal-overlay,body:not(.light-theme) #walletPage,body:not(.light-theme) .wallet-orders-page,body:not(.light-theme) #autoTopupCheckout,body:not(.light-theme) #mohabAutoTopupLoading,body:not(.light-theme) #walletCustomNotice,body:not(.light-theme) #mohabOrderReceipt{background:rgba(3,7,14,.92)!important}
+body:not(.light-theme) nav{background:rgba(9,13,22,.98)!important}
+.game-card::before{opacity:.5}
+
+/* ---------- أيقونة عناوين الميزات ---------- */
+.luck-feature-title i{color:var(--primary);margin-inline-end:6px;font-size:.92em}
+
+/* =====================================================================
+   مربع الشحن التلقائي (أول خيار + مؤثر جذاب)
+   ===================================================================== */
+.option-card.auto-topup-option.mz-auto-card{position:relative;overflow:hidden;gap:14px;padding:18px 15px 16px!important;border-radius:22px!important;border:1.5px solid rgba(52,211,153,.7)!important;background:linear-gradient(120deg,rgba(16,185,129,.24),rgba(6,182,212,.15) 58%,rgba(59,130,246,.12))!important;box-shadow:0 10px 28px rgba(16,185,129,.20)!important;animation:mzAutoPulse 2.6s ease-out infinite;order:-1}
+.mz-auto-card::after{content:"";position:absolute;top:0;bottom:0;width:46%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.20),transparent);transform:skewX(-20deg);animation:mzAutoShine 3.4s ease-in-out infinite;pointer-events:none}
+.mz-auto-card .option-icon.mz-auto-icon{position:relative;flex:0 0 52px;width:52px;height:52px;border-radius:17px!important;background:linear-gradient(135deg,#34d399,#06b6d4)!important;color:#04121a!important;box-shadow:0 6px 18px rgba(16,185,129,.45)}
+.mz-auto-icon svg{width:26px;height:26px;position:relative;z-index:1;animation:mzBoltBeat 1.6s ease-in-out infinite}
+.mz-auto-ring{position:absolute;inset:0;border-radius:inherit;border:2px solid rgba(52,211,153,.8);animation:mzRing 2s ease-out infinite;pointer-events:none}
+.mz-auto-text{flex:1;min-width:0;position:relative;z-index:1}
+.mz-auto-ribbon{position:absolute;top:0;inset-inline-end:0;display:inline-flex;align-items:center;gap:4px;padding:4px 11px 5px 12px;border-radius:0 0 0 14px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#241500;font-size:.66rem;font-weight:900;z-index:2}
+[dir="rtl"] .mz-auto-ribbon{border-radius:0 0 14px 0}
+.mz-auto-ribbon svg{width:11px;height:11px}
+.mz-auto-go{width:30px;height:30px;flex:0 0 30px;border-radius:11px;display:grid;place-items:center;background:rgba(52,211,153,.16);color:#34d399;position:relative;z-index:1}
+.mz-auto-go svg{width:16px;height:16px}
+.mz-auto-card:hover{transform:translateY(-2px)!important}
+@keyframes mzAutoPulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.42),0 10px 28px rgba(16,185,129,.20)}70%{box-shadow:0 0 0 12px rgba(16,185,129,0),0 10px 28px rgba(16,185,129,.20)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0),0 10px 28px rgba(16,185,129,.20)}}
+@keyframes mzAutoShine{0%{left:-60%}55%,100%{left:130%}}
+@keyframes mzBoltBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@keyframes mzRing{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+body.light-theme .option-card.auto-topup-option.mz-auto-card{background:linear-gradient(120deg,#ecfdf5,#ecfeff)!important;border-color:#10b981!important}
+body.light-theme .mz-auto-go{background:#d1fae5;color:#059669}
+
+/* =====================================================================
+   مربع إضافة الـ ID (ستايل أحدث)
+   ===================================================================== */
+#pricesContent.auto-topup-prices-view .auto-topup-player-panel{position:relative;padding:16px 14px 14px!important;border-radius:26px!important;border:1px solid var(--mz-border-strong)!important;background:radial-gradient(120% 90% at 100% 0,rgba(6,182,212,.14),transparent 55%),var(--mz-card-2)!important;box-shadow:0 12px 30px rgba(0,0,0,.18)!important}
+.auto-topup-player-head{display:flex!important;align-items:center;gap:10px;margin:0 0 12px!important;font-size:.82rem;font-weight:800;color:var(--text-muted)!important}
+.auto-topup-player-head i{width:34px;height:34px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,rgba(6,182,212,.28),rgba(59,130,246,.22));color:#22d3ee!important;font-size:.95rem!important}
+.mz-player-label{margin:0 2px 9px!important;font-size:.92rem!important}
+.auto-topup-player-row{border-radius:20px!important;padding:6px!important;background:var(--mz-input)!important;border:1px solid var(--mz-border-strong)!important}
+.auto-topup-player-row:focus-within{box-shadow:0 0 0 4px var(--mz-tint-strong)!important;border-color:var(--primary)!important}
+.auto-topup-player-row input{font-size:1.08rem!important;font-weight:800!important;letter-spacing:.6px;text-align:start}
+.auto-topup-recent-toggle,body.light-theme .auto-topup-recent-toggle{border-radius:15px!important;transition:background .2s,transform .15s}
+.auto-topup-recent-toggle:active{transform:scale(.92)}
+.auto-topup-player-row button.auto-topup-verify-btn{background:linear-gradient(135deg,#06b6d4,#3b82f6)!important;color:#fff!important;border:0!important;border-radius:16px!important;font-weight:900!important;box-shadow:0 6px 16px rgba(6,182,212,.28)!important;transition:transform .15s,filter .15s}
+.auto-topup-player-row button.auto-topup-verify-btn:active{transform:scale(.97)}
+.auto-topup-player-row button.auto-topup-verify-btn.logged-in,body.light-theme .auto-topup-verify-btn.logged-in{background:rgba(239,68,68,.10)!important;color:#f87171!important;border:1px solid rgba(239,68,68,.38)!important;box-shadow:none!important;height:42px!important;min-height:42px!important;font-size:.82rem!important}
+.auto-topup-player-state.ok{border-radius:18px!important;padding:13px 15px!important;background:linear-gradient(120deg,rgba(16,185,129,.14),rgba(6,182,212,.08))!important;border:1px solid rgba(52,211,153,.45)!important}
+.auto-topup-player-state.ok .mz-acc-label{color:#34d399!important;font-weight:800}
+.auto-topup-player-state.ok .mz-acc-id{color:#22d3ee!important;font-size:1.05rem;letter-spacing:1px}
+.auto-topup-id-disclaimer{display:flex;align-items:center;gap:8px;margin-top:12px!important;padding:9px 12px;border-radius:14px;background:var(--mz-tint);font-size:.72rem!important;line-height:1.6}
+.auto-topup-id-disclaimer i{font-size:.95rem}
+.auto-topup-price-card{transition:transform .15s,box-shadow .2s}
+.auto-topup-price-card:active{transform:scale(.97)}
+.auto-topup-price-card .price-card-content{min-height:150px;gap:4px}
+.auto-topup-price-card .item-price-tag{background:linear-gradient(135deg,rgba(16,185,129,.22),rgba(6,182,212,.18))!important;border:1px solid rgba(52,211,153,.4)!important;color:#34d399!important;font-weight:900!important;padding:6px 18px!important}
+body.light-theme .auto-topup-price-card .item-price-tag{color:#047857!important}
+
+/* =====================================================================
+   الشريط السفلي (أيقونات SVG حديثة، خفيف بدون blur)
+   ===================================================================== */
+#bottomDock.bottom-nav-dock{bottom:max(12px,env(safe-area-inset-bottom))!important;width:min(94%,540px)!important;padding:7px!important;gap:2px;justify-content:space-between;border-radius:26px!important;background:linear-gradient(180deg,#16233a,#0c1424)!important;border:1px solid rgba(6,182,212,.26)!important;box-shadow:0 14px 34px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06)!important}
+#bottomDock .dock-item{--dk:#22d3ee;--dk-rgb:34,211,238;position:relative;flex:1 1 0;min-width:0;padding:6px 2px 5px!important;gap:5px!important;border:0;background:none!important;border-radius:20px;font-family:inherit;cursor:pointer;text-decoration:none;color:var(--text-muted)}
+#bottomDock .mz-dk-wa{--dk:#22c55e;--dk-rgb:34,197,94}
+#bottomDock .mz-dk-tg{--dk:#38bdf8;--dk-rgb:56,189,248}
+#bottomDock .mz-dk-ord{--dk:#22d3ee;--dk-rgb:34,211,238}
+#bottomDock .mz-dk-sh{--dk:#a78bfa;--dk-rgb:167,139,250}
+#bottomDock .mz-dk-fb{--dk:#60a5fa;--dk-rgb:96,165,250}
+#bottomDock .mz-dk-ig{--dk:#f472b6;--dk-rgb:244,114,182}
+#bottomDock .mz-dk-yt{--dk:#f87171;--dk-rgb:248,113,113}
+#bottomDock .mz-dk-st{--dk:#fbbf24;--dk-rgb:251,191,36}
+#bottomDock .mz-dk-df{--dk:#94a3b8;--dk-rgb:148,163,184}
+#bottomDock .dock-icon-wrapper{position:relative;width:44px!important;height:34px!important;border-radius:14px!important;background:rgba(var(--dk-rgb),.13)!important;border:1px solid rgba(var(--dk-rgb),.28)!important;color:var(--dk)!important;box-shadow:none!important;transition:transform .18s,background .18s}
+#bottomDock .dock-icon-wrapper svg{width:20px;height:20px;display:block}
+#bottomDock .dock-item span{max-width:100%;font-size:.64rem!important;font-weight:800!important;color:var(--text-muted)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bottomDock .dock-item:hover,#bottomDock .dock-item:active{background:none!important;transform:none!important}
+#bottomDock .dock-item:hover .dock-icon-wrapper{transform:translateY(-2px);background:rgba(var(--dk-rgb),.22)!important;box-shadow:none!important;border-color:rgba(var(--dk-rgb),.5)!important}
+#bottomDock .dock-item:active .dock-icon-wrapper{transform:scale(.92)}
+#bottomDock .dock-item:hover span{color:var(--dk)!important}
+#bottomDock .mz-dk-badge{position:absolute;top:-7px;inset-inline-end:-5px;min-width:18px;height:18px;line-height:18px;padding:0 4px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;font-style:normal;font-weight:900;text-align:center;border:2px solid #0c1424}
+body.light-theme #bottomDock.bottom-nav-dock{background:#fff!important;border-color:#dbe4ee!important;box-shadow:0 10px 28px rgba(15,23,42,.14)!important}
+body.light-theme #bottomDock .dock-item span{color:#475569!important}
+body.light-theme #bottomDock .mz-dk-badge{border-color:#fff}
+
+/* =====================================================================
+   كروت الطلبات (بدون إيموجي)
+   ===================================================================== */
+.mz-ord{margin:12px 0;border-radius:22px;border:1px solid var(--mz-border);background:var(--mz-card-2);overflow:hidden}
+.mz-ord-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px 14px 10px;background:linear-gradient(135deg,var(--mz-tint),transparent 70%)}
+.mz-ord-title{flex:1;min-width:0;font-size:.95rem;font-weight:900;line-height:1.7;color:var(--text-main);overflow-wrap:anywhere}
+.mz-ord-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:.7rem;font-weight:900;white-space:nowrap;color:#22d3ee;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.38)}
+.mz-ord-chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.mz-ord[data-status="paid"] .mz-ord-chip,.mz-ord[data-status="shipped"] .mz-ord-chip{color:#34d399;background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.4)}
+.mz-ord[data-status="pending_payment"] .mz-ord-chip{color:#fbbf24;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.4)}
+.mz-ord[data-status="rejected"] .mz-ord-chip,.mz-ord[data-status="topup_failed"] .mz-ord-chip,.mz-ord[data-status="cancelled"] .mz-ord-chip{color:#f87171;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4)}
+.mz-ord[data-status="processing"] .mz-ord-chip{color:#60a5fa;background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.4)}
+.mz-ord-body{padding:2px 14px 6px}
+.mz-ord-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px dashed var(--mz-border)}
+.mz-ord-row:first-child{border-top:0}
+.mz-ord-k{display:flex;align-items:center;gap:8px;flex:0 0 auto;color:var(--text-muted);font-size:.74rem;font-weight:700}
+.mz-ord-k i{width:25px;height:25px;display:grid;place-items:center;border-radius:9px;background:var(--mz-tint);color:var(--primary);font-size:.7rem}
+.mz-ord-v{min-width:0;text-align:end;font-size:.8rem;font-weight:800;color:var(--text-main);overflow-wrap:anywhere}
+.mz-ord-row.warn .mz-ord-v,.mz-ord-row.warn .mz-ord-k i{color:#f87171}
+.mz-ord-timeline{display:flex;flex-direction:column;gap:6px;margin:4px 14px 10px;padding:10px 12px;border-radius:14px;background:var(--mz-tint)}
+.mz-ord-timeline>b{font-size:.74rem;color:var(--primary);display:flex;align-items:center;gap:7px}
+.mz-ord-timeline small{display:flex;align-items:flex-start;gap:8px;font-size:.7rem;line-height:1.7;color:var(--text-muted)}
+.mz-ord-timeline small i{font-size:.4rem;margin-top:.55rem;color:var(--primary)}
+.mz-ord-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--mz-border);background:rgba(0,0,0,.14)}
+.mz-ord-dates{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 150px;font-size:.68rem;color:var(--text-muted);line-height:1.6}
+.mz-ord-dates i{margin-inline-end:6px;color:var(--primary);font-size:.72rem}
+.mz-ord .wallet-receipt-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 16px;border:0;border-radius:14px;font:inherit;font-size:.78rem;font-weight:900;cursor:pointer;color:#04121a;background:linear-gradient(135deg,#22d3ee,#3b82f6);box-shadow:0 6px 14px rgba(6,182,212,.25)}
+.mz-ord .wallet-receipt-btn:active{transform:scale(.96)}
+body.light-theme .mz-ord-foot{background:#f1f6fb}
+body.light-theme .mz-ord .wallet-receipt-btn{color:#fff}
+
 </style>
 
 </body>
