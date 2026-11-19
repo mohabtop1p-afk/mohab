@@ -1433,7 +1433,18 @@ def('__mz',function(p,k){
         .prices-top-bar .prices-share-btn:active{background:rgba(6,182,212,.24)}
         @media(prefers-reduced-motion:reduce){.currency-toggle,#walletLoginArea .wallet-google-login{transition:none!important}}
 
-    </style>
+    
+        /* ===== سلايدر متجاوب لكل الشاشات ===== */
+        .slider-container{padding:0 clamp(10px,3vw,24px);margin-top:clamp(10px,2vw,22px);margin-bottom:clamp(6px,1.5vw,14px)}
+        .slider{aspect-ratio:16/9;max-height:none;border-radius:clamp(14px,2.4vw,22px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+        @media (min-width:600px){.slider{aspect-ratio:2/1}}
+        @media (min-width:1024px){.slider{aspect-ratio:21/9;max-height:min(480px,38vw)}}
+        @media (min-width:1600px){.slider{max-height:540px}}
+        .slider-dots{bottom:clamp(6px,1.4vw,12px);padding:5px 10px;gap:6px}
+        .dot{width:7px;height:5px}
+        .dot.active{width:18px}
+        .slide{width:100%;height:100%;object-fit:contain}
+</style>
 
 <style id="mohab-white-wallet-and-currency-fix">
 /* ضبط العلم داخل زر العملة: الحجم يتناسب مع الزر ولا يخرج عن حدوده */
@@ -3546,6 +3557,7 @@ globalGames = data || {};
             const profileEmail=document.getElementById('walletProfileEmail');
             if(profile)profile.style.display='flex';
             if(profileEmail)profileEmail.textContent=(walletUser.displayName && walletUser.displayName!==walletUser.email ? walletUser.displayName : (walletUser.email||'').split('@')[0]) || 'تم تسجيل الدخول';
+            {const pu=document.getElementById('walletProfileUsername'),nm=walletDisplayName(walletUser);if(pu&&nm&&/^@?[—\-]?$/.test((pu.textContent||'').trim()))pu.textContent='@'+nm;}
             document.getElementById('walletStatus').textContent='';
             walletShowTab('profile');
         }
@@ -3601,20 +3613,26 @@ globalGames = data || {};
             throw new Error('تعذر حجز اسم المستخدم من البريد. راجع صلاحيات username_index في قاعدة البيانات.');
         }
         async function walletSyncAccountProfile(user){
+            const wt=(p,ms)=>Promise.race([p,new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),ms))]);
             const ref=db.ref('wallet_users/'+user.uid);
-            const oldSnap=await ref.once('value'),old=oldSnap.val()||{};
+            let old={};
+            try{old=(await wt(ref.once('value'),10000)).val()||{};}catch(_){}
             const providers=(user.providerData||[]).map(p=>p.providerId);
             const provider=providers.includes('google.com')?'google':(providers.includes('password')?'username':'other');
-            let username=provider==='google'?'':(old.username||'');
-            if(provider==='google'){
-                username=await walletAssignGoogleUsername(user);
-            }else if(!username){
-                    username=walletUsernameNormalize((user.email||'').split('@')[0]);
-                    if(!walletUsernameValid(username))username='user'+user.uid.slice(0,8).toLowerCase();
-                    const claimed=await walletReserveUsername(username,user.uid);
-                    if(!claimed){const lookup=await db.ref('username_index/'+username).once('value');if(lookup.val()!==user.uid)throw new Error('اسم المستخدم غير متاح.');}
+            const local=()=>{let u=walletUsernameNormalize(String(user.email||'').split('@')[0]).replace(/[^a-z0-9._-]/g,'').slice(0,16);if(!walletUsernameValid(u))u='user'+user.uid.slice(0,8).toLowerCase();return u;};
+            let username=(old.username&&walletUsernameValid(String(old.username)))?String(old.username):'';
+            if(!username){
+                try{
+                    if(provider==='google'){username=await wt(walletAssignGoogleUsername(user),10000);}
+                    else{
+                        const u=local();
+                        const ok=await wt(walletReserveUsername(u,user.uid),10000);
+                        if(!ok){const lk=await wt(db.ref('username_index/'+u).once('value'),8000);if(lk.val()!==user.uid)throw new Error('taken');}
+                        username=u;
+                    }
+                }catch(e){username=local();}
             }
-            await ref.update({uid:user.uid,username,authProvider:provider,email:provider==='google'?(user.email||''):'',displayName:username,photoURL:user.photoURL||'',updatedAt:firebase.database.ServerValue.TIMESTAMP});
+            try{await wt(ref.update({uid:user.uid,username,authProvider:provider,email:provider==='google'?(user.email||''):'',displayName:username,photoURL:user.photoURL||'',updatedAt:firebase.database.ServerValue.TIMESTAMP}),10000);}catch(_){}
             return username;
         }
         async function walletSubmitUsernameAuth(event){
@@ -3678,11 +3696,16 @@ globalGames = data || {};
             try {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 provider.setCustomParameters({prompt:'select_account'});
-                await firebase.auth().signInWithPopup(provider);
+                // أحيانًا في متصفحات الموبايل يتأخر وعد النافذة المنبثقة رغم نجاح الدخول؛ نعتمد على حالة المصادقة أيضًا
+                let stopWatch=()=>{};
+                const authSeen=new Promise(res=>{stopWatch=firebase.auth().onAuthStateChanged(u=>{if(u)res('auth');});});
+                const popupP=firebase.auth().signInWithPopup(provider);
+                popupP.catch(()=>{});
+                try{await Promise.race([popupP,authSeen]);}finally{try{stopWatch();}catch(_){}}
             } catch(e) {
                 const code=String(e&&e.code||'');
                 if(code==='auth/popup-closed-by-user'||code==='auth/cancelled-popup-request')walletAuthMessage('تم إلغاء تسجيل الدخول بجوجل.',true);
-                else if(code==='auth/popup-blocked'){try{await firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider());return;}catch(_){walletAuthMessage('المتصفح منع نافذة تسجيل الدخول. اسمح بالنوافذ المنبثقة وجرّب مرة أخرى.',true);}}
+                else if(code==='auth/popup-blocked'||code==='auth/operation-not-supported-in-this-environment'){try{await firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider());return;}catch(_){walletAuthMessage('المتصفح منع نافذة تسجيل الدخول. اسمح بالنوافذ المنبثقة وجرّب مرة أخرى.',true);}}
                 else walletAuthMessage('تعذر تسجيل الدخول. جرّب مرة أخرى أو تأكد من تفعيل Google في Firebase Authentication.',true);
             } finally {
                 if(gbtn){gbtn.disabled=false;gbtn.innerHTML=gHtml;}
@@ -4382,6 +4405,7 @@ globalGames = data || {};
                 {const errMsg='حدث خطأ أثناء تنفيذ الطلب. راجع صفحة طلباتي قبل إعادة المحاولة حتى لا يتكرر الخصم.';if(showTopupLoader){await walletShowTopupResult('failure',code,orderRef?orderRef.key:'',errMsg,'تعذر إتمام العملية');walletSetAutoTopupLoading(false);}else{await walletShowNotice('تعذر إتمام العملية',errMsg,'warning');}}
             }
         }
+        try{firebase.auth().getRedirectResult().catch(e=>{if(e&&e.code&&e.code!=='auth/no-auth-event')walletAuthMessage('تعذر إكمال تسجيل الدخول بجوجل. جرّب مرة أخرى.',true);});}catch(_){}
         firebase.auth().onAuthStateChanged(async user=>{
             walletUser=user||null;
             // لا نحتفظ بحساب لاعب نشط عند تبديل مستخدم المحفظة؛ لكل UID حساباته الخاصة.
