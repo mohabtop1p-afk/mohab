@@ -66,12 +66,20 @@ def('__mz',function(p,k){
     <script>(function(){var DB='https://mohab-store-default-rtdb.firebaseio.com',pre={};window.__mohabFetchCfg=function(p){if(!pre[p]){try{pre[p]=fetch(DB+'/'+p+'.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}catch(e){pre[p]=Promise.resolve(null);}}return pre[p];};['settings/general','settings/visuals','settings/banners','settings/socials','settings/productCategories','settings/announcementTicker'].forEach(window.__mohabFetchCfg);})();</script>
     <title>MOHAB STORE | المتجر الرسمي</title>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://wsrv.nl">
+    <link rel="preconnect" href="https://g.top4top.io">
+    <link rel="preconnect" href="https://a.top4top.io">
+    <link rel="dns-prefetch" href="https://e.top4top.io">
+    <link rel="dns-prefetch" href="https://f.top4top.io">
+    <link rel="dns-prefetch" href="https://k.top4top.io">
+    <link rel="dns-prefetch" href="https://l.top4top.io">
+    <link rel="dns-prefetch" href="https://wsrv.nl">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preload" as="image" href="https://g.top4top.io/p_39146kcfj0.png">
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <link rel="preload" as="image" href="https://g.top4top.io/p_39146kcfj0.png" referrerpolicy="no-referrer">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -111,6 +119,10 @@ def('__mz',function(p,k){
         /* مساحة تحميل ثابتة تمنع ظهور أيقونة الصورة المكسورة مع بطء الاتصال */
         img.mohab-image-pending { background-color:rgba(15,27,43,.92)!important; background-image:linear-gradient(135deg,rgba(6,182,212,.10),rgba(30,41,59,.65))!important; object-fit:contain; }
         iframe { border: 0; }
+        /* رسالة هادئة (غير حمراء) أثناء بطء الاتصال */
+        .mz-soft-msg{grid-column:1/-1;text-align:center;color:var(--text-muted,#94a3b8);padding:26px 14px;font-size:.9rem;line-height:1.9}
+        .mz-soft-msg button{margin-top:12px;padding:10px 22px;border:0;border-radius:12px;background:linear-gradient(135deg,#0891b2,#2563eb);color:#fff;font:800 .9rem Almarai,sans-serif;cursor:pointer}
+        #walletNavLabel{display:block;max-width:104px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
         }
@@ -1741,8 +1753,10 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 </div>
 <script id="mohab-initial-loader-controller">
 (function(){
-  const started=Date.now();let finished=false,current=0,target=0,gamesArrived=false;
+  const DB='https://mohab-store-default-rtdb.firebaseio.com';
+  const started=Date.now();let finished=false,finishing=false,current=0,target=0,gamesArrived=false,retryRunning=false;
   const $=id=>document.getElementById(id);
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const overlay=()=>$('mohabInitialLoader');
   function paint(){
     const p=Math.round(current);
@@ -1753,7 +1767,6 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
   }
   function msg(text){const m=$('mohabLoaderMessage');if(m&&m.textContent!==text)m.textContent=text;}
   function setTarget(v,text){ if(v>target)target=Math.min(100,v); if(text)msg(text); }
-  // تحريك ناعم للرقم نحو الهدف + تقدم بطيء تلقائي قبل وصول البيانات (لا يتجاوز 88%)
   const timer=setInterval(()=>{
     if(!gamesArrived&&target<88)target=Math.min(88,target+(88-target)*0.035+0.08);
     if(current<target){current+=Math.max(0.35,(target-current)*0.18);if(current>target)current=target;paint();}
@@ -1775,35 +1788,67 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
       },120);
     },wait);
   }
+  // ننتظر الصور الأساسية فقط (الشريط العلوي + الشعار + أول 8 منتجات) بحد أقصى ثانيتين ونصف
+  function waitImages(){
+    return new Promise(resolve=>{
+      let imgs=[];
+      try{
+        imgs=Array.from(document.querySelectorAll('nav img, #mainLogoImg, #gamesGrid .game-card:nth-child(-n+8) img, .home-wallet-coupon-art img'))
+          .filter(i=>i.getAttribute('src')&&i.style.display!=='none'&&!(i.complete&&i.naturalWidth>0));
+      }catch(_){}
+      if(!imgs.length){resolve();return;}
+      const t0=Date.now();
+      const iv=setInterval(()=>{
+        const pending=imgs.filter(i=>i.isConnected&&!(i.complete&&i.naturalWidth>0)&&i.dataset.mzFailed!=='1');
+        if(!pending.length||Date.now()-t0>2500){clearInterval(iv);resolve();}
+      },100);
+    });
+  }
+  function waitCfg(){
+    try{
+      if(!window.__mohabFetchCfg)return Promise.resolve();
+      return Promise.race([Promise.all(['settings/general','settings/visuals','settings/banners'].map(p=>window.__mohabFetchCfg(p))),sleep(2500)]);
+    }catch(_){return Promise.resolve();}
+  }
+  function waitFonts(){
+    try{return document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,sleep(2500)]):Promise.resolve();}catch(_){return Promise.resolve();}
+  }
   window.mohabFinishInitialLoad=async function(games){
-    if(finished)return;
-    gamesArrived=true;
-    setTarget(60,'جاري تحميل الصور...');
-    const urls=[]; /* لا ننتظر الصور: تظهر تدريجيًا بعد ظهور الموقع */
-    if(urls.length){
-      let done=0;
-      const step=()=>{done++;setTarget(60+Math.round(38*done/urls.length));};
-      const checks=urls.map(url=>new Promise(resolve=>{
-        let settled=false;
-        const finish=()=>{if(settled)return;settled=true;step();resolve();};
-        const img=new Image();img.onload=finish;img.onerror=finish;img.src=url;
-        if(img.complete)finish();
-        setTimeout(finish,4500);
-      }));
-      await Promise.race([Promise.all(checks),new Promise(resolve=>setTimeout(resolve,4800))]);
-    }
-    if(finished)return;
+    if(finished||finishing)return;
+    finishing=true;gamesArrived=true;
+    setTarget(70,'جاري تجهيز الصور...');
+    try{await Promise.race([Promise.all([waitImages(),waitCfg(),waitFonts()]),sleep(3200)]);}catch(_){}
+    setTarget(97,'اكتمل التجهيز');
     hide();
   };
-  window.mohabInitialLoadFailed=function(){
-    if(finished)return;
+  function softMessage(){
     const gg=document.getElementById('gamesGrid');
-    if(gg&&!gg.querySelector('.game-card')){gg.innerHTML='<div class="empty-msg" style="grid-column:1/-1;text-align:center;padding:26px 12px">الاتصال بطيء حاليًا… المنتجات ستظهر فور وصولها.<br><button onclick="location.reload()" style="margin-top:12px;padding:10px 22px;border:0;border-radius:12px;background:linear-gradient(135deg,#0891b2,#2563eb);color:#fff;font:800 .9rem Almarai,sans-serif;cursor:pointer">إعادة المحاولة</button></div>';}
-    setTarget(100,'جاري تحميل الموقع');
-    setTimeout(hide,600);
+    if(gg&&!gg.querySelector('.game-card')){
+      gg.innerHTML='<div class="mz-soft-msg">جاري تحميل المنتجات… تأكد من اتصالك بالإنترنت.<br><button type="button" onclick="location.reload()">إعادة المحاولة</button></div>';
+    }
+  }
+  // إعادة محاولة صامتة لجلب المنتجات (بدون أي مربع أحمر)
+  function startRetry(){
+    if(retryRunning||gamesArrived)return;retryRunning=true;
+    let n=0,busy=false;
+    function schedule(){busy=false;if(gamesArrived)return;if(n>=8){softMessage();return;}setTimeout(attempt,Math.min(6000,1500*n));}
+    function attempt(){
+      if(gamesArrived||busy)return;busy=true;n++;
+      fetch(DB+'/games.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{
+        if(d&&typeof d==='object'&&typeof window.mohabRenderGames==='function'){busy=false;window.mohabRenderGames(d,false);}
+        else schedule();
+      }).catch(schedule);
+    }
+    window.addEventListener('online',()=>{if(!gamesArrived){n=0;attempt();}});
+    attempt();
+  }
+  window.mohabInitialLoadFailed=function(){
+    if(!finished){setTarget(100,'جاري فتح المتجر...');setTimeout(hide,350);}
+    startRetry();
   };
-  // حماية من بقاء شاشة التحميل إذا تعذر الاتصال بقاعدة البيانات.
-  setTimeout(()=>{if(!finished)window.mohabInitialLoadFailed();},7000);
+  // لا نُبقي شاشة التحميل أكثر من اللازم، لكن لا نعرض أي رسالة خطأ
+  setTimeout(()=>{if(!finished&&!gamesArrived)window.mohabInitialLoadFailed();},9000);
+  setTimeout(()=>{if(!finished)hide();},14000);
 })();
 </script>
 
@@ -1811,9 +1856,9 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
     <nav>
         <div class="nav-content">
             <button id="walletOpenBtn" class="wallet-nav-btn" onclick="openWallet()" aria-label="المحفظة">
-                <img referrerpolicy="no-referrer" id="walletNavIconImg" src="https://wsrv.nl/?n=-1&output=webp&q=72&fit=contain&we&url=https%3A%2F%2Fg.top4top.io%2Fp_3940ozgp60.png&w=200&h=200" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block'">
+                <img referrerpolicy="no-referrer" id="walletNavIconImg" src="https://g.top4top.io/p_3940ozgp60.png" alt="" loading="eager" fetchpriority="high" decoding="async">
                 <i class="fas fa-wallet" style="display:none"></i>
-                <span><small>رصيدك</small><b id="walletNavBalance">—</b></span>
+                <span><small id="walletNavLabel">رصيدك</small><b id="walletNavBalance">—</b></span>
             </button>
             <button id="walletOrdersOpenBtn" class="wallet-nav-btn wallet-orders-nav" onclick="openWalletOrdersPage()" aria-label="طلباتي" style="display:none;position:relative!important;visibility:hidden;width:0;height:0;padding:0;margin:0;overflow:hidden">
                 <i class="fas fa-box-open"></i><span><small>طلباتي</small><b id="walletOrdersNavCount">0 طلب</b></span><em id="walletOrdersBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:99px;min-width:19px;height:19px;line-height:19px;font-size:11px;font-style:normal;font-weight:900;text-align:center;padding:0 4px">0</em>
@@ -1821,9 +1866,9 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
             <button id="themeToggleBtn" class="theme-toggle-btn" type="button" onclick="toggleSiteTheme()" aria-label="تفعيل الوضع الفاتح" title="تغيير المظهر"><i class="fas fa-sun"></i></button>
             <button id="currencyBtn" class="currency-toggle" onclick="toggleCurrency()" aria-label="تغيير العملة">
                 <img referrerpolicy="no-referrer" id="currencyFlag" class="currency-flag"
-                     src="https://wsrv.nl/?n=-1&output=webp&q=72&fit=contain&we&url=https%3A%2F%2Fa.top4top.io%2Fp_3914owpxp0.jpg&w=200&h=200"
+                     src="https://a.top4top.io/p_3914owpxp0.jpg"
                      alt="علم مصر"
-                     onerror="handleCurrencyFlagError(this)">
+                     loading="eager" fetchpriority="high">
                 <span class="currency-toggle-main">
                     <span id="currencyTitle" class="currency-toggle-title">الأسعار بالجنيه المصري</span>
                     <span class="currency-toggle-hint">اضغط للتغيير</span>
@@ -1860,7 +1905,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 
     <div class="luck-feature-wrap">
         <a href="#luck" class="luck-feature" onclick="openLuckPage(event)" aria-label="فتح عجلة الحظ">
-            <img referrerpolicy="no-referrer" src="https://wsrv.nl/?n=-1&output=webp&q=72&fit=contain&we&url=https%3A%2F%2Fe.top4top.io%2Fp_3913ditnr0.png&w=200&h=200" alt="عجلة الحظ" loading="lazy" decoding="async">
+            <img referrerpolicy="no-referrer" src="https://e.top4top.io/p_3913ditnr0.png" alt="عجلة الحظ" loading="lazy" decoding="async">
             <div class="luck-feature-text">
                 <div class="luck-feature-title"><i class="fas fa-dharmachakra"></i> عجلة الحظ</div>
                 <div class="luck-feature-sub">جرّب حظك واكتشف المفاجأة</div>
@@ -1871,7 +1916,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 
     <div class="luck-feature-wrap">
         <a href="#chatbot" class="luck-feature chatbot-feature" onclick="openChatbotPage(event)" aria-label="فتح شات بوت المساعد الذكي">
-            <img referrerpolicy="no-referrer" src="https://wsrv.nl/?n=-1&output=webp&q=72&fit=contain&we&url=https%3A%2F%2Ff.top4top.io%2Fp_3916qmqqv0.png&w=200&h=200" alt="شات بوت المساعد الذكي" loading="lazy" decoding="async">
+            <img referrerpolicy="no-referrer" src="https://f.top4top.io/p_3916qmqqv0.png" alt="شات بوت المساعد الذكي" loading="lazy" decoding="async">
             <div class="luck-feature-text">
                 <div class="luck-feature-title"><i class="fas fa-robot"></i> شات بوت المساعد الذكي</div>
                 <div class="luck-feature-sub">تواصل مع المساعد الذكي واحصل على المساعدة</div>
@@ -1900,7 +1945,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
     </div>
 
     <section id="homeWalletCoupon" class="home-wallet-coupon" style="display:none" aria-live="polite">
-        <div class="home-wallet-coupon-art"><img referrerpolicy="no-referrer" src="https://wsrv.nl/?n=-1&output=webp&q=72&fit=contain&we&url=https%3A%2F%2Fl.top4top.io%2Fp_3944acdgb1.png&w=200&h=200" alt="خصم MOHAB STORE" loading="lazy" decoding="async"></div>
+        <div class="home-wallet-coupon-art"><img referrerpolicy="no-referrer" src="https://l.top4top.io/p_3944acdgb1.png" alt="خصم MOHAB STORE" loading="lazy" decoding="async"></div>
         <div class="home-wallet-coupon-info"><strong>خصمك الخاص جاهز!</strong><div>خصم <b id="homeWalletCouponPercent">5%</b> على قائمة الأسعار كلها عند الدفع من المحفظة.</div><div class="home-wallet-coupon-time">ينتهي الخصم خلال <b id="homeWalletCouponTimer">--:--:--</b></div><small>الخصم صالح مرة واحدة للحساب الحالي.</small></div>
     </section>
 
@@ -1973,7 +2018,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
             <div id="welcomeCountdown" class="welcome-countdown">10</div>
             <div class="ultra-img-container">
                 <a id="welcomeEventLink" class="welcome-event-link" href="#" target="_blank" rel="noopener noreferrer">
-                    <img referrerpolicy="no-referrer" id="welcomeEventImg" src="https://via.placeholder.com/600x600?text=إشعار+المتجر" alt="إشعار">
+                    <img referrerpolicy="no-referrer" id="welcomeEventImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="إشعار">
                 </a>
             </div>
         </div>
@@ -2067,13 +2112,13 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
             if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
         };
 
-        // تحميل الصور تدريجياً مع Placeholder موحد؛ عند فشل الرابط لا تظهر علامة الصورة المكسورة.
+        // ===== نظام تحميل الصور الجديد (مستقر) =====
+        // 1) تحميل مباشر من المصدر (أسرع وأضمن؛ بعض مواقع رفع الصور تحجب الوسيط)
+        // 2) إن فشل: عبر CDN وسيط  3) إعادة محاولة مباشرة  4) إعادة مع بصمة جديدة
+        // 5) أيقونة بديلة (FontAwesome / صورة بديلة) بدل صورة مكسورة. لا يوجد إخفاء مبكر للصورة أبدًا.
         (function installMohabImageFallback(){
             const placeholder = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90"><rect width="120" height="90" rx="12" fill="#101d2d"/><rect x="35" y="20" width="50" height="42" rx="6" fill="none" stroke="#22d3ee" stroke-width="4" opacity=".8"/><circle cx="72" cy="33" r="5" fill="#22d3ee" opacity=".8"/><path d="M40 57l14-14 10 10 8-8 9 12" fill="none" stroke="#22d3ee" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/><path d="M48 74h24" stroke="#64748b" stroke-width="3" stroke-linecap="round"/></svg>');
-            // تحميل الصور: بدون استبدال الرابط الأصلي ولا تحميل مزدوج. الصورة تبدأ التحميل فورًا
-            // مع خلفية لامعة مؤقتة، وعند الفشل نعيد المحاولة مرتين قبل عرض الصورة البديلة.
-            // ضغط وتسريع الصور: كل صورة خارجية تمر عبر CDN يحوّلها WebP ويصغّر حجمها، ومع سلسلة بدائل عند الفشل.
-            const OPT='https://wsrv.nl/?n=-1&output=webp&q=72&fit=contain&we&url=';
+            const OPT='https://wsrv.nl/?n=-1&output=webp&q=75&fit=contain&url=';
             function norm(u){
                 u=String(u==null?'':u).trim(); if(!u) return '';
                 if(/^\/\//.test(u)) return 'https:'+u;
@@ -2082,57 +2127,94 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                 return u;
             }
             function sameOrigin(u){ try{ return new URL(u,location.href).origin===location.origin; }catch(_){ return true; } }
-            window.mohabImgSrc=function(u,w,h){
-                u=norm(u);
-                if(!u||!w||!/^https:/i.test(u)||u.indexOf('https://wsrv.nl/')===0||sameOrigin(u)) return u;
-                return OPT+encodeURIComponent(u)+'&w='+w+(h===0?'':'&h='+(h||w));
-            };
-            function widthFor(img){
-                if(img.dataset.w) return Number(img.dataset.w)||0;
-                const idw={mainLogoImg:240,walletNavIconImg:96,walletLoginArt:160,walletProfileAvatar:160,walletBannedImage:400}[img.id];
+            function unwrap(u){
+                if(u.indexOf('https://wsrv.nl/')===0){ try{ return new URL(u).searchParams.get('url')||u; }catch(_){} }
+                return u;
+            }
+            // تُستخدم عند بناء بطاقات المنتجات: الرابط المباشر أولاً
+            window.mohabImgSrc=function(u){ return unwrap(norm(u)); };
+            function proxyWidth(img){
+                if(img.dataset.w) return Number(img.dataset.w)||400;
+                const idw={mainLogoImg:240,walletNavIconImg:96,walletLoginArt:160,walletProfileAvatar:160,walletBannedImage:400,modalGameImg:280,dGameImage:280}[img.id];
                 if(idw) return idw;
                 if(img.classList.contains('price-item-icon')) return 96;
-                if(img.id==='modalGameImg'||img.id==='dGameImage') return 280;
                 if(img.closest && img.closest('.game-logo-frame')) return 280;
-                return 0;
+                return 400;
             }
             function prepare(img){
                 if(!img) return;
                 const cur=img.getAttribute('src');
-                if(!cur || cur===placeholder || img.dataset.mzSrc===cur) return;
+                if(!cur || cur===placeholder) return;
+                if(img.dataset.mzSrc===cur) return;
                 if(/^(data:|blob:)/i.test(cur)){ img.dataset.mzSrc=cur; return; }
-                let orig=norm(cur);
-                if(orig.indexOf('https://wsrv.nl/')===0){ try{ orig=new URL(orig).searchParams.get('url')||orig; }catch(_){} }
-                img.dataset.mzOrig=orig; img.dataset.mzStage='0';
+                const orig=unwrap(norm(cur));
+                img.dataset.mzOrig=orig; img.dataset.mzStage='0'; img.dataset.mzFailed='';
                 if(!img.hasAttribute('decoding')) img.decoding='async';
-                const w=widthFor(img);
-                const next=(cur.indexOf('https://wsrv.nl/')===0)?cur:(w?window.mohabImgSrc(orig,w):orig);
-                img.dataset.mzSrc=next;
+                img.referrerPolicy='no-referrer';
                 if(!(img.complete && img.naturalWidth>0)) img.classList.add('mohab-image-pending');
-                if(next!==cur) img.setAttribute('src',next);
+                img.dataset.mzSrc=orig;
+                if(orig!==cur) img.setAttribute('src',orig);
             }
             function scan(root){
                 if(root && root.tagName==='IMG') prepare(root);
                 if(root && root.querySelectorAll) root.querySelectorAll('img').forEach(prepare);
             }
+            function setSrc(img,v){ img.dataset.mzSrc=v; img.setAttribute('src',v); }
+            function fail(img){
+                img.dataset.mzFailed='1';
+                img.classList.remove('mohab-image-pending');
+                let fb=img.dataset.fallbackSrc||'';
+                if(!fb && img.id==='currencyFlag' && typeof CURRENCY_FLAG_FALLBACKS!=='undefined'){
+                    fb=CURRENCY_FLAG_FALLBACKS[(typeof currentCurrency!=='undefined'&&currentCurrency==='USD')?'USD':'EGP']||'';
+                }
+                if(fb && img.getAttribute('src')!==fb){ setSrc(img,fb); return; }
+                const fa=img.dataset.fa;
+                if(fa){ const i=document.createElement('i'); i.className='fas '+fa; if(img.parentNode) img.parentNode.replaceChild(i,img); return; }
+                const sib=img.nextElementSibling;
+                if(sib && sib.tagName==='I'){ img.style.display='none'; img.dataset.mzHidden='1'; sib.style.display='inline-block'; sib.dataset.mzFb='1'; return; }
+                if((img.closest && img.closest('.game-logo-frame')) || ['modalGameImg','dGameImage','welcomeEventImg'].indexOf(img.id)>-1){
+                    setSrc(img,placeholder); img.classList.add('mohab-image-pending'); return;
+                }
+                img.style.display='none'; img.dataset.mzHidden='1';
+            }
             document.addEventListener('load',e=>{
                 const img=e.target; if(!img || img.tagName!=='IMG') return;
-                if(img.getAttribute('src')!==placeholder) img.classList.remove('mohab-image-pending');
+                if(img.getAttribute('src')===placeholder) return;
+                img.classList.remove('mohab-image-pending');
+                if(img.dataset.mzHidden==='1' && img.dataset.mzFailed!=='1'){
+                    img.style.display=''; img.dataset.mzHidden='';
+                    const sib=img.nextElementSibling; if(sib && sib.dataset && sib.dataset.mzFb==='1'){ sib.style.display='none'; sib.dataset.mzFb=''; }
+                }
             },true);
             document.addEventListener('error',e=>{
                 const img=e.target; if(!img || img.tagName!=='IMG') return;
                 const cur=img.getAttribute('src'); if(!cur || cur===placeholder) return;
-                const orig=img.dataset.mzOrig||cur, st=Number(img.dataset.mzStage||0);
-                if(st===0 && cur!==orig){ img.dataset.mzStage='1'; img.dataset.mzSrc=orig; img.setAttribute('src',orig); return; }
-                if(st<2 && /^https:/i.test(orig)){ img.dataset.mzStage='2'; img.referrerPolicy='strict-origin-when-cross-origin'; img.dataset.mzSrc=orig; img.removeAttribute('src'); setTimeout(()=>img.setAttribute('src',orig),50); return; }
-                img.dataset.mzSrc=placeholder; img.setAttribute('src',placeholder); img.classList.add('mohab-image-pending');
+                if(/^data:/i.test(cur)) return;
+                const orig=img.dataset.mzOrig||unwrap(norm(cur));
+                const st=Number(img.dataset.mzStage||0);
+                if(!/^https:/i.test(orig) || sameOrigin(orig)){ fail(img); return; }
+                if(st===0){ img.dataset.mzStage='1'; setSrc(img,OPT+encodeURIComponent(orig)+'&w='+proxyWidth(img)); return; }
+                if(st===1){ img.dataset.mzStage='2'; img.dataset.mzSrc=orig; setTimeout(()=>img.setAttribute('src',orig),600); return; }
+                if(st===2){ img.dataset.mzStage='3'; setSrc(img,orig+(orig.indexOf('?')>-1?'&':'?')+'_mz='+Date.now()); return; }
+                fail(img);
             },true);
+            // إعادة محاولة الصور الفاشلة عند رجوع الاتصال أو بعد استقرار الصفحة
+            function retryFailed(){
+                document.querySelectorAll('img[data-mz-failed="1"]').forEach(img=>{
+                    const orig=img.dataset.mzOrig; if(!orig) return;
+                    img.dataset.mzFailed=''; img.dataset.mzStage='0'; img.dataset.mzHidden=''; img.style.display='';
+                    img.classList.add('mohab-image-pending'); setSrc(img,orig);
+                });
+            }
+            window.addEventListener('online',retryFailed);
+            window.addEventListener('load',()=>setTimeout(retryFailed,6000));
+            document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') setTimeout(retryFailed,500); });
             if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>scan(document),{once:true}); else scan(document);
             new MutationObserver(records=>records.forEach(record=>{
                 if(record.type==='childList') record.addedNodes.forEach(node=>{if(node.nodeType===1)scan(node);});
                 else if(record.type==='attributes' && record.target.tagName==='IMG'){
                     const img=record.target, cur=img.getAttribute('src');
-                    if(cur===placeholder || cur===img.dataset.mzSrc) return;
+                    if(!cur || cur===placeholder || cur===img.dataset.mzSrc) return;
                     prepare(img);
                 }
             })).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});
@@ -2311,7 +2393,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 
             const modal = document.getElementById('welcomeEventModal');
             const img = document.getElementById('welcomeEventImg');
-            if (!img.getAttribute('src') || img.getAttribute('src').includes('via.placeholder.com')) return;
+            if (!img.getAttribute('src') || /^data:image\/gif/.test(img.getAttribute('src'))) return;
 
             modal.style.display = 'flex';
             void modal.offsetWidth;
@@ -2874,14 +2956,14 @@ globalGames = data || {};
             const optionsList = document.getElementById('modalOptionsList'); let htmlString = ''; let hasAnyOption = false;
             
             if (game.id_available) { hasAnyOption = true; htmlString += `<div class="option-card" onclick="showPrices('id')"><div class="option-icon"><i class="fas fa-id-card"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق ID</h4></div></div>`; }
-            if (game.auto_available === true && game.auto_prices) { hasAnyOption = true; const autoTitle=String(game.auto_title||'شحن تلقائي بالـ ID').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])); const autoSub=String(game.auto_subtitle||'شحن مباشر وآمن عبر الموقع').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])); htmlString = `<div class="option-card auto-topup-option mz-auto-card" onclick="openAutoTopupPrices()"><span class="mz-auto-ribbon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.6 13.4a.8.8 0 0 0 .64 1.28H10l-1.1 6.5a.6.6 0 0 0 1.07.46l8.6-11.5a.8.8 0 0 0-.64-1.28H13l1.1-6.4A.6.6 0 0 0 13.2 2Z"/></svg>الأسرع</span><div class="option-icon mz-auto-icon"><span class="mz-auto-ring"></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.6 13.4a.8.8 0 0 0 .64 1.28H10l-1.1 6.5a.6.6 0 0 0 1.07.46l8.6-11.5a.8.8 0 0 0-.64-1.28H13l1.1-6.4A.6.6 0 0 0 13.2 2Z"/></svg></div><div class="mz-auto-text"><h4 style="color:#fff;font-size:.98rem;">${autoTitle}</h4><small style="display:block;color:var(--text-muted);margin-top:4px">${autoSub}</small><span class="auto-topup-badge"><i class="fas fa-shield-alt"></i> شحن تلقائي</span></div><span class="mz-auto-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></span></div>` + htmlString; }
+            if ((game.auto_available === true || game.auto_available === 'true') && game.auto_prices) { hasAnyOption = true; const autoTitle=String(game.auto_title||'شحن تلقائي بالـ ID').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])); const autoSub=String(game.auto_subtitle||'شحن مباشر وآمن عبر الموقع').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])); htmlString = `<div class="option-card auto-topup-option mz-auto-card" onclick="openAutoTopupPrices()"><span class="mz-auto-ribbon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.6 13.4a.8.8 0 0 0 .64 1.28H10l-1.1 6.5a.6.6 0 0 0 1.07.46l8.6-11.5a.8.8 0 0 0-.64-1.28H13l1.1-6.4A.6.6 0 0 0 13.2 2Z"/></svg>الأسرع</span><div class="option-icon mz-auto-icon"><span class="mz-auto-ring"></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.6 13.4a.8.8 0 0 0 .64 1.28H10l-1.1 6.5a.6.6 0 0 0 1.07.46l8.6-11.5a.8.8 0 0 0-.64-1.28H13l1.1-6.4A.6.6 0 0 0 13.2 2Z"/></svg></div><div class="mz-auto-text"><h4 style="color:#fff;font-size:.98rem;">${autoTitle}</h4><small style="display:block;color:var(--text-muted);margin-top:4px">${autoSub}</small><span class="auto-topup-badge"><i class="fas fa-shield-alt"></i> شحن تلقائي</span></div><span class="mz-auto-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></span></div>` + htmlString; }
             if (game.account_available) { hasAnyOption = true; htmlString += `<div class="option-card" onclick="showPrices('account')"><div class="option-icon"><i class="fas fa-user-shield"></i></div><div><h4 style="color:#fff; font-size:0.95rem;">شحن عن طريق الحساب</h4></div></div>`; }
             
             if (game.custom_methods && game.custom_methods.length > 0) {
                 hasAnyOption = true;
                 game.custom_methods.forEach((cm, index) => {
                     const methodName = String(cm.name || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-                    const iconHtml = cm.icon ? `<img referrerpolicy="no-referrer" src="${mzEsc(mzSafeUrl(cm.icon))}" alt="" style="width:100%;height:100%;object-fit:contain;background:transparent!important;background-color:transparent!important;background-image:none!important;mix-blend-mode:normal" onerror="this.outerHTML='<i class=\"fas fa-bolt\"></i>'">` : '<i class="fas fa-bolt"></i>';
+                    const iconHtml = cm.icon ? `<img referrerpolicy="no-referrer" src="${mzEsc(mzSafeUrl(cm.icon))}" alt="" style="width:100%;height:100%;object-fit:contain;background:transparent!important;background-color:transparent!important;background-image:none!important;mix-blend-mode:normal" data-fa="fa-bolt">` : '<i class="fas fa-bolt"></i>';
                     const action = cm.type === 'external' ? `openExternalMethod(globalGames[currentGameId].custom_methods[${index}], currentGameId, ${index})` : `showPrices('custom_${index}')`;
                     htmlString += `<div class="option-card" onclick="${action}"><div class="option-icon">${iconHtml}</div><div><h4 style="color:#fff; font-size:0.95rem;">${methodName}</h4></div></div>`;
                 });
@@ -2931,7 +3013,7 @@ globalGames = data || {};
                         
                         htmlString += `<div class="price-card-modern" style="cursor: pointer;" data-game="${encodeURIComponent(game.name)}" data-pack="${encodeURIComponent(name)}" data-price="${encodeURIComponent(finalPrice)}" data-method="${encodeURIComponent(methodTextForWhatsApp)}" onclick="openWhatsApp(this)">
                                         <div class="price-card-content">
-                                            ${(game.package_icons && game.package_icons[name]) || game.price_icon ? `<img referrerpolicy="no-referrer" class="price-item-icon" src="${mzEsc(mzSafeUrl((game.package_icons && game.package_icons[name]) || game.price_icon))}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">` : ''}
+                                            ${(game.package_icons && game.package_icons[name]) || game.price_icon ? `<img referrerpolicy="no-referrer" class="price-item-icon" src="${mzEsc(mzSafeUrl((game.package_icons && game.package_icons[name]) || game.price_icon))}" alt="" loading="lazy" decoding="async">` : ''}
                                             <div class="item-details">${displayNameHtml}</div>
                                             <div class="price-area">${oldPriceHtml}${couponPriceHtml ? couponPriceHtml : `<div class="item-price-tag">${mzEsc(finalPrice)}</div>`}</div>
                                         </div>
@@ -3025,15 +3107,14 @@ globalGames = data || {};
             return `<div class="auto-topup-recent-title"><span><i class="fas fa-clock-rotate-left"></i> الحسابات الأخيرة</span><small>${values.length}/5</small></div>${items||'<div class="auto-topup-recent-empty"><i class="far fa-folder-open"></i><span>لا توجد معرفات محفوظة بعد</span></div>'}`;
         }
         async function openAutoTopupPrices(){
-            const game=globalGames[currentGameId]; if(!game||game.auto_available!==true)return;
+            const game=globalGames[currentGameId]; if(!game||!(game.auto_available===true||game.auto_available==='true'))return;
             let settingsText=game.auto_prices||'';
             if(currentCurrency==='USD'){
                 settingsText=String(game.auto_prices_usd||'').trim()?game.auto_prices_usd:(game.auto_auto_usd!==false&&typeof convertEgpPriceListToUsd==='function'?convertEgpPriceListToUsd(game.auto_prices||''):game.auto_prices||'');
             }
             const packs=autoTopupParsePriceLines(settingsText),content=document.getElementById('pricesContent');
             autoTopupSelectedGame=game;autoTopupSelectedGame._autoParsedPacks=packs;currentPriceType='auto';autoTopupVerifiedPlayer=null;
-            let account=null;if(walletUser)account=await autoTopupLoadAccount(game);
-            if(account)autoTopupVerifiedPlayer=account.player;
+            let account=null; /* لا ننتظر قاعدة البيانات هنا: النافذة تُفتح فورًا ثم تُحدَّث بيانات الحساب المحفوظ */
             const saved=account?.player||null,recent=account?.recent||[],icon=String(game.auto_icon||game.price_icon||'').trim();
             const playerValue=saved?autoTopupEscape(saved.playerId):'';
             const playerLabel=game.auto_player_label||'Player ID';
@@ -3057,10 +3138,26 @@ globalGames = data || {};
                 </div>
                 <div id="autoTopupInlinePlayerState" class="auto-topup-player-state ${stateClass}" aria-live="polite">${stateText}</div><div class="auto-topup-id-disclaimer"><i class="fas fa-shield-halved"></i><span>تأكد من صحة المعرّف قبل تأكيد الشحن.</span></div>
             </section>`;
-            const cards=packs.map((p,i)=>{const packIcon=String((game.package_icons&&game.package_icons[p.name])||icon||'').trim();const packIconHtml=packIcon?`<img referrerpolicy="no-referrer" class="price-item-icon" src="${autoTopupEscape(packIcon)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">`:'<i class="fas fa-gem" style="font-size:30px;color:#06b6d4"></i>';return `<button type="button" class="price-card-modern auto-topup-price-card" data-auto-index="${i}" onclick="selectAutoTopupPack(${i})"><div class="price-card-content">${packIconHtml}<div class="item-details"><span class="item-quantity">${autoTopupEscape(p.name)}</span></div><div class="price-area"><div class="item-price-tag">${autoTopupEscape(p.price)}</div></div></div></button>`;}).join('');
+            const cards=packs.map((p,i)=>{const packIcon=String((game.package_icons&&game.package_icons[p.name])||icon||'').trim();const packIconHtml=packIcon?`<img referrerpolicy="no-referrer" class="price-item-icon" src="${autoTopupEscape(packIcon)}" alt="" loading="lazy" decoding="async">`:'<i class="fas fa-gem" style="font-size:30px;color:#06b6d4"></i>';return `<button type="button" class="price-card-modern auto-topup-price-card" data-auto-index="${i}" onclick="selectAutoTopupPack(${i})"><div class="price-card-content">${packIconHtml}<div class="item-details"><span class="item-quantity">${autoTopupEscape(p.name)}</span></div><div class="price-area"><div class="item-price-tag">${autoTopupEscape(p.price)}</div></div></div></button>`;}).join('');
             content.classList.add('auto-topup-prices-view');content.innerHTML=panel+(cards||'<div class="empty-msg" style="grid-column:1/-1">لا توجد باقات شحن صالحة حالياً. راجع إعدادات الأسعار داخل لوحة التحكم.</div>');
             document.getElementById('stepSelection').classList.remove('active');document.getElementById('stepPrices').classList.add('active');document.getElementById('modalScrollBox').scrollTop=0;
             const title=document.querySelector('#stepPrices .prices-top-bar span');if(title)title.textContent='باقات الشحن التلقائي';const shareBtn=document.querySelector('#stepPrices .prices-share-btn');if(shareBtn)shareBtn.style.visibility='hidden';
+            if(walletUser){
+                const gid=String(currentGameId);
+                Promise.race([autoTopupLoadAccount(game),new Promise(r=>setTimeout(()=>r(null),8000))]).then(acc=>{
+                    if(!acc||currentPriceType!=='auto'||String(currentGameId)!==gid||autoTopupVerifiedPlayer)return;
+                    const sv=acc.player||null;
+                    if(sv)autoTopupVerifiedPlayer=sv;
+                    const inp=document.getElementById('autoTopupInlinePlayerId');
+                    if(sv&&inp&&!inp.value)inp.value=sv.playerId;
+                    const st=document.getElementById('autoTopupInlinePlayerState');
+                    if(sv&&st){st.className='auto-topup-player-state ok';st.innerHTML=autoTopupAccountStateHtml(sv.playerId)+(sv.nickname?`<br><span class="auto-topup-saved-nickname">اسم اللاعب: ${autoTopupEscape(sv.nickname)}</span>`:'');}
+                    else if(st&&!sv){st.textContent='أدخل معرف اللاعب ثم اضغط تسجيل الدخول.';}
+                    const chk=document.getElementById('autoTopupPlayerCheck');if(chk&&sv)chk.classList.add('visible');
+                    const vb=document.getElementById('autoTopupInlineVerifyBtn');if(vb&&sv){vb.classList.add('logged-in');vb.textContent='تسجيل الخروج';}
+                    const menu=document.getElementById('autoTopupRecentMenu');if(menu)menu.innerHTML=autoTopupRecentMenuMarkup(acc.recent||[]);
+                }).catch(()=>{});
+            }
         }
         function autoTopupIsFreeFire(game){
             const code=String(game?.auto_game_code||'').toLowerCase().replace(/[\s_-]/g,'');
@@ -3198,7 +3295,7 @@ globalGames = data || {};
             const entries=Object.entries(walletMethods).filter(([,m])=>m&&m.enabled!==false);
             if(!entries.length){box.innerHTML='<div class="wallet-muted">لا توجد طرق إيداع متاحة حاليًا. تواصل مع الدعم.</div>';return;}
             if(!walletMethods[walletMethod]||walletMethods[walletMethod].enabled===false)walletMethod=entries[0][0];
-            box.innerHTML=entries.map(([key,m])=>`<button type="button" class="wallet-method ${key===walletMethod?'active':''}" data-method="${walletEscape(key)}" onclick="walletSelectMethod(this)">${m.logo?`<img referrerpolicy="no-referrer" src="${walletEscape(m.logo)}" alt="" style="width:30px;height:30px;object-fit:contain;display:block;margin:0 auto 6px" onerror="this.style.display='none'">`:''}<strong>${walletEscape(m.label||key)}</strong>${m.actionType==='whatsapp'?'<small style="display:block;margin-top:5px;color:#16a34a">اضغط للتواصل عبر واتساب</small>':''}</button>`).join('');
+            box.innerHTML=entries.map(([key,m])=>`<button type="button" class="wallet-method ${key===walletMethod?'active':''}" data-method="${walletEscape(key)}" onclick="walletSelectMethod(this)">${m.logo?`<img referrerpolicy="no-referrer" src="${walletEscape(m.logo)}" alt="" style="width:30px;height:30px;object-fit:contain;display:block;margin:0 auto 6px">`:''}<strong>${walletEscape(m.label||key)}</strong>${m.actionType==='whatsapp'?'<small style="display:block;margin-top:5px;color:#16a34a">اضغط للتواصل عبر واتساب</small>':''}</button>`).join('');
             walletApplyMethodDetails(walletMethods[walletMethod]||walletMethods[entries[0][0]]);
         }
         db.ref('wallet_settings/depositMethods').on('value',snap=>{const v=snap.val();if(v&&typeof v==='object'&&Object.keys(v).length)walletMethods=v;walletRenderMethods();});
@@ -3392,7 +3489,12 @@ globalGames = data || {};
         async function walletRequireSecurityCode(user){
             const overlay=document.getElementById('walletSecurityGate');
             try{
-                const snap=await db.ref('wallet_users/'+user.uid+'/securityCode').once('value');
+                let snap=null,lastErr=null;
+                for(let a=0;a<3&&!snap;a++){
+                    try{snap=await db.ref('wallet_users/'+user.uid+'/securityCode').once('value');}
+                    catch(err){lastErr=err;await new Promise(r=>setTimeout(r,900*(a+1)));}
+                }
+                if(!snap)throw lastErr||new Error('security-check-failed');
                 const cfg=snap.val();
                 if(!cfg||!cfg.enabled||!cfg.hash||!cfg.salt)return true;
                 if(firebase.auth().currentUser?.uid!==user.uid)return false;
@@ -3426,6 +3528,16 @@ globalGames = data || {};
             await firebase.auth().signOut();
         }
 
+        function walletDisplayName(u){
+            if(!u)return '';
+            const n=(u.displayName&&u.displayName!==u.email)?u.displayName:String(u.email||'').split('@')[0];
+            return n||'';
+        }
+        function walletSetNavUser(u){
+            const el=document.getElementById('walletNavLabel');if(!el)return;
+            const n=walletDisplayName(u);
+            el.textContent=n?('@'+String(n).slice(0,14)):'رصيدك';
+        }
         function walletShowTools() {
             document.getElementById('walletLoginArea').classList.add('wallet-hidden');
             document.getElementById('walletTools').classList.remove('wallet-hidden');
@@ -4284,12 +4396,13 @@ globalGames = data || {};
                 const bannedScreen=document.getElementById('walletBannedScreen');if(bannedScreen)bannedScreen.style.display='none';
                 const securityGate=document.getElementById('walletSecurityGate');if(securityGate)securityGate.style.display='none';
                 walletCloseAccountSettings();
-                walletBalanceUsd=0;walletBalanceEgp=0;walletNextDiscount=null;walletRenderNextDiscount();document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
+                walletSetNavUser(null);walletBalanceUsd=0;walletBalanceEgp=0;walletNextDiscount=null;walletRenderNextDiscount();document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
                 document.getElementById('walletTools').classList.add('wallet-hidden');
                 document.getElementById('walletUserLabel').textContent='سجّل الدخول لتفعيل المحفظة.';
                 const profile=document.getElementById('walletProfile');if(profile)profile.style.display='none';
                 walletDisplayBalance();return;
             }
+            walletSetNavUser(user);
             const securityPassed=await walletRequireSecurityCode(user);
             if(!securityPassed||firebase.auth().currentUser?.uid!==user.uid)return;
             walletShowTools();
@@ -4298,7 +4411,7 @@ globalGames = data || {};
             banRef.on('value',banFn);walletBanListener={uid:user.uid,fn:banFn};
             db.ref('wallet_settings/banImageUrl').on('value',banImageSnap=>{const img=document.getElementById('walletBannedImage');if(img){const url=banImageSnap.val()||'';if(url){img.src=url;img.style.display='block';}else if(!img.getAttribute('data-user-image')){img.removeAttribute('src');img.style.display='none';}}});
             db.ref('wallet_settings/profileAvatarUrl').on('value',avatarSnap=>{const img=document.getElementById('walletProfileAvatar');if(img&&avatarSnap.val())img.src=avatarSnap.val();});
-            walletSyncAccountProfile(user).then(username=>{const profileEmail=document.getElementById('walletProfileEmail');if(profileEmail)profileEmail.textContent=username;const label=document.getElementById('walletProfileUsername');if(label)label.textContent='@'+username;const isPassword=(user.providerData||[]).some(p=>p.providerId==='password');document.getElementById('walletPasswordChangeArea')?.classList.toggle('wallet-hidden',!isPassword);document.getElementById('walletGooglePasswordNote')?.classList.add('wallet-hidden');}).catch(e=>console.warn('تعذر مزامنة بيانات الحساب:',e));
+            walletSyncAccountProfile(user).then(username=>{const nl=document.getElementById('walletNavLabel');if(nl&&username)nl.textContent='@'+String(username).slice(0,14);const profileEmail=document.getElementById('walletProfileEmail');if(profileEmail)profileEmail.textContent=username;const label=document.getElementById('walletProfileUsername');if(label)label.textContent='@'+username;const isPassword=(user.providerData||[]).some(p=>p.providerId==='password');document.getElementById('walletPasswordChangeArea')?.classList.toggle('wallet-hidden',!isPassword);document.getElementById('walletGooglePasswordNote')?.classList.add('wallet-hidden');}).catch(e=>console.warn('تعذر مزامنة بيانات الحساب:',e));
             const fn=snap=>{const data=snap.val()||{};walletBalanceUsd=Number(data.balanceUsd||0);walletBalanceEgp=Number.isFinite(Number(data.balanceEgp))?Number(data.balanceEgp):walletBalanceUsd*walletFxRate;walletNextDiscount=data.nextDiscount||null;if(walletNextDiscount&&walletNextDiscount.status==='available'&&!Number(walletNextDiscount.expiresAt)){const earned=Number(walletNextDiscount.earnedAt)||Date.now();const hours=Math.max(1,Math.min(8760,Number(walletDiscountSettings&&walletDiscountSettings.expiryHours)||24));walletNextDiscount.expiresAt=earned+hours*3600000;db.ref(`wallet_users/${user.uid}/nextDiscount`).update({expiresAt:walletNextDiscount.expiresAt}).catch(()=>{});}walletDisplayBalance();};
             walletBalanceListener={uid:user.uid,fn};
             db.ref(`wallet_users/${user.uid}`).on('value',fn);
@@ -4716,7 +4829,7 @@ globalGames = data || {};
         <div class="wallet-head"><h2><i class="fas fa-wallet" style="color:var(--primary)"></i> محفظة MOHAB STORE</h2><button class="close-modal" onclick="closeWallet()" aria-label="إغلاق"><i class="fas fa-times"></i></button></div>
         <div id="walletProfile" class="wallet-profile" style="display:none">
           <div class="wallet-profile-avatar-wrap">
-            <img id="walletProfileAvatar" class="wallet-profile-avatar" src="https://picturetolink.com/i/fxSQuDFofH.gif" alt="صورة الملف الشخصي" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=MOHAB+STORE&background=101827&color=67e8f9&size=256'">
+            <img id="walletProfileAvatar" class="wallet-profile-avatar" src="https://picturetolink.com/i/fxSQuDFofH.gif" alt="صورة الملف الشخصي" referrerpolicy="no-referrer" data-fallback-src="https://ui-avatars.com/api/?name=MOHAB+STORE&background=101827&color=67e8f9&size=256">
             <span class="wallet-profile-badge" aria-hidden="true"><i class="fas fa-check"></i></span>
           </div>
           <div class="wallet-profile-title">حسابك في MOHAB STORE</div>
