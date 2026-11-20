@@ -3065,6 +3065,7 @@ globalGames = data || {};
             }
             
             const content = document.getElementById('pricesContent');
+            if (window.mzWsApply) pricesStr = window.mzWsApply(pricesStr, currentGameId, type, currentCurrency); /* أسعار التاجر */
             content.classList.remove('auto-topup-prices-view');
             if (!pricesStr || pricesStr.trim() === '') { content.innerHTML = `<div class="empty-msg">لا توجد أسعار مدخلة لهذه الطريقة بالعملة الحالية (${currentCurrency})</div>`; } else {
                 const lines = pricesStr.split('\n'); let htmlString = '';
@@ -3182,6 +3183,7 @@ globalGames = data || {};
             if(currentCurrency==='USD'){
                 settingsText=String(game.auto_prices_usd||'').trim()?game.auto_prices_usd:(game.auto_auto_usd!==false&&typeof convertEgpPriceListToUsd==='function'?convertEgpPriceListToUsd(game.auto_prices||''):game.auto_prices||'');
             }
+            if(window.mzWsApply)settingsText=window.mzWsApply(settingsText,currentGameId,'auto',currentCurrency); /* أسعار التاجر */
             const packs=autoTopupParsePriceLines(settingsText),content=document.getElementById('pricesContent');
             autoTopupSelectedGame=game;autoTopupSelectedGame._autoParsedPacks=packs;currentPriceType='auto';autoTopupVerifiedPlayer=null;
             let account=null; /* لا ننتظر قاعدة البيانات هنا: النافذة تُفتح فورًا ثم تُحدَّث بيانات الحساب المحفوظ */
@@ -5939,6 +5941,152 @@ body.light-theme #walletCustomNotice .wallet-notice-actions button.mz-opt-wa{col
   prepare();
   // أمان: لو لم يجهز المؤثر بعد 20 ثانية نُظهر الكروت بدونه
   setTimeout(()=>grid.querySelectorAll('.game-card.mohab-reveal:not(.mohab-in):not(.mohab-shown)').forEach(c=>{if(!window.__mohabReady||!io)c.classList.remove('mohab-reveal');}),20000);
+})();
+</script>
+<!-- ===== MOHAB STORE: أسعار التجار (جملة) — إضافة مستقلة، لا تغيّر أي ميزة أخرى ===== -->
+<style id="mohab-wholesale-style">
+#mzWsBar{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;margin:0 0 8px;padding:8px 12px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);color:#2b1a00;font-weight:900;font-size:.84rem;line-height:1.5;text-align:center;font-family:inherit;box-shadow:0 2px 10px rgba(245,158,11,.35)}
+#mzWsBar[hidden]{display:none!important}
+#mzWsBar i{font-size:.95rem}
+body.mz-ws-on #pricesContent::before{content:var(--mz-ws-chip);grid-column:1/-1;display:block;box-sizing:border-box;padding:8px 12px;border-radius:12px;background:linear-gradient(90deg,rgba(245,158,11,.20),rgba(251,191,36,.12));border:1px solid rgba(245,158,11,.55);color:#f59e0b;font-weight:900;font-size:.82rem;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.light-theme.mz-ws-on #pricesContent::before{color:#92400e;background:linear-gradient(90deg,#fef3c7,#fffbeb)}
+</style>
+<script id="mohab-wholesale">
+(function(){
+  'use strict';
+  var WS=null, WS_JSON='null', WS_UID=null, detachFn=null, pollTimer=null;
+  var DEFAULT_LABEL='أنت الآن تشاهد أسعار التاجر (أسعار الجملة) الخاصة بحسابك';
+  var NUM=/[0-9][0-9,]*(?:\.[0-9]+)?/;
+
+  function toLatin(v){
+    return String(v).replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d);}).replace(/[۰-۹]/g,function(d){return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d);});
+  }
+  /* نفس ترميز مفاتيح الباقات المستخدم في لوحة التحكم (يتجنب الرموز الممنوعة في Firebase) */
+  function packKey(name){
+    return encodeURIComponent(String(name==null?'':name).trim()).replace(/\./g,'%2E');
+  }
+  function isNum(v){ return v!==null && v!==undefined && v!=='' && Number.isFinite(Number(v)) && Number(v)>0; }
+  function fmt(n){ return (Math.round(Number(n)*100)/100).toLocaleString('en-US',{maximumFractionDigits:2}); }
+  function rate(){
+    try{ var r=Number(storeUsdToEgp); if(Number.isFinite(r)&&r>0) return r; }catch(e){}
+    try{ var r2=Number(walletFxRate); if(Number.isFinite(r2)&&r2>0) return r2; }catch(e){}
+    return 50;
+  }
+
+  /* يُستدعى من showPrices و openAutoTopupPrices: يستبدل سعر كل باقة بسعر التاجر إن وُجد، ويترك الباقي كما هو */
+  window.mzWsApply=function(list,gameId,method,cur){
+    try{
+      if(!list||!WS||WS.enabled!==true||!WS.prices)return list;
+      var g=WS.prices[gameId]; var m=g&&g[method]; if(!m)return list;
+      var r=rate();
+      return String(list).split(/\r?\n/).map(function(line){
+        var eq=line.indexOf('='); if(eq<1)return line;
+        var name=line.slice(0,eq).trim(); if(!name)return line;
+        var o=m[packKey(name)]; if(!o)return line;
+        var val=null;
+        if(cur==='USD'){ if(isNum(o.u)) val=Number(o.u); else if(isNum(o.e)) val=Math.round(Number(o.e)/r*100)/100; }
+        else { if(isNum(o.e)) val=Number(o.e); }
+        if(!(val>0))return line;
+        var parts=line.slice(eq+1).split('|');
+        var base=toLatin(parts[0].split('بدل')[0].trim());
+        var mt=base.match(NUM), f=fmt(val);
+        parts[0]=' '+(mt?base.replace(mt[0],f):(f+(cur==='USD'?' $':' جنيه')))+' ';
+        return line.slice(0,eq)+'='+parts.join('|');
+      }).join('\n');
+    }catch(e){ console.warn('wholesale apply',e); return list; }
+  };
+
+  var bar=null;
+  function ensureBar(){
+    if(bar)return bar;
+    var t=document.getElementById('announcementTicker'); if(!t||!t.parentNode)return null;
+    bar=document.createElement('div'); bar.id='mzWsBar'; bar.hidden=true; bar.setAttribute('role','status');
+    var ic=document.createElement('i'); ic.className='fas fa-crown'; ic.setAttribute('aria-hidden','true');
+    var tx=document.createElement('span'); tx.id='mzWsBarText';
+    bar.appendChild(ic); bar.appendChild(tx);
+    t.parentNode.insertBefore(bar,t);
+    return bar;
+  }
+  function labelText(){
+    var l=WS&&typeof WS.label==='string'?WS.label.replace(/[\r\n]+/g,' ').trim():'';
+    return (l||DEFAULT_LABEL).slice(0,160);
+  }
+
+  /* تحديث أسعار الشاشة المفتوحة فورًا بدون إغلاقها */
+  function rerender(){
+    try{
+      var step=document.getElementById('stepPrices');
+      if(!step||!step.classList.contains('active'))return;
+      if(typeof currentGameId==='undefined'||!currentGameId||!currentPriceType)return;
+      var sb=document.getElementById('modalScrollBox'), st=sb?sb.scrollTop:0;
+      if(currentPriceType==='auto'){ refreshAutoInPlace(); return; }
+      showPrices(currentPriceType,true);
+      if(sb)sb.scrollTop=st;
+    }catch(e){ console.warn('wholesale rerender',e); }
+  }
+  /* الشحن التلقائي: نحدّث الأسعار في مكانها حتى لا نمسح الـ ID الذي يكتبه المستخدم */
+  function refreshAutoInPlace(){
+    var game=globalGames[currentGameId]; if(!game||!autoTopupSelectedGame||!autoTopupSelectedGame._autoParsedPacks)return;
+    var t=game.auto_prices||'';
+    if(currentCurrency==='USD'){
+      t=String(game.auto_prices_usd||'').trim()?game.auto_prices_usd:(game.auto_auto_usd!==false&&typeof convertEgpPriceListToUsd==='function'?convertEgpPriceListToUsd(game.auto_prices||''):game.auto_prices||'');
+    }
+    var packs=autoTopupParsePriceLines(window.mzWsApply(t,currentGameId,'auto',currentCurrency));
+    var cur=autoTopupSelectedGame._autoParsedPacks;
+    if(packs.length!==cur.length)return;
+    for(var i=0;i<packs.length;i++){ if(packs[i].name!==cur[i].name)return; }
+    for(var j=0;j<packs.length;j++){
+      cur[j].price=packs[j].price;
+      var tag=document.querySelector('.auto-topup-price-card[data-auto-index="'+j+'"] .item-price-tag');
+      if(tag)tag.textContent=packs[j].price;
+    }
+  }
+
+  function applyUi(){
+    var on=!!(WS&&WS.enabled===true);
+    var b=ensureBar();
+    if(b){
+      b.hidden=!on;
+      var tx=document.getElementById('mzWsBarText'); if(tx)tx.textContent=on?labelText():'';
+    }
+    document.body.classList.toggle('mz-ws-on',on);
+    if(on){ document.body.style.setProperty('--mz-ws-chip',JSON.stringify('🏷️ '+labelText())); }
+    else { document.body.style.removeProperty('--mz-ws-chip'); }
+  }
+  function setData(v){
+    if(!v||typeof v!=='object')v=null;
+    var j=JSON.stringify(v);
+    if(j===WS_JSON)return;
+    WS_JSON=j; WS=v;
+    applyUi(); rerender();
+  }
+  function detach(){
+    if(detachFn){ try{detachFn();}catch(e){} detachFn=null; }
+    if(pollTimer){ clearInterval(pollTimer); pollTimer=null; }
+    WS_UID=null;
+  }
+  function attach(uid){
+    detach(); WS_UID=uid;
+    var ref=firebase.database().ref('wholesale/'+uid);
+    var fn=function(snap){ if(WS_UID===uid)setData(snap.val()); };
+    ref.on('value',fn,function(err){ console.warn('wholesale listener',err&&err.code); });
+    detachFn=function(){ ref.off('value',fn); };
+    /* احتياطي: لو تعطّل الاتصال المباشر نعيد القراءة كل 45 ثانية */
+    pollTimer=setInterval(function(){
+      if(document.visibilityState!=='visible'||WS_UID!==uid||typeof mzDbGet!=='function')return;
+      mzDbGet('wholesale/'+uid).then(function(v){ if(WS_UID===uid)setData(v); }).catch(function(){});
+    },45000);
+  }
+
+  function start(){
+    if(!window.firebase||!firebase.auth||!firebase.database){ return setTimeout(start,400); }
+    ensureBar();
+    firebase.auth().onAuthStateChanged(function(user){
+      if(user){ attach(user.uid); }
+      else { detach(); setData(null); }
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start); else start();
 })();
 </script>
 </body>
