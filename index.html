@@ -7,7 +7,7 @@
     <link rel="apple-touch-icon" href="/favicon.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://www.google.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https: about:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https:; upgrade-insecure-requests">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://*.firebaseio.com https://www.googleapis.com https://apis.google.com https://www.google.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https: about:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https:; upgrade-insecure-requests">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="format-detection" content="telephone=no">
     <script id="mohab-security-guard">(function(){
@@ -2242,6 +2242,37 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
         };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
+        // ===== طبقة اتصال احتياطية: تعمل حتى لو تعطل WebSocket الخاص بـ Firebase =====
+        const MZ_DB_URL=String(firebaseConfig.databaseURL||'').replace(/\/$/,'');
+        let mzSdkConnected=false;
+        try{db.ref('.info/connected').on('value',s=>{mzSdkConnected=s.val()===true;});}catch(_){}
+        setTimeout(()=>{if(!mzSdkConnected){try{if(firebase.database.INTERNAL&&firebase.database.INTERNAL.forceLongPolling)firebase.database.INTERNAL.forceLongPolling();db.goOffline();setTimeout(()=>db.goOnline(),300);}catch(_){}}},8000);
+        function mzTimeout(p,ms){return Promise.race([p,new Promise((_,rj)=>setTimeout(()=>rj(Object.assign(new Error('timeout'),{code:'mz/timeout'})),ms))]);}
+        async function mzRest(method,path,body,query){
+            const u=firebase.auth().currentUser;
+            const qs=new URLSearchParams(query||{});
+            if(u){const tok=await mzTimeout(u.getIdToken(),8000);qs.set('auth',tok);}
+            const opt={method,cache:'no-store'};
+            if(body!==undefined){opt.headers={'Content-Type':'application/json'};opt.body=JSON.stringify(body);}
+            const res=await mzTimeout(fetch(MZ_DB_URL+'/'+path+'.json?'+qs.toString(),opt),12000);
+            const data=await res.json().catch(()=>null);
+            if(!res.ok){const e=new Error((data&&data.error)||('HTTP '+res.status));e.code=(res.status===401||res.status===403)?'PERMISSION_DENIED':'mz/http';throw e;}
+            return data;
+        }
+        async function mzDbGet(path){
+            if(mzSdkConnected){try{return (await mzTimeout(db.ref(path).once('value'),6000)).val();}catch(e){if(e&&e.code==='PERMISSION_DENIED')throw e;}}
+            return mzRest('GET',path);
+        }
+        async function mzDbWrite(path,val,mode){
+            if(mzSdkConnected){try{await mzTimeout(mode==='update'?db.ref(path).update(val):db.ref(path).set(val),7000);return;}catch(e){if(e&&e.code==='PERMISSION_DENIED')throw e;}}
+            await mzRest(mode==='update'?'PATCH':'PUT',path,val);
+        }
+        function mzSnap(v,key){
+            const isObj=v!=null&&typeof v==='object';
+            return {key:key==null?null:key,val:()=>v,exists:()=>v!=null,hasChildren:()=>isObj&&Object.keys(v).length>0,numChildren:()=>isObj?Object.keys(v).length:0,
+                child:p=>{let x=v;String(p).split('/').forEach(sg=>{x=(x!=null&&typeof x==='object')?x[sg]:undefined;});return mzSnap(x===undefined?null:x,String(p).split('/').pop());},
+                forEach:fn=>{if(isObj){for(const k of Object.keys(v)){if(v[k]==null)continue;if(fn(mzSnap(v[k],k))===true)return true;}}return false;}};
+        }
         // طبقة تسريع: إعدادات الموقع (الشعار، البنرات، الشريط السفلي، الصور...) تُعرض فورًا من النسخة المحفوظة/REST
         // بدون انتظار اتصال Firebase اللحظي، ثم يستمر المستمع الحي كالمعتاد.
         (function installCfgSeed(){
@@ -3100,7 +3131,7 @@ globalGames = data || {};
         async function autoTopupLoadAccount(game){
             if(!walletUser)return null;
             try{
-                const snap=await autoTopupAccountRef(game).once('value');
+                const snap=mzSnap(await mzDbGet(autoTopupAccountPath(game)));
                 const value=snap.val();
                 if(!value)return null;
                 const recent=autoTopupRecentList(value);
@@ -3200,10 +3231,10 @@ globalGames = data || {};
             if(!walletUser){state.className='auto-topup-player-state warn';state.textContent='سجّل الدخول إلى حساب الموقع أولاً لحفظ معرفات ألعابك.';return;}
             const requestId=++autoTopupCheckRequest;btn.disabled=true;btn.textContent='جارٍ الحفظ...';
             try{
-                const ref=autoTopupAccountRef(game),oldSnap=await ref.once('value'),old=oldSnap.val()||{};
+                const apath=autoTopupAccountPath(game),oldSnap=mzSnap(await mzDbGet(apath)),old=oldSnap.val()||{};
                 if(requestId!==autoTopupCheckRequest)return;
                 const recent=[...new Set([playerId,...autoTopupRecentList(old)])].slice(0,5);
-                await ref.set({currentId:playerId,nickname:'',region:'',verified:false,recent,updatedAt:firebase.database.ServerValue.TIMESTAMP});
+                await mzDbWrite(apath,{currentId:playerId,nickname:'',region:'',verified:false,recent,updatedAt:firebase.database.ServerValue.TIMESTAMP},'set');
                 if(requestId!==autoTopupCheckRequest)return;
                 autoTopupVerifiedPlayer={gameId:String(currentGameId),playerId,nickname:'',region:'',verified:false};
                 const menu=document.getElementById('autoTopupRecentMenu');if(menu)menu.innerHTML=autoTopupRecentMenuMarkup(recent);
@@ -3234,7 +3265,7 @@ globalGames = data || {};
             const input=document.getElementById('autoTopupInlinePlayerId');if(input)input.value='';
             autoTopupSetLoginUi(false);
             const state=document.getElementById('autoTopupInlinePlayerState');if(state){state.className='auto-topup-player-state';state.textContent='تم تسجيل الخروج. معرفاتك السابقة ما زالت محفوظة في القائمة.';}
-            try{if(walletUser&&autoTopupSelectedGame){const ref=autoTopupAccountRef(autoTopupSelectedGame);const snap=await ref.once('value');const old=snap.val()||{};await ref.update({currentId:'',nickname:'',region:'',verified:false,recent:autoTopupRecentList(old),updatedAt:firebase.database.ServerValue.TIMESTAMP});}}catch(error){console.warn('تعذر تحديث حالة الحساب بعد تسجيل الخروج',error);}
+            try{if(walletUser&&autoTopupSelectedGame){const apath=autoTopupAccountPath(autoTopupSelectedGame);const old=(await mzDbGet(apath))||{};await mzDbWrite(apath,{currentId:'',nickname:'',region:'',verified:false,recent:autoTopupRecentList(old),updatedAt:firebase.database.ServerValue.TIMESTAMP},'update');}}catch(error){console.warn('تعذر تحديث حالة الحساب بعد تسجيل الخروج',error);}
         }
         async function selectAutoTopupPack(index){
             const pack=autoTopupSelectedGame?._autoParsedPacks?.[index];if(!pack)return;
@@ -3252,7 +3283,7 @@ globalGames = data || {};
                 if(state){state.className='auto-topup-player-state warn';state.textContent='اضغط تسجيل الدخول لحفظ هذا المعرف قبل اختيار الباقة.';}
                 document.getElementById('autoTopupInlinePlayerId')?.focus();return;
             }
-            const settingsSnap=await db.ref('settings/autoTopupApi').once('value');const apiSettings=settingsSnap.val()||{};
+            const settingsSnap=mzSnap(await mzDbGet('settings/autoTopupApi'));const apiSettings=settingsSnap.val()||{};
             if(apiSettings.enabled===false||!/^https:\/\//i.test(String(apiSettings.workerUrl||''))){await walletShowNotice('الشحن غير متاح','خدمة الشحن التلقائي غير متاحة حالياً. تم الاحتفاظ بحسابك، حاول لاحقاً.','warning');return;}
             const player=autoTopupVerifiedPlayer;
             const order={gameName:game.name,packName:pack.name,price:pack.price,method:'شحن تلقائي بالـ ID',
@@ -3310,6 +3341,14 @@ globalGames = data || {};
             walletApplyMethodDetails(walletMethods[walletMethod]||walletMethods[entries[0][0]]);
         }
         db.ref('wallet_settings/depositMethods').on('value',snap=>{const v=snap.val();if(v&&typeof v==='object'&&Object.keys(v).length)walletMethods=v;walletRenderMethods();});
+        let mzMethodsAt=0;
+        function mzLoadMethods(force){
+            if(!force&&Date.now()-mzMethodsAt<20000)return;mzMethodsAt=Date.now();
+            mzDbGet('wallet_settings/depositMethods').then(v=>{if(v&&typeof v==='object'&&Object.keys(v).length){walletMethods=v;}walletRenderMethods();}).catch(()=>{walletRenderMethods();});
+            mzDbGet('wallet_settings/usdToEgp').then(v=>{const n=Number(v);if(Number.isFinite(n)&&n>0){walletFxRate=n;storeUsdToEgp=n;walletDisplayBalance();walletUpdateDepositCurrency();}}).catch(()=>{});
+        }
+        document.addEventListener('DOMContentLoaded',()=>{walletRenderMethods();setTimeout(()=>mzLoadMethods(true),1500);});
+        window.addEventListener('load',()=>{walletRenderMethods();});
         function walletMoney(n,currency=currentCurrency) {
             const amount = currency === 'USD' ? Number(n||0) : Number(n||0) * walletFxRate;
             return `${amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ${currency}`;
@@ -3352,6 +3391,7 @@ globalGames = data || {};
             document.getElementById('walletPage').setAttribute('aria-hidden','false');
             document.body.style.overflow='hidden';
             if(walletUser) walletShowTools();
+            try{walletRenderMethods();walletDisplayBalance();walletRenderDepositHistory();mzLoadMethods(false);}catch(_){}
         }
         function closeWallet(fromPopState=false) {
             document.getElementById('walletPage').classList.remove('open');
@@ -3502,7 +3542,7 @@ globalGames = data || {};
             try{
                 let snap=null,lastErr=null;
                 for(let a=0;a<3&&!snap;a++){
-                    try{snap=await db.ref('wallet_users/'+user.uid+'/securityCode').once('value');}
+                    try{snap=mzSnap(await mzDbGet('wallet_users/'+user.uid+'/securityCode'));}
                     catch(err){lastErr=err;await new Promise(r=>setTimeout(r,900*(a+1)));}
                 }
                 if(!snap)throw lastErr||new Error('security-check-failed');
@@ -3526,7 +3566,7 @@ globalGames = data || {};
             const code=input?.value||'';if(!code){status.textContent='اكتب رمز الأمان للمتابعة.';return;}
             const btn=document.getElementById('walletSecurityGateSubmit');btn.disabled=true;status.textContent='جارٍ التحقق…';
             try{
-                const snap=await db.ref('wallet_users/'+user.uid+'/securityCode').once('value');const cfg=snap.val();
+                const snap=mzSnap(await mzDbGet('wallet_users/'+user.uid+'/securityCode'));const cfg=snap.val();
                 const hash=await walletSecurityHash(code,cfg.salt,Number(cfg.iterations)||120000);
                 if(hash!==cfg.hash){walletSecurityGateAttempts++;input.value='';status.textContent='رمز الأمان غير صحيح.'+(walletSecurityGateAttempts>=5?' سيتم تسجيل الخروج لحماية الحساب.':'');if(walletSecurityGateAttempts>=5){const done=walletSecurityGateResolver;walletSecurityGateResolver=null;document.getElementById('walletSecurityGate').style.display='none';done(false);await firebase.auth().signOut();}return;}
                 const done=walletSecurityGateResolver;walletSecurityGateResolver=null;document.getElementById('walletSecurityGate').style.display='none';done(true);
@@ -3616,7 +3656,7 @@ globalGames = data || {};
             const wt=(p,ms)=>Promise.race([p,new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),ms))]);
             const ref=db.ref('wallet_users/'+user.uid);
             let old={};
-            try{old=(await wt(ref.once('value'),10000)).val()||{};}catch(_){}
+            try{old=(await wt(mzDbGet('wallet_users/'+user.uid),10000))||{};}catch(_){}
             const providers=(user.providerData||[]).map(p=>p.providerId);
             const provider=providers.includes('google.com')?'google':(providers.includes('password')?'username':'other');
             const local=()=>{let u=walletUsernameNormalize(String(user.email||'').split('@')[0]).replace(/[^a-z0-9._-]/g,'').slice(0,16);if(!walletUsernameValid(u))u='user'+user.uid.slice(0,8).toLowerCase();return u;};
@@ -3632,11 +3672,12 @@ globalGames = data || {};
                     }
                 }catch(e){username=local();}
             }
-            try{await wt(ref.update({uid:user.uid,username,authProvider:provider,email:provider==='google'?(user.email||''):'',displayName:username,photoURL:user.photoURL||'',updatedAt:firebase.database.ServerValue.TIMESTAMP}),10000);}catch(_){}
+            try{await wt(mzDbWrite('wallet_users/'+user.uid,{uid:user.uid,username,authProvider:provider,email:provider==='google'?(user.email||''):'',displayName:username,photoURL:user.photoURL||'',updatedAt:firebase.database.ServerValue.TIMESTAMP},'update'),12000);}catch(_){}
             return username;
         }
         async function walletSubmitUsernameAuth(event){
             event.preventDefault();
+            mzLoginIntent=true;
             const username=walletUsernameNormalize(document.getElementById('walletUsernameInput').value);
             const password=document.getElementById('walletPasswordInput').value;
             const btn=document.getElementById('walletUsernameSubmit');
@@ -3693,6 +3734,7 @@ globalGames = data || {};
             if(gbtn&&gbtn.disabled)return;
             const gHtml=gbtn?gbtn.innerHTML:'';
             if(gbtn){gbtn.disabled=true;gbtn.innerHTML='<i class="fas fa-spinner fa-spin"></i><span>جارٍ الاتصال بـ Google…</span>';}
+            mzLoginIntent=true;
             try {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 provider.setCustomParameters({prompt:'select_account'});
@@ -4306,7 +4348,7 @@ globalGames = data || {};
         let walletRecheckBusy=false,walletRecheckAt={},walletWorkerUrlCache='';
         async function walletGetWorkerUrl(){
             if(walletWorkerUrlCache)return walletWorkerUrlCache;
-            const snap=await db.ref('settings/autoTopupApi').once('value'),cfg=snap.val()||{};
+            const snap=mzSnap(await mzDbGet('settings/autoTopupApi')),cfg=snap.val()||{};
             if(/^https:\/\//i.test(String(cfg.workerUrl||'')))walletWorkerUrlCache=String(cfg.workerUrl);
             return walletWorkerUrlCache;
         }
@@ -4405,6 +4447,40 @@ globalGames = data || {};
                 {const errMsg='حدث خطأ أثناء تنفيذ الطلب. راجع صفحة طلباتي قبل إعادة المحاولة حتى لا يتكرر الخصم.';if(showTopupLoader){await walletShowTopupResult('failure',code,orderRef?orderRef.key:'',errMsg,'تعذر إتمام العملية');walletSetAutoTopupLoading(false);}else{await walletShowNotice('تعذر إتمام العملية',errMsg,'warning');}}
             }
         }
+        let mzSyncTimer=null, mzLoginIntent=false;
+        function mzWalletNote(msg){const el=document.getElementById('walletStatus');if(el&&msg)el.textContent=msg;}
+        function mzStopRestSync(){if(mzSyncTimer){clearInterval(mzSyncTimer);mzSyncTimer=null;}}
+        function mzStartRestSync(user,balanceFn){
+            mzStopRestSync();
+            const last={};let busy=false,denied=false;
+            const feed=(key,data,apply)=>{if(data===undefined)return;const j=JSON.stringify(data);if(last[key]===j)return;last[key]=j;try{apply(mzSnap(data));}catch(e){console.warn(e);}};
+            const tick=async()=>{
+                if(busy||mzSdkConnected||!walletUser||walletUser.uid!==user.uid)return;
+                busy=true;
+                const get=(path,q)=>mzRest('GET',path,undefined,q).catch(e=>{if(e&&e.code==='PERMISSION_DENIED'&&!denied){denied=true;mzWalletNote('قاعدة البيانات رفضت قراءة بيانات حسابك (المسار: '+path+'). راجع قواعد Realtime Database.');}return undefined;});
+                try{
+                    const q={orderBy:'"uid"',equalTo:JSON.stringify(user.uid)};
+                    const r=await Promise.all([get('wallet_users/'+user.uid),get('wallet_orders/'+user.uid),get('wallet_deposits',q),get('wallet_admin_adjustments',q)]);
+                    feed('bal',r[0],balanceFn);
+                    feed('ord',r[1],s=>{if(walletOrdersListener)walletOrdersListener(s);});
+                    feed('dep',r[2],s=>{if(walletHistoryListener)walletHistoryListener(s);});
+                    feed('adj',r[3],s=>{if(walletAdminHistoryListener)walletAdminHistoryListener(s);});
+                }finally{busy=false;}
+            };
+            setTimeout(tick,2500);
+            mzSyncTimer=setInterval(tick,7000);
+        }
+        function mzToast(text){
+            let t=document.getElementById('mzToast');
+            if(!t){t=document.createElement('div');t.id='mzToast';t.style.cssText='position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:99999;background:#0f766e;color:#fff;padding:12px 20px;border-radius:14px;font:800 .95rem Almarai,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:90vw;text-align:center;transition:opacity .3s';document.body.appendChild(t);}
+            t.textContent=text;t.style.opacity='1';clearTimeout(t._h);t._h=setTimeout(()=>{t.style.opacity='0';},3200);
+        }
+        function mzAfterLogin(){
+            try{closeWallet();}catch(_){}
+            const nm=walletDisplayName(walletUser);
+            mzToast('تم تسجيل الدخول بنجاح'+(nm?(' — أهلاً @'+String(nm).slice(0,18)):''));
+        }
+        function autoTopupAccountPath(game){return `wallet_users/${walletUser.uid}/autoTopupAccounts/${autoTopupGameKey(game)}`;}
         try{firebase.auth().getRedirectResult().catch(e=>{if(e&&e.code&&e.code!=='auth/no-auth-event')walletAuthMessage('تعذر إكمال تسجيل الدخول بجوجل. جرّب مرة أخرى.',true);});}catch(_){}
         firebase.auth().onAuthStateChanged(async user=>{
             walletUser=user||null;
@@ -4420,7 +4496,7 @@ globalGames = data || {};
                 const bannedScreen=document.getElementById('walletBannedScreen');if(bannedScreen)bannedScreen.style.display='none';
                 const securityGate=document.getElementById('walletSecurityGate');if(securityGate)securityGate.style.display='none';
                 walletCloseAccountSettings();
-                walletSetNavUser(null);walletBalanceUsd=0;walletBalanceEgp=0;walletNextDiscount=null;walletRenderNextDiscount();document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
+                walletSetNavUser(null);mzStopRestSync();walletBalanceUsd=0;walletBalanceEgp=0;walletNextDiscount=null;walletRenderNextDiscount();document.getElementById('walletOrdersOpenBtn').style.display='none';const dockBtn=document.getElementById('walletOrdersDockBtn');if(dockBtn)dockBtn.style.display='none';document.getElementById('walletLoginArea').classList.remove('wallet-hidden');
                 document.getElementById('walletTools').classList.add('wallet-hidden');
                 document.getElementById('walletUserLabel').textContent='سجّل الدخول لتفعيل المحفظة.';
                 const profile=document.getElementById('walletProfile');if(profile)profile.style.display='none';
@@ -4429,7 +4505,7 @@ globalGames = data || {};
             walletSetNavUser(user);
             const securityPassed=await walletRequireSecurityCode(user);
             if(!securityPassed||firebase.auth().currentUser?.uid!==user.uid)return;
-            walletShowTools();
+            walletShowTools();if(mzLoginIntent){mzLoginIntent=false;setTimeout(mzAfterLogin,350);}
             const banRef=db.ref('wallet_bans/'+user.uid);
             const banFn=banSnap=>{const ban=banSnap.val();const screen=document.getElementById('walletBannedScreen');if(screen)screen.style.display=ban&&ban.banned?'flex':'none';if(ban&&ban.banned){if(ban.imageUrl){document.getElementById('walletBannedImage').src=ban.imageUrl;document.getElementById('walletBannedImage').dataset.userImage='1';document.getElementById('walletBannedImage').style.display='block';}else{document.getElementById('walletBannedImage').dataset.userImage='';}}};
             banRef.on('value',banFn);walletBanListener={uid:user.uid,fn:banFn};
@@ -4438,9 +4514,10 @@ globalGames = data || {};
             walletSyncAccountProfile(user).then(username=>{const nl=document.getElementById('walletNavLabel');if(nl&&username)nl.textContent='@'+String(username).slice(0,14);const profileEmail=document.getElementById('walletProfileEmail');if(profileEmail)profileEmail.textContent=username;const label=document.getElementById('walletProfileUsername');if(label)label.textContent='@'+username;const isPassword=(user.providerData||[]).some(p=>p.providerId==='password');document.getElementById('walletPasswordChangeArea')?.classList.toggle('wallet-hidden',!isPassword);document.getElementById('walletGooglePasswordNote')?.classList.add('wallet-hidden');}).catch(e=>console.warn('تعذر مزامنة بيانات الحساب:',e));
             const fn=snap=>{const data=snap.val()||{};walletBalanceUsd=Number(data.balanceUsd||0);walletBalanceEgp=Number.isFinite(Number(data.balanceEgp))?Number(data.balanceEgp):walletBalanceUsd*walletFxRate;walletNextDiscount=data.nextDiscount||null;if(walletNextDiscount&&walletNextDiscount.status==='available'&&!Number(walletNextDiscount.expiresAt)){const earned=Number(walletNextDiscount.earnedAt)||Date.now();const hours=Math.max(1,Math.min(8760,Number(walletDiscountSettings&&walletDiscountSettings.expiryHours)||24));walletNextDiscount.expiresAt=earned+hours*3600000;db.ref(`wallet_users/${user.uid}/nextDiscount`).update({expiresAt:walletNextDiscount.expiresAt}).catch(()=>{});}walletDisplayBalance();};
             walletBalanceListener={uid:user.uid,fn};
-            db.ref(`wallet_users/${user.uid}`).on('value',fn);
+            db.ref(`wallet_users/${user.uid}`).on('value',fn,err=>{console.warn('wallet balance listener',err);if(err&&err.code==='PERMISSION_DENIED')mzWalletNote('قاعدة البيانات رفضت قراءة رصيدك. راجع قواعد wallet_users/'+user.uid);});
             walletListenHistory();
             walletListenOrders();
+            mzStartRestSync(user,fn);
         });
         db.ref('wallet_settings/usdToEgp').on('value',snap=>{
             const n=Number(snap.val());if(Number.isFinite(n)&&n>0){walletFxRate=n;storeUsdToEgp=n;}
