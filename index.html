@@ -1540,6 +1540,34 @@ body.light-theme #walletPage #walletLoginArea .wallet-google-icon{filter:none!im
     60%{filter:blur(0)}
     100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
   }
+  /* عند الصعود لأعلى: الكرت ينزل من فوق */
+  .game-card.mohab-reveal.mohab-in.mohab-up{animation-name:mohabCardDrop}
+  @keyframes mohabCardDrop{
+    0%{opacity:0;transform:translateY(-34px) scale(.94);filter:blur(5px)}
+    60%{filter:blur(0)}
+    100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+  }
+  /* بعد انتهاء المؤثر يبقى الكرت ظاهرًا بدون أي animation (حتى يعمل الـ hover) */
+  .game-card.mohab-reveal.mohab-shown{opacity:1}
+
+  /* ===== شارة "خصم" على كل المنتجات عند وجود خصم نشط للمستخدم ===== */
+  body.mz-has-discount .game-card::after{
+    content:"خصم";position:absolute;top:10px;right:10px;z-index:4;pointer-events:none;
+    padding:4px 13px 5px;border-radius:999px;
+    font:900 .8rem/1.25 Almarai,sans-serif;letter-spacing:.3px;color:#fff;
+    background:linear-gradient(110deg,#ef4444 0%,#dc2626 38%,#ff7a7a 50%,#dc2626 62%,#b91c1c 100%);background-size:240% 100%;
+    border:1px solid rgba(255,255,255,.38);
+    box-shadow:0 4px 14px rgba(239,68,68,.5),inset 0 1px 0 rgba(255,255,255,.35);
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+    animation:mzDiscPop .55s cubic-bezier(.2,1.5,.4,1) both,mzDiscShine 2.6s linear .6s infinite,mzDiscGlow 1.9s ease-in-out .6s infinite;
+  }
+  @keyframes mzDiscPop{0%{transform:scale(.3) rotate(-14deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+  @keyframes mzDiscShine{0%{background-position:130% 0}100%{background-position:-130% 0}}
+  @keyframes mzDiscGlow{
+    0%,100%{box-shadow:0 4px 12px rgba(239,68,68,.42),inset 0 1px 0 rgba(255,255,255,.35)}
+    50%{box-shadow:0 4px 22px rgba(239,68,68,.95),0 0 0 3px rgba(239,68,68,.18),inset 0 1px 0 rgba(255,255,255,.35)}
+  }
+  @media(prefers-reduced-motion:reduce){body.mz-has-discount .game-card::after{animation:none}}
 
   @media(prefers-reduced-motion:reduce){
     #mohabInitialLoader .mohab-loader-card,#mohabInitialLoader .mohab-loader-spin,
@@ -3364,7 +3392,7 @@ globalGames = data || {};
         }
         function walletCouponIsActive(c){return !!(walletUser&&c&&c.status==='available'&&Number(c.percent)>=5&&Number(c.percent)<=10&&(!Number(c.expiresAt)||Number(c.expiresAt)>Date.now()));}
         function walletFormatRemaining(ms){if(ms<=0)return 'انتهى';const total=Math.floor(ms/1000),d=Math.floor(total/86400),h=Math.floor((total%86400)/3600),m=Math.floor((total%3600)/60),sec=total%60;return (d?d+' يوم ':'')+[h,m,sec].map(n=>String(n).padStart(2,'0')).join(':');}
-        function walletUpdateCouponCountdown(){const c=walletNextDiscount;const active=walletCouponIsActive(c);const home=document.getElementById('homeWalletCoupon');if(home)home.style.display=active?'flex':'none';const timer=document.getElementById('homeWalletCouponTimer');if(active){const pct=Number(c.percent)||5;const hp=document.getElementById('homeWalletCouponPercent');if(hp)hp.textContent=pct+'%';if(timer)timer.textContent=Number(c.expiresAt)?walletFormatRemaining(Number(c.expiresAt)-Date.now()):'بدون مدة محددة';if(Number(c.expiresAt)&&Number(c.expiresAt)<=Date.now()){walletNextDiscount=null;walletRenderNextDiscount();}}}
+        function walletUpdateCouponCountdown(){const c=walletNextDiscount;const active=walletCouponIsActive(c);document.body.classList.toggle('mz-has-discount',!!active);const home=document.getElementById('homeWalletCoupon');if(home)home.style.display=active?'flex':'none';const timer=document.getElementById('homeWalletCouponTimer');if(active){const pct=Number(c.percent)||5;const hp=document.getElementById('homeWalletCouponPercent');if(hp)hp.textContent=pct+'%';if(timer)timer.textContent=Number(c.expiresAt)?walletFormatRemaining(Number(c.expiresAt)-Date.now()):'بدون مدة محددة';if(Number(c.expiresAt)&&Number(c.expiresAt)<=Date.now()){walletNextDiscount=null;walletRenderNextDiscount();}}}
         setInterval(walletUpdateCouponCountdown,1000);
         function walletRenderNextDiscount(){
             const box=document.getElementById('walletNextDiscountBox'); if(!box)return;
@@ -5777,16 +5805,34 @@ body.light-theme #walletPage #walletLoginArea .wallet-auth-status.error{color:#d
   const grid=document.getElementById('gamesGrid');
   if(!grid)return;
   const supportsIO='IntersectionObserver' in window;
-  let batch=0,batchTimer=null;
+  // اتجاه التمرير: نزول = الكروت تطلع من تحت، صعود = تنزل من فوق
+  let lastY=window.scrollY,dir=1;
+  window.addEventListener('scroll',()=>{const y=window.scrollY;if(Math.abs(y-lastY)>2){dir=y>lastY?1:-1;lastY=y;}},{passive:true});
+  function show(c,i){
+    c.classList.remove('mohab-shown','mohab-in','mohab-up');
+    void c.offsetWidth; // إعادة تشغيل الحركة
+    c.style.setProperty('--mohab-d',Math.min(i,5)*70+'ms');
+    if(dir<0)c.classList.add('mohab-up');
+    c.classList.add('mohab-in');
+  }
+  function hide(c){c.classList.remove('mohab-in','mohab-up','mohab-shown');c.style.removeProperty('--mohab-d');}
   const io=supportsIO?new IntersectionObserver(entries=>{
-    const vis=entries.filter(e=>e.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top||b.boundingClientRect.left-a.boundingClientRect.left);
-    vis.forEach((e,i)=>{
-      const c=e.target;io.unobserve(c);
-      c.style.setProperty('--mohab-d',Math.min(i,6)*90+'ms');
-      c.classList.add('mohab-in');
-      c.addEventListener('animationend',()=>{c.classList.remove('mohab-reveal','mohab-in');c.style.removeProperty('--mohab-d');},{once:true});
+    const enter=[];
+    entries.forEach(e=>{
+      const c=e.target;
+      if(!e.isIntersecting&&e.intersectionRatio===0){hide(c);return;} // خرج من الشاشة: يجهز للمؤثر من جديد
+      if(e.intersectionRatio>=0.12&&!c.classList.contains('mohab-in')&&!c.classList.contains('mohab-shown'))enter.push(e);
     });
-  },{threshold:0.12,rootMargin:'0px 0px -6% 0px'}):null;
+    enter.sort((a,b)=>((a.boundingClientRect.top-b.boundingClientRect.top)*dir)||(b.boundingClientRect.left-a.boundingClientRect.left));
+    enter.forEach((e,i)=>show(e.target,i));
+  },{threshold:[0,0.12],rootMargin:'0px 0px -6% 0px'}):null;
+  // عند انتهاء حركة الكرت نفسه (وليس حركات العناصر الداخلية) يثبت ظاهرًا
+  grid.addEventListener('animationend',e=>{
+    const c=e.target;
+    if(c&&c.classList&&c.classList.contains('game-card')&&/^mohabCard/.test(e.animationName)){
+      c.classList.remove('mohab-in','mohab-up');c.classList.add('mohab-shown');c.style.removeProperty('--mohab-d');
+    }
+  });
   function prepare(){
     if(!io)return;
     grid.querySelectorAll('.game-card:not(.mohab-seen)').forEach(c=>{
@@ -5794,12 +5840,12 @@ body.light-theme #walletPage #walletLoginArea .wallet-auth-status.error{color:#d
       if(window.__mohabReady)io.observe(c);
     });
   }
-  // أي كروت جديدة تضاف (أو يعاد رسمها من قاعدة البيانات) تجهز للظهور التدريجي
+  // أي كروت جديدة تضاف (أو يعاد رسمها من قاعدة البيانات) تجهز للمؤثر
   new MutationObserver(prepare).observe(grid,{childList:true});
-  document.addEventListener('mohab-ready',()=>{grid.querySelectorAll('.game-card.mohab-reveal:not(.mohab-in)').forEach(c=>io&&io.observe(c));});
+  document.addEventListener('mohab-ready',()=>{grid.querySelectorAll('.game-card.mohab-reveal').forEach(c=>io&&io.observe(c));});
   prepare();
-  // أمان: لو لأي سبب لم تظهر الكروت بعد 20 ثانية نظهرها بدون مؤثر
-  setTimeout(()=>grid.querySelectorAll('.game-card.mohab-reveal:not(.mohab-in)').forEach(c=>{if(!window.__mohabReady||!io)c.classList.remove('mohab-reveal');}),20000);
+  // أمان: لو لم يجهز المؤثر بعد 20 ثانية نُظهر الكروت بدونه
+  setTimeout(()=>grid.querySelectorAll('.game-card.mohab-reveal:not(.mohab-in):not(.mohab-shown)').forEach(c=>{if(!window.__mohabReady||!io)c.classList.remove('mohab-reveal');}),20000);
 })();
 </script>
 </body>
