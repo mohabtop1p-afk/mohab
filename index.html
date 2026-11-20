@@ -1775,26 +1775,29 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 <link rel="preconnect" href="https://picturetolink.com" crossorigin>
 <link rel="preload" as="image" href="https://picturetolink.com/i/f6xXM22J29.gif" fetchpriority="high">
 <style id="mohab-loader-gif">
-  /* ===== شاشة التحميل: صورة متحركة GIF + نص أسفلها ===== */
-  #mohabInitialLoader .mz-ld-orb,#mohabInitialLoader .mz-ld-dots{display:none!important}
+  /* ===== شاشة التحميل: GIF بملء الشاشة + نص التحميل فوقه بدون إطار ===== */
+  #mohabInitialLoader{padding:0!important;background:#0a1020!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  #mohabInitialLoader::before,#mohabInitialLoader .mz-ld-orb,#mohabInitialLoader .mz-ld-dots{display:none!important}
   #mohabInitialLoader .mohab-loader-card,body.light-theme #mohabInitialLoader .mohab-loader-card{
-    background:none!important;border:0!important;box-shadow:none!important;padding:0!important;
-    width:min(320px,100%)!important;animation:none!important;display:flex;flex-direction:column;align-items:center;
+    position:absolute!important;inset:0!important;width:100%!important;max-width:none!important;height:100%!important;
+    background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important;
+    animation:none!important;display:block!important;border-radius:0!important;
   }
   #mohabInitialLoader .mohab-loader-card::before,#mohabInitialLoader .mohab-loader-card::after{display:none!important}
-  #mohabInitialLoader .mz-gif-loader{display:block;width:min(260px,64vw);height:auto;max-height:42vh;object-fit:contain;margin:0 auto 26px}
-  #mohabInitialLoader .mz-gif-foot{width:100%;text-align:center}
-  #mohabInitialLoader .mz-gif-text{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 0 14px;
-    font-weight:800;font-size:15px;color:#e2e8f0;letter-spacing:.3px;text-shadow:0 0 14px rgba(34,211,238,.35)}
-  #mohabInitialLoader .mz-gif-text i{color:#22d3ee;font-size:15px}
+  #mohabInitialLoader .mz-gif-loader{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;margin:0;border:0;display:block}
+  @media (min-aspect-ratio:1/1){#mohabInitialLoader .mz-gif-loader{object-fit:contain}}
+  #mohabInitialLoader .mz-gif-foot{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 9%);padding:0 24px;text-align:center;z-index:2}
+  #mohabInitialLoader .mz-gif-text{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 0 14px;background:none;border:0;
+    font-weight:800;font-size:16px;color:#fff!important;letter-spacing:.3px;text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 16px rgba(0,0,0,.75)}
+  #mohabInitialLoader .mz-gif-text i{color:#22d3ee;font-size:16px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}
   #mohabInitialLoader .mz-gif-dots{display:inline-flex;direction:ltr;color:#22d3ee}
   #mohabInitialLoader .mz-gif-dots u{text-decoration:none;animation:mzGifDot 1.2s infinite both}
   #mohabInitialLoader .mz-gif-dots u:nth-child(2){animation-delay:.2s}
   #mohabInitialLoader .mz-gif-dots u:nth-child(3){animation-delay:.4s}
   @keyframes mzGifDot{0%,80%,100%{opacity:.15}40%{opacity:1}}
-  #mohabInitialLoader .mohab-loader-bar{width:78%;margin:0 auto;height:6px}
-  body.light-theme #mohabInitialLoader .mz-gif-text{color:#0f172a;text-shadow:none}
-  body.light-theme #mohabInitialLoader .mz-gif-text i,body.light-theme #mohabInitialLoader .mz-gif-dots{color:#0891b2}
+  #mohabInitialLoader .mohab-loader-bar{width:min(300px,70%);margin:0 auto;height:5px;background:rgba(255,255,255,.22);box-shadow:none}
+  body.light-theme #mohabInitialLoader .mz-gif-text{color:#fff!important}
+  body.light-theme #mohabInitialLoader .mohab-loader-bar{background:rgba(255,255,255,.22)}
   @media (prefers-reduced-motion:reduce){#mohabInitialLoader .mz-gif-dots u{animation:none;opacity:1}}
 </style>
 </head>
@@ -1812,6 +1815,46 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
     <div class="mohab-loader-error" id="mohabLoaderError"></div>
   </div>
 </div>
+<script id="mohab-gif-timing">
+(function(){
+  /* يضمن أن المستخدم يشاهد الـ GIF دورة كاملة قبل فتح الموقع */
+  var FALLBACK_MS=4000, MAX_WAIT_MS=9000, t0=Date.now(), img=document.getElementById('mzGifLoader'), url='https://picturetolink.com/i/f6xXM22J29.gif';
+  var done,ready=new Promise(function(r){done=r;});
+  window.__mzGifReady=ready;
+  var fin=false;function finish(){if(!fin){fin=true;done();}}
+  setTimeout(finish,MAX_WAIT_MS);                      // حد أقصى حتى لا يعلق التحميل
+  function schedule(ms){var left=Math.max(0,ms-(Date.now()-gifShown));setTimeout(finish,left);}
+  var gifShown=Date.now(),duration=FALLBACK_MS,dReady=false,iReady=false;
+  function check(){ if(dReady&&iReady){gifShown=gifShown||Date.now();schedule(duration);} }
+  function parse(buf){ // مجموع زمن إطارات الـ GIF
+    var b=new Uint8Array(buf),i=0,total=0;
+    if(b.length<14||String.fromCharCode(b[0],b[1],b[2])!=='GIF')return 0;
+    var flags=b[10];i=13;if(flags&0x80)i+=3*(1<<((flags&7)+1));
+    while(i<b.length){
+      var t=b[i++];
+      if(t===0x21){var l=b[i++];
+        if(l===0xF9){total+=(b[i+2]|(b[i+3]<<8))*10||0;}
+        if(l===0xF9)total=total; 
+        while(i<b.length){var n=b[i++];if(!n)break;i+=n;}
+      }else if(t===0x2C){i+=8;var f=b[i++];if(f&0x80)i+=3*(1<<((f&7)+1));i++;
+        while(i<b.length){var n2=b[i++];if(!n2)break;i+=n2;}
+      }else if(t===0x3B)break;else break;
+    }
+    return total;
+  }
+  try{
+    fetch(url,{mode:'cors',cache:'force-cache'}).then(function(r){return r.arrayBuffer();}).then(function(buf){
+      var d=parse(buf);if(d>=800&&d<=MAX_WAIT_MS-500)duration=d;else if(d>MAX_WAIT_MS-500)duration=MAX_WAIT_MS-500;
+      dReady=true;check();
+    }).catch(function(){dReady=true;check();});
+  }catch(e){dReady=true;}
+  function shown(){gifShown=Date.now();iReady=true;check();}
+  if(img){
+    if(img.complete&&img.naturalWidth>0)shown();
+    else{img.addEventListener('load',shown);img.addEventListener('error',finish);}
+  }else finish();
+})();
+</script>
 <script id="mohab-initial-loader-controller">
 (function(){
   const DB='https://mohab-store-default-rtdb.firebaseio.com';
@@ -1839,7 +1882,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
     if(finished)return;finished=true;
     target=100;
     const wait=Math.max(0,250-(Date.now()-started));
-    setTimeout(()=>{
+    Promise.all([sleep(wait),window.__mzGifReady||Promise.resolve()]).then(()=>{
       current=100;paint();msg('اكتمل التحميل');
       setTimeout(()=>{
         const el=overlay();
@@ -1847,7 +1890,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
         window.__mohabReady=true;
         document.dispatchEvent(new Event('mohab-ready'));
       },120);
-    },wait);
+    });
   }
   // ننتظر الصور الأساسية فقط (الشريط العلوي + الشعار + أول 8 منتجات) بحد أقصى ثانيتين ونصف
   function waitImages(){
