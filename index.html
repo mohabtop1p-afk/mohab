@@ -4091,6 +4091,17 @@ globalGames = data || {};
             const mode=await walletShowChoiceNotice('اختار طريقة الطلب',`الباقة: ${order.packName}\nالسعر: ${order.price}\n\nتقدر تدفع من رصيد المحفظة، أو ترسل طلب واتساب غير مدفوع وتكمل الدفع مع الدعم.`, 'متابعة', {pack:order.packName,price:order.price});
             if(mode==='paid') return walletConfirmPurchase(order, launch);
             if(!mode && window._mohabOrderTab && !window._mohabOrderTab.closed){window._mohabOrderTab.close();window._mohabOrderTab=null;}
+            if(mode==='telegram') {
+                const code='MTU-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+                try {
+                    const orderRef=db.ref(`wallet_orders/${walletUser.uid}`).push();
+                    await orderRef.set({code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,price:order.price,method:order.method,status:'pending_payment',paymentType:'whatsapp',createdAt:firebase.database.ServerValue.TIMESTAMP});
+                    walletListenOrders();
+                    let msg=`مرحباً، أريد طلب شحن غير مدفوع من MOHAB STORE\n🎮 اللعبة/المنتج: ${order.gameName}\n📦 الباقة: ${order.packName}\n💰 السعر: ${order.price}\n⚙️ طريقة الشحن: ${order.method}\n🧾 كود الطلب: ${code}\n⏳ الحالة: بانتظار الدفع عبر تليجرام`;
+                    const copied=await launchTelegramText(msg);
+                    await walletShowNotice('تم تسجيل طلبك',`تم تسجيل الطلب بالكود ${code}.`+(copied?' تم نسخ رسالة الطلب، الصقها في محادثة تليجرام وأرسلها.':'')+' تقدر تتابع حالته من المحفظة، ولن يبدأ الشحن إلا بعد تأكيد الدفع.', 'success');
+                } catch(e) { console.error(e); walletShowNotice('تعذر تسجيل الطلب','لم يتم حفظ الطلب. حاول مرة أخرى.', 'warning'); }
+            }
             if(mode==='whatsapp') {
                 const code='MWU-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
                 try {
@@ -4102,6 +4113,15 @@ globalGames = data || {};
                     await walletShowNotice('تم تسجيل طلبك',`تم تسجيل الطلب بالكود ${code}. تقدر تتابع حالته من المحفظة، ولن يبدأ الشحن إلا بعد تأكيد الدفع.`, 'success');
                 } catch(e) { console.error(e); walletShowNotice('تعذر تسجيل الطلب','لم يتم حفظ الطلب. حاول مرة أخرى.', 'warning'); }
             }
+        }
+        async function launchTelegramText(text){
+            let copied=false;
+            try{ if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(text);copied=true;} }catch(e){}
+            if(!copied){
+                try{const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:-1000px;opacity:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,ta.value.length);copied=document.execCommand('copy');ta.remove();}catch(e){}
+            }
+            window.open('https://t.me/mohabstore_1x','_blank','noopener,noreferrer');
+            return copied;
         }
         function launchWhatsAppText(text){window.open(`https://wa.me/201125808758?text=${encodeURIComponent(text)}`,'_blank','noopener,noreferrer');}
         function walletShowChoiceNotice(title,message,okText,meta) {
@@ -4118,17 +4138,17 @@ globalGames = data || {};
                 const msgEl=overlay.querySelector('.wallet-notice-message');
                 if(meta){
                     const ne=v=>walletEscape(v==null?'':v);
-                    msgEl.innerHTML='<span class="mz-sum"><span class="mz-sum-row"><span class="mz-sum-ic mz-ic-pack"><i class="fas fa-box-open"></i></span><span class="mz-sum-tx"><small>الباقة</small><b>'+ne(meta.pack)+'</b></span></span><span class="mz-sum-row mz-sum-price"><span class="mz-sum-ic mz-ic-price"><i class="fas fa-tag"></i></span><span class="mz-sum-tx"><small>السعر</small><b>'+ne(meta.price)+'</b></span></span></span><span class="mz-hint"><i class="fas fa-circle-info"></i><span>تقدر تدفع من رصيد المحفظة، أو ترسل طلب واتساب غير مدفوع وتكمل الدفع مع الدعم.</span></span>';
+                    msgEl.innerHTML='<span class="mz-sum"><span class="mz-sum-row"><span class="mz-sum-ic mz-ic-pack"><i class="fas fa-box-open"></i></span><span class="mz-sum-tx"><small>الباقة</small><b>'+ne(meta.pack)+'</b></span></span><span class="mz-sum-row mz-sum-price"><span class="mz-sum-ic mz-ic-price"><i class="fas fa-tag"></i></span><span class="mz-sum-tx"><small>السعر</small><b>'+ne(meta.price)+'</b></span></span></span><span class="mz-hint"><i class="fas fa-circle-info"></i><span>تقدر تدفع من رصيد المحفظة، أو ترسل طلب واتساب أو تليجرام غير مدفوع وتكمل الدفع مع الدعم.</span></span>';
                 }else msgEl.textContent=message;
                 let mzX=mzCard.querySelector('.mz-notice-x');
                 if(!mzX){mzX=document.createElement('button');mzX.type='button';mzX.className='mz-notice-x';mzX.setAttribute('aria-label','إغلاق');mzX.innerHTML='<i class="fas fa-xmark"></i>';mzCard.appendChild(mzX);}
                 const actions=overlay.querySelector('.wallet-notice-actions');
                 {const ic=overlay.querySelector('.wallet-notice-icon');ic.className='wallet-notice-icon is-confirm';ic.innerHTML='<i class="fas fa-cart-shopping"></i>';}
-                actions.innerHTML='<button type="button" class="wallet-notice-ok mz-opt mz-opt-pay"><span class="mz-ic"><i class="fas fa-wallet"></i></span><span class="mz-tx"><b>الدفع من المحفظة</b><small>خصم فوري من رصيدك وتنفيذ الطلب</small></span><i class="fas fa-chevron-left mz-ch"></i></button><button type="button" class="wallet-notice-cancel mz-opt mz-opt-wa"><span class="mz-ic"><i class="fab fa-whatsapp"></i></span><span class="mz-tx"><b>طلب واتساب غير مدفوع</b><small>تكمل الدفع مع الدعم</small></span><i class="fas fa-chevron-left mz-ch"></i></button><button type="button" class="wallet-notice-cancel" data-cancel="1"><i class="fas fa-xmark"></i> إلغاء</button>';
+                actions.innerHTML='<button type="button" class="wallet-notice-ok mz-opt mz-opt-pay"><span class="mz-ic"><i class="fas fa-wallet"></i></span><span class="mz-tx"><b>الدفع من المحفظة</b><small>خصم فوري من رصيدك وتنفيذ الطلب</small></span><i class="fas fa-chevron-left mz-ch"></i></button><button type="button" class="wallet-notice-cancel mz-opt mz-opt-wa"><span class="mz-ic"><i class="fab fa-whatsapp"></i></span><span class="mz-tx"><b>طلب واتساب غير مدفوع</b><small>تكمل الدفع مع الدعم</small></span><i class="fas fa-chevron-left mz-ch"></i></button><button type="button" class="wallet-notice-cancel mz-opt mz-opt-tg"><span class="mz-ic"><i class="fab fa-telegram"></i></span><span class="mz-tx"><b>طلب تليجرام غير مدفوع</b><small>تكمل الدفع مع الدعم</small></span><i class="fas fa-chevron-left mz-ch"></i></button><button type="button" class="wallet-notice-cancel" data-cancel="1"><i class="fas fa-xmark"></i> إلغاء</button>';
                 overlay.style.display='flex';
                 const finish=v=>{overlay.style.display='none';overlay.classList.remove('mz-choice');overlay.onclick=null;actions.innerHTML='<button class="wallet-notice-ok">حسنًا</button><button class="wallet-notice-cancel">إلغاء</button>';resolve(v);};
                 mzX.onclick=()=>finish(null);overlay.onclick=e=>{if(e.target===overlay)finish(null);};
-                actions.children[0].onclick=()=>finish('paid'); actions.children[1].onclick=()=>finish('whatsapp'); actions.children[2].onclick=()=>finish(null);
+                actions.children[0].onclick=()=>finish('paid'); actions.children[1].onclick=()=>finish('whatsapp'); actions.children[2].onclick=()=>finish('telegram'); actions.children[3].onclick=()=>finish(null);
             });
         }
         let walletOrdersListener=null, walletOrdersRef=null, walletAdminAdjustmentsListener=null;
@@ -4195,7 +4215,7 @@ globalGames = data || {};
                     mzRows.push(mzRow('hashtag','كود الطلب',walletEscape(o.code||o.key)));
                     mzRows.push(mzRow('tag','السعر',walletEscape(o.price||'—')));
                     mzRows.push(mzRow('bolt','طريقة الشحن',walletEscape(o.method||'يتم التأكيد مع الدعم')));
-                    mzRows.push(mzRow('wallet','طريقة الدفع',walletEscape(o.paymentType==='wallet'?'محفظة MOHAB STORE':o.paymentType==='whatsapp'?'واتساب — غير مدفوع':'غير محددة')));
+                    mzRows.push(mzRow('wallet','طريقة الدفع',walletEscape(o.paymentType==='wallet'?'محفظة MOHAB STORE':o.paymentType==='whatsapp'?(String(o.code||'').indexOf('MTU-')===0?'تليجرام — غير مدفوع':'واتساب — غير مدفوع'):'غير محددة')));
                     if(Number(o.discountPercent)>0)mzRows.push(mzRow('percent','الخصم المطبق',walletEscape(o.discountPercent)+'%'));
                     if(o.autoTopup){
                         mzRows.push(mzRow('gamepad','نوع اللعبة',walletEscape(o.game||o.gameName||'—')));
@@ -4294,7 +4314,7 @@ globalGames = data || {};
             const statusLabels={pending_payment:'بانتظار الدفع',paid:'تم الدفع',processing:'تم إرسال الطلب',shipped:'تم الشحن',rejected:'المنتج غير متوفر الآن',topup_failed:'المنتج غير متوفر الآن',cancelled:'ملغي'};
             let modal=document.getElementById('mohabOrderReceipt');
             if(!modal){modal=document.createElement('div');modal.id='mohabOrderReceipt';modal.innerHTML='<div class="mohab-receipt-card" role="dialog" aria-modal="true"><div class="mohab-receipt-head"><div><b>إيصال MOHAB STORE</b><small class="mohab-receipt-code"></small></div><button type="button" class="mohab-receipt-close" aria-label="إغلاق">×</button></div><div class="mohab-receipt-content"></div><button type="button" class="mohab-receipt-done">إغلاق</button></div>';document.body.appendChild(modal);}
-            const playerName=walletExtractPlayerName(order);const fields=[['نوع اللعبة / المنتج',order.game||order.gameName||'—'],['الباقة',order.pack||order.packName||'—'],['اسم اللاعب',playerName||'غير متاح من مزود الخدمة'],['معرف اللاعب',order.playerId||'—'],['المنطقة / السيرفر',order.zoneId||'—'],['السعر',order.price||'—'],['طريقة الدفع',order.paymentType==='wallet'?'محفظة MOHAB STORE':order.paymentType==='whatsapp'?'واتساب':'—'],['حالة الطلب',statusLabels[order.status]||order.status||'—'],['كود الطلب',order.code||order.key||'—'],['تاريخ الطلب',order.createdAt?new Date(order.createdAt).toLocaleString('ar-EG'):'—']];
+            const playerName=walletExtractPlayerName(order);const fields=[['نوع اللعبة / المنتج',order.game||order.gameName||'—'],['الباقة',order.pack||order.packName||'—'],['اسم اللاعب',playerName||'غير متاح من مزود الخدمة'],['معرف اللاعب',order.playerId||'—'],['المنطقة / السيرفر',order.zoneId||'—'],['السعر',order.price||'—'],['طريقة الدفع',order.paymentType==='wallet'?'محفظة MOHAB STORE':order.paymentType==='whatsapp'?(String(order.code||'').indexOf('MTU-')===0?'تليجرام':'واتساب'):'—'],['حالة الطلب',statusLabels[order.status]||order.status||'—'],['كود الطلب',order.code||order.key||'—'],['تاريخ الطلب',order.createdAt?new Date(order.createdAt).toLocaleString('ar-EG'):'—']];
             modal.querySelector('.mohab-receipt-code').textContent='رقم الطلب: '+String(order.code||order.key||'—');
             modal.querySelector('.mohab-receipt-content').innerHTML=fields.map(([k,v])=>`<div class="mohab-receipt-line"><span>${walletEscape(k)}</span><b>${walletEscape(v)}</b></div>`).join('');
             modal.style.display='flex';
@@ -5925,6 +5945,7 @@ body #walletCustomNotice.mz-choice .wallet-notice-message{margin:0 0 18px!import
 body #walletCustomNotice.mz-choice .wallet-notice-actions button.mz-opt{justify-content:flex-start;text-align:right;gap:13px;min-height:66px;padding:11px 14px;animation:mzUp .5s cubic-bezier(.2,.9,.3,1) both}
 body #walletCustomNotice.mz-choice .wallet-notice-actions button.mz-opt:nth-child(1){animation-delay:.14s}
 body #walletCustomNotice.mz-choice .wallet-notice-actions button.mz-opt:nth-child(2){animation-delay:.22s}
+body #walletCustomNotice.mz-choice .wallet-notice-actions button.mz-opt:nth-child(3){animation-delay:.28s}
 body #walletCustomNotice.mz-choice .wallet-notice-actions button[data-cancel="1"]{animation:mzUp .5s .3s cubic-bezier(.2,.9,.3,1) both;justify-content:center;gap:8px}
 .mz-opt .mz-ic{flex:0 0 44px;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:19px;background:rgba(255,255,255,.2)}
 .mz-opt .mz-tx{display:block;flex:1;min-width:0}
@@ -5934,6 +5955,8 @@ body #walletCustomNotice.mz-choice .wallet-notice-actions button[data-cancel="1"
 .mz-opt:hover .mz-ch{transform:translateX(-4px)}
 body #walletCustomNotice .wallet-notice-actions button.mz-opt-wa{color:#eafff1;background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(16,185,129,.07))!important;border:1px solid rgba(34,197,94,.5)!important}
 .mz-opt-wa .mz-ic{background:linear-gradient(145deg,#22c55e,#16a34a);box-shadow:0 6px 16px rgba(34,197,94,.35)}
+body #walletCustomNotice .wallet-notice-actions button.mz-opt-tg{color:#e8f6ff;background:linear-gradient(135deg,rgba(14,165,233,.16),rgba(56,189,248,.07))!important;border:1px solid rgba(14,165,233,.5)!important}
+.mz-opt-tg .mz-ic{background:linear-gradient(145deg,#38bdf8,#0284c7);box-shadow:0 6px 16px rgba(14,165,233,.35)}
 
 @keyframes mzNoticeFade{from{opacity:0}to{opacity:1}}
 @keyframes mzNoticePop{0%{opacity:0;transform:translateY(26px) scale(.9)}100%{opacity:1;transform:none}}
@@ -5958,6 +5981,7 @@ body.light-theme #walletCustomNotice .mz-sum-price .mz-sum-tx b{color:#0e7490}
 body.light-theme #walletCustomNotice .mz-hint{color:#64748b}
 body.light-theme #walletCustomNotice .mz-notice-x{background:#f1f5f9;border-color:#d3dce7;color:#475569}
 body.light-theme #walletCustomNotice .wallet-notice-actions button.mz-opt-wa{color:#14532d!important;background:linear-gradient(135deg,#ecfdf5,#f0fdf4)!important;border-color:#86efac!important}
+body.light-theme #walletCustomNotice .wallet-notice-actions button.mz-opt-tg{color:#075985!important;background:linear-gradient(135deg,#f0f9ff,#e0f2fe)!important;border-color:#7dd3fc!important}
 @media(prefers-reduced-motion:reduce){body #walletCustomNotice,body #walletCustomNotice *,body #walletCustomNotice .wallet-notice-card{animation:none!important}}
 </style>
 <script id="mohab-scroll-reveal">
