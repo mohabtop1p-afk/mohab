@@ -3998,14 +3998,15 @@ globalGames = data || {};
                     document.body.appendChild(overlay);
                 }
                 const card=overlay.querySelector('.wallet-notice-card');
+                overlay.classList.remove('mz-choice');
                 overlay.querySelector('.wallet-notice-title').textContent=title;
                 overlay.querySelector('.wallet-notice-message').textContent=message;
                 const noticeIcon=overlay.querySelector('.wallet-notice-icon');
-                noticeIcon.classList.toggle('is-success',type==='success');
+                noticeIcon.className='wallet-notice-icon'+(type==='success'?' is-success':(type==='warning'?' is-warning':(confirmMode?' is-confirm':'')));
                 if(type==='success') noticeIcon.innerHTML='<svg class="wallet-success-svg" viewBox="0 0 48 48" aria-hidden="true"><circle class="wallet-success-circle" cx="24" cy="24" r="18.5"></circle><path class="wallet-success-path" d="M14.5 24.5 21 31l13-14"></path></svg>';
-                else noticeIcon.textContent=type==='warning'?'!':'✦';
-                overlay.querySelector('.wallet-notice-cancel').style.display=confirmMode?'':'none';
-                overlay.querySelector('.wallet-notice-ok').textContent=confirmMode?'تأكيد الطلب':'حسنًا';
+                else noticeIcon.innerHTML=type==='warning'?'<i class="fas fa-triangle-exclamation"></i>':(confirmMode?'<i class="fas fa-circle-question"></i>':'<i class="fas fa-circle-info"></i>');
+                overlay.querySelector('.wallet-notice-cancel').innerHTML='<i class="fas fa-xmark"></i> إلغاء';overlay.querySelector('.wallet-notice-cancel').style.display=confirmMode?'':'none';
+                overlay.querySelector('.wallet-notice-ok').innerHTML=confirmMode?'<i class="fas fa-circle-check"></i> تأكيد الطلب':'<i class="fas fa-check"></i> حسنًا';
                 overlay.style.display='flex';
                 const finish=value=>{overlay.style.display='none'; overlay.querySelector('.wallet-notice-ok').onclick=null; overlay.querySelector('.wallet-notice-cancel').onclick=null; resolve(value);};
                 overlay.querySelector('.wallet-notice-ok').onclick=()=>finish(true);
@@ -4020,7 +4021,7 @@ globalGames = data || {};
         })();
 
         async function walletChooseOrderMode(order, launch) {
-            const mode=await walletShowChoiceNotice('اختار طريقة الطلب',`الباقة: ${order.packName}\nالسعر: ${order.price}\n\nتقدر تدفع من رصيد المحفظة، أو ترسل طلب واتساب غير مدفوع وتكمل الدفع مع الدعم.`, 'متابعة');
+            const mode=await walletShowChoiceNotice('اختار طريقة الطلب',`الباقة: ${order.packName}\nالسعر: ${order.price}\n\nتقدر تدفع من رصيد المحفظة، أو ترسل طلب واتساب غير مدفوع وتكمل الدفع مع الدعم.`, 'متابعة', {pack:order.packName,price:order.price});
             if(mode==='paid') return walletConfirmPurchase(order, launch);
             if(!mode && window._mohabOrderTab && !window._mohabOrderTab.closed){window._mohabOrderTab.close();window._mohabOrderTab=null;}
             if(mode==='whatsapp') {
@@ -4036,7 +4037,7 @@ globalGames = data || {};
             }
         }
         function launchWhatsAppText(text){window.open(`https://wa.me/201125808758?text=${encodeURIComponent(text)}`,'_blank','noopener,noreferrer');}
-        function walletShowChoiceNotice(title,message,okText) {
+        function walletShowChoiceNotice(title,message,okText,meta) {
             return new Promise(resolve=>{
                 let overlay=document.getElementById('walletCustomNotice');
                 if(!overlay){
@@ -4045,11 +4046,21 @@ globalGames = data || {};
                     document.body.appendChild(overlay);
                 }
                 overlay.querySelector('.wallet-notice-title').textContent=title;
-                overlay.querySelector('.wallet-notice-message').textContent=message;
+                const mzCard=overlay.querySelector('.wallet-notice-card');
+                overlay.classList.add('mz-choice');
+                const msgEl=overlay.querySelector('.wallet-notice-message');
+                if(meta){
+                    const ne=v=>walletEscape(v==null?'':v);
+                    msgEl.innerHTML='<span class="mz-sum"><span class="mz-sum-row"><span class="mz-sum-ic mz-ic-pack"><i class="fas fa-box-open"></i></span><span class="mz-sum-tx"><small>الباقة</small><b>'+ne(meta.pack)+'</b></span></span><span class="mz-sum-row mz-sum-price"><span class="mz-sum-ic mz-ic-price"><i class="fas fa-tag"></i></span><span class="mz-sum-tx"><small>السعر</small><b>'+ne(meta.price)+'</b></span></span></span><span class="mz-hint"><i class="fas fa-circle-info"></i><span>تقدر تدفع من رصيد المحفظة، أو ترسل طلب واتساب غير مدفوع وتكمل الدفع مع الدعم.</span></span>';
+                }else msgEl.textContent=message;
+                let mzX=mzCard.querySelector('.mz-notice-x');
+                if(!mzX){mzX=document.createElement('button');mzX.type='button';mzX.className='mz-notice-x';mzX.setAttribute('aria-label','إغلاق');mzX.innerHTML='<i class="fas fa-xmark"></i>';mzCard.appendChild(mzX);}
                 const actions=overlay.querySelector('.wallet-notice-actions');
-                overlay.querySelector('.wallet-notice-icon').innerHTML='<i class="fas fa-cart-shopping"></i>';actions.innerHTML='<button type="button" class="wallet-notice-ok"><i class="fas fa-wallet"></i> الدفع من المحفظة</button><button type="button" class="wallet-notice-cancel"><i class="fab fa-whatsapp"></i> طلب واتساب غير مدفوع</button><button type="button" class="wallet-notice-cancel" data-cancel="1">إلغاء</button>';
+                {const ic=overlay.querySelector('.wallet-notice-icon');ic.className='wallet-notice-icon is-confirm';ic.innerHTML='<i class="fas fa-cart-shopping"></i>';}
+                actions.innerHTML='<button type="button" class="wallet-notice-ok mz-opt mz-opt-pay"><span class="mz-ic"><i class="fas fa-wallet"></i></span><span class="mz-tx"><b>الدفع من المحفظة</b><small>خصم فوري من رصيدك وتنفيذ الطلب</small></span><i class="fas fa-chevron-left mz-ch"></i></button><button type="button" class="wallet-notice-cancel mz-opt mz-opt-wa"><span class="mz-ic"><i class="fab fa-whatsapp"></i></span><span class="mz-tx"><b>طلب واتساب غير مدفوع</b><small>تكمل الدفع مع الدعم</small></span><i class="fas fa-chevron-left mz-ch"></i></button><button type="button" class="wallet-notice-cancel" data-cancel="1"><i class="fas fa-xmark"></i> إلغاء</button>';
                 overlay.style.display='flex';
-                const finish=v=>{overlay.style.display='none';actions.innerHTML='<button class="wallet-notice-ok">حسنًا</button><button class="wallet-notice-cancel">إلغاء</button>';resolve(v);};
+                const finish=v=>{overlay.style.display='none';overlay.classList.remove('mz-choice');overlay.onclick=null;actions.innerHTML='<button class="wallet-notice-ok">حسنًا</button><button class="wallet-notice-cancel">إلغاء</button>';resolve(v);};
+                mzX.onclick=()=>finish(null);overlay.onclick=e=>{if(e.target===overlay)finish(null);};
                 actions.children[0].onclick=()=>finish('paid'); actions.children[1].onclick=()=>finish('whatsapp'); actions.children[2].onclick=()=>finish(null);
             });
         }
@@ -5799,6 +5810,88 @@ body.light-theme #walletPage #walletLoginArea .wallet-auth-status.error{color:#d
 @media(max-width:360px){body:not(.mz-x) #walletPage #walletLoginArea .wallet-password-strength ul{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){body:not(.mz-x) #walletPage #walletLoginArea *{transition:none!important}}
 
+
+/* ===== تصميم جديد لمربعات التأكيد والإشعارات (walletCustomNotice) ===== */
+body #walletCustomNotice{background:radial-gradient(circle at 50% 28%,rgba(14,116,144,.30),rgba(2,6,18,.88) 72%)!important;backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2);animation:mzNoticeFade .25s ease-out both}
+body #walletCustomNotice .wallet-notice-card{position:relative;width:min(100%,430px)!important;max-height:92vh;overflow-x:hidden;overflow-y:auto;border-radius:28px!important;padding:32px 22px 22px!important;text-align:center;
+  background:linear-gradient(160deg,rgba(26,39,64,.97),rgba(8,13,27,.99))!important;border:1px solid rgba(103,232,249,.28)!important;
+  box-shadow:0 30px 90px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.04) inset,0 0 60px rgba(6,182,212,.14)!important;
+  animation:mzNoticePop .45s cubic-bezier(.2,1.15,.3,1) both}
+body #walletCustomNotice .wallet-notice-card::before{content:"";position:absolute;top:0;left:12%;right:12%;height:3px;border-radius:0 0 8px 8px;background:linear-gradient(90deg,transparent,#22d3ee,#818cf8,transparent)}
+body #walletCustomNotice .wallet-notice-icon{position:relative;width:78px!important;height:78px!important;border-radius:25px!important;margin:-2px auto 18px!important;font-size:32px!important;color:#fff;display:grid;place-items:center;
+  background:linear-gradient(145deg,#06b6d4,#3b82f6 58%,#6366f1)!important;box-shadow:0 14px 34px rgba(37,99,235,.45),inset 0 1px 0 rgba(255,255,255,.38)!important;
+  animation:walletSuccessPop .5s cubic-bezier(.2,.8,.2,1) both,mzIconFloat 3.2s ease-in-out .5s infinite}
+body #walletCustomNotice .wallet-notice-icon::before{content:"";position:absolute;inset:-9px;border-radius:31px;border:2px solid rgba(34,211,238,.45);animation:mzRing 2.3s ease-out infinite;pointer-events:none}
+body #walletCustomNotice .wallet-notice-icon.is-success{background:linear-gradient(145deg,#059669,#10b981)!important;box-shadow:0 14px 34px rgba(16,185,129,.42),inset 0 1px 0 rgba(255,255,255,.38)!important}
+body #walletCustomNotice .wallet-notice-icon.is-success::before{border-color:rgba(16,185,129,.5)}
+body #walletCustomNotice .wallet-notice-icon.is-warning{background:linear-gradient(145deg,#f59e0b,#ef4444)!important;box-shadow:0 14px 34px rgba(245,158,11,.42),inset 0 1px 0 rgba(255,255,255,.38)!important}
+body #walletCustomNotice .wallet-notice-icon.is-warning::before{border-color:rgba(245,158,11,.5)}
+body #walletCustomNotice .wallet-notice-icon.is-confirm{background:linear-gradient(145deg,#10b981,#06b6d4 60%,#3b82f6)!important;box-shadow:0 14px 34px rgba(6,182,212,.42),inset 0 1px 0 rgba(255,255,255,.38)!important}
+body #walletCustomNotice .wallet-notice-title{font-size:22px!important;font-weight:900!important;line-height:1.5;margin:0 0 12px!important;color:#f8fafc;letter-spacing:-.2px}
+body #walletCustomNotice .wallet-notice-message{font-size:14px!important;line-height:1.95!important;color:#b6c3d8;margin:0 0 22px!important;white-space:pre-line}
+body #walletCustomNotice .wallet-notice-actions{display:grid;grid-template-columns:1fr;gap:10px}
+body #walletCustomNotice .wallet-notice-actions button{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:50px;border-radius:16px!important;font:inherit;font-size:14.5px;font-weight:850;cursor:pointer;transition:transform .15s,box-shadow .2s,filter .2s,border-color .2s}
+body #walletCustomNotice .wallet-notice-actions button:hover{transform:translateY(-1px);filter:brightness(1.07)}
+body #walletCustomNotice .wallet-notice-actions button:active{transform:scale(.985)}
+body #walletCustomNotice .wallet-notice-ok{color:#fff;background:linear-gradient(110deg,#06b6d4,#3b82f6 60%,#6366f1)!important;border:0!important;box-shadow:0 10px 26px rgba(37,99,235,.38)!important}
+body #walletCustomNotice .wallet-notice-ok::after{content:"";position:absolute;top:0;bottom:0;width:45%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);animation:mzShine 3.2s ease-in-out 1s infinite;pointer-events:none}
+body #walletCustomNotice .wallet-notice-cancel{color:#dbe5f3;background:rgba(148,163,184,.10)!important;border:1px solid rgba(148,163,184,.28)!important}
+body #walletCustomNotice .wallet-notice-actions button[data-cancel="1"]{background:transparent!important;border-color:rgba(148,163,184,.2)!important;color:#93a4bd;min-height:44px}
+
+/* --- مربع "اختار طريقة الطلب" --- */
+body #walletCustomNotice .mz-notice-x{display:none}
+body #walletCustomNotice.mz-choice .mz-notice-x{display:grid;position:absolute;top:14px;left:14px;width:36px;height:36px;border-radius:12px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.05);color:#cbd5e1;place-items:center;cursor:pointer;font-size:15px;transition:background .2s,transform .2s}
+body #walletCustomNotice.mz-choice .mz-notice-x:hover{background:rgba(239,68,68,.18);color:#fecaca;transform:rotate(90deg)}
+body #walletCustomNotice.mz-choice .wallet-notice-message{margin:0 0 18px!important;white-space:normal}
+.mz-sum{display:grid;gap:9px;margin-bottom:12px}
+.mz-sum-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;text-align:right;background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(148,163,184,.2);animation:mzUp .45s cubic-bezier(.2,.9,.3,1) both}
+.mz-sum-row:nth-child(2){animation-delay:.08s}
+.mz-sum-ic{flex:0 0 42px;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#fff;font-size:17px;box-shadow:0 6px 16px rgba(0,0,0,.28)}
+.mz-ic-pack{background:linear-gradient(145deg,#8b5cf6,#6366f1)}
+.mz-ic-price{background:linear-gradient(145deg,#f59e0b,#f97316)}
+.mz-sum-tx{display:block;min-width:0;flex:1}
+.mz-sum-tx small{display:block;font-size:.72rem;color:#8da0bb;margin-bottom:2px}
+.mz-sum-tx b{display:block;font-size:.98rem;color:#f8fafc;word-break:break-word;line-height:1.5}
+.mz-sum-price .mz-sum-tx b{font-size:1.25rem;font-weight:900;color:#67e8f9;letter-spacing:.2px}
+.mz-hint{display:flex;align-items:flex-start;gap:8px;margin-top:12px;font-size:.8rem;line-height:1.85;color:#9fb0c8;text-align:right}
+.mz-hint i{color:#22d3ee;margin-top:5px}
+body #walletCustomNotice.mz-choice .wallet-notice-actions button.mz-opt{justify-content:flex-start;text-align:right;gap:13px;min-height:66px;padding:11px 14px;animation:mzUp .5s cubic-bezier(.2,.9,.3,1) both}
+body #walletCustomNotice.mz-choice .wallet-notice-actions button.mz-opt:nth-child(1){animation-delay:.14s}
+body #walletCustomNotice.mz-choice .wallet-notice-actions button.mz-opt:nth-child(2){animation-delay:.22s}
+body #walletCustomNotice.mz-choice .wallet-notice-actions button[data-cancel="1"]{animation:mzUp .5s .3s cubic-bezier(.2,.9,.3,1) both;justify-content:center;gap:8px}
+.mz-opt .mz-ic{flex:0 0 44px;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:19px;background:rgba(255,255,255,.2)}
+.mz-opt .mz-tx{display:block;flex:1;min-width:0}
+.mz-opt .mz-tx b{display:block;font-size:15px;font-weight:900;line-height:1.4}
+.mz-opt .mz-tx small{display:block;font-size:11.5px;font-weight:600;opacity:.82;margin-top:2px}
+.mz-opt .mz-ch{opacity:.7;font-size:13px;transition:transform .2s}
+.mz-opt:hover .mz-ch{transform:translateX(-4px)}
+body #walletCustomNotice .wallet-notice-actions button.mz-opt-wa{color:#eafff1;background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(16,185,129,.07))!important;border:1px solid rgba(34,197,94,.5)!important}
+.mz-opt-wa .mz-ic{background:linear-gradient(145deg,#22c55e,#16a34a);box-shadow:0 6px 16px rgba(34,197,94,.35)}
+
+@keyframes mzNoticeFade{from{opacity:0}to{opacity:1}}
+@keyframes mzNoticePop{0%{opacity:0;transform:translateY(26px) scale(.9)}100%{opacity:1;transform:none}}
+@keyframes mzIconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes mzRing{0%{transform:scale(.88);opacity:.9}100%{transform:scale(1.28);opacity:0}}
+@keyframes mzShine{0%{left:-60%}55%,100%{left:140%}}
+@keyframes mzUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media(max-width:480px){body #walletCustomNotice .wallet-notice-card{padding:30px 16px 18px!important;border-radius:26px!important}.mz-sum-price .mz-sum-tx b{font-size:1.15rem}}
+
+/* الوضع الفاتح */
+body.light-theme #walletCustomNotice{background:radial-gradient(circle at 50% 28%,rgba(125,211,252,.35),rgba(203,213,225,.85) 72%)!important}
+body.light-theme #walletCustomNotice .wallet-notice-card{background:linear-gradient(160deg,#ffffff,#f1f6fc)!important;border:1px solid #cfe0ee!important;box-shadow:0 26px 70px rgba(15,23,42,.22),0 0 50px rgba(14,165,233,.12)!important;color:#172033!important}
+body.light-theme #walletCustomNotice .wallet-notice-title{color:#0f172a!important}
+body.light-theme #walletCustomNotice .wallet-notice-message{color:#475569!important}
+body.light-theme #walletCustomNotice .wallet-notice-cancel{color:#334155!important;background:#eef2f7!important;border:1px solid #d3dce7!important}
+body.light-theme #walletCustomNotice .wallet-notice-actions button[data-cancel="1"]{background:transparent!important;color:#64748b!important}
+body.light-theme #walletCustomNotice .wallet-notice-ok{color:#fff!important}
+body.light-theme #walletCustomNotice .mz-sum-row{background:linear-gradient(135deg,#fff,#f4f8fc);border-color:#d6e2ee}
+body.light-theme #walletCustomNotice .mz-sum-tx small{color:#64748b}
+body.light-theme #walletCustomNotice .mz-sum-tx b{color:#0f172a}
+body.light-theme #walletCustomNotice .mz-sum-price .mz-sum-tx b{color:#0e7490}
+body.light-theme #walletCustomNotice .mz-hint{color:#64748b}
+body.light-theme #walletCustomNotice .mz-notice-x{background:#f1f5f9;border-color:#d3dce7;color:#475569}
+body.light-theme #walletCustomNotice .wallet-notice-actions button.mz-opt-wa{color:#14532d!important;background:linear-gradient(135deg,#ecfdf5,#f0fdf4)!important;border-color:#86efac!important}
+@media(prefers-reduced-motion:reduce){body #walletCustomNotice,body #walletCustomNotice *,body #walletCustomNotice .wallet-notice-card{animation:none!important}}
 </style>
 <script id="mohab-scroll-reveal">
 (function(){
