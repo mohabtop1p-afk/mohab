@@ -61,6 +61,12 @@ def('__mz',function(p,k){
 });
 })();
 </script>
+    <!-- تسريع الاتصال المبكر: قاعدة البيانات + الصور المتحركة + المكتبات -->
+    <link rel="preconnect" href="https://mohab-store-default-rtdb.firebaseio.com" crossorigin>
+    <link rel="preconnect" href="https://picturetolink.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="preload" as="image" href="https://picturetolink.com/i/f6xXM22J29.gif" media="(max-width:899px)" fetchpriority="high">
+    <link rel="preload" as="image" href="https://picturetolink.com/i/EN5ERuTTFz.gif" media="(min-width:900px)" fetchpriority="high">
     <!-- جلب المنتجات مبكرًا عبر REST قبل تحميل مكتبة Firebase (أسرع في أول زيارة) -->
     <script>(function(){try{window.__mohabGamesREST=fetch('https://mohab-store-default-rtdb.firebaseio.com/games.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}catch(e){window.__mohabGamesREST=Promise.resolve(null);}})();</script>
     <script>(function(){var DB='https://mohab-store-default-rtdb.firebaseio.com',pre={};window.__mohabFetchCfg=function(p){if(!pre[p]){try{pre[p]=fetch(DB+'/'+p+'.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}catch(e){pre[p]=Promise.resolve(null);}}return pre[p];};['settings/general','settings/visuals','settings/banners','settings/socials','settings/productCategories','settings/announcementTicker'].forEach(window.__mohabFetchCfg);})();</script>
@@ -82,8 +88,11 @@ def('__mz',function(p,k){
     <link rel="preload" as="image" href="https://g.top4top.io/p_39146kcfj0.png" referrerpolicy="no-referrer">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script>window.firebase||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/8.10.1/firebase-app.js"><\/script>')</script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>(window.firebase&&firebase.database)||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/8.10.1/firebase-database.js"><\/script>')</script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script>(window.firebase&&firebase.auth)||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/8.10.1/firebase-auth.js"><\/script>')</script>
     
     <style>
         :root {
@@ -1772,9 +1781,6 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 </style>
 
 
-<link rel="preconnect" href="https://picturetolink.com" crossorigin>
-<link rel="preload" as="image" href="https://picturetolink.com/i/f6xXM22J29.gif" media="(max-width:899px)" fetchpriority="high">
-<link rel="preload" as="image" href="https://picturetolink.com/i/EN5ERuTTFz.gif" media="(min-width:900px)" fetchpriority="high">
 <style id="mohab-loader-gif">
   /* ===== شاشة التحميل: GIF بملء الشاشة + نص التحميل فوقه بدون إطار ===== */
   #mohabInitialLoader{padding:0!important;background:#0a1020!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
@@ -1820,7 +1826,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 <script id="mohab-gif-timing">
 (function(){
   /* يضمن أن المستخدم يشاهد الـ GIF دورة كاملة قبل فتح الموقع */
-  var FALLBACK_MS=4000, MAX_WAIT_MS=9000, t0=Date.now(), img=document.getElementById('mzGifLoader'), url=(window.matchMedia&&window.matchMedia('(min-width:900px)').matches)?'https://picturetolink.com/i/EN5ERuTTFz.gif':'https://picturetolink.com/i/f6xXM22J29.gif';
+  var FALLBACK_MS=4000, MAX_WAIT_MS=6500, t0=Date.now(), img=document.getElementById('mzGifLoader'), url=(window.matchMedia&&window.matchMedia('(min-width:900px)').matches)?'https://picturetolink.com/i/EN5ERuTTFz.gif':'https://picturetolink.com/i/f6xXM22J29.gif';
   var done,ready=new Promise(function(r){done=r;});
   window.__mzGifReady=ready;
   var fin=false;function finish(){if(!fin){fin=true;done();}}
@@ -1844,7 +1850,10 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
     }
     return total;
   }
+  var cn=navigator.connection||{},slowNet=!!(cn.saveData||/(^|-)(2g|3g)$/.test(cn.effectiveType||''));
+  if(slowNet){setTimeout(function(){if(!iReady)finish();},3500);}   // اتصال بطيء: لا نعطّل الموقع بانتظار الـ GIF
   try{
+    if(slowNet){dReady=true;check();}else
     fetch(url,{mode:'cors',cache:'force-cache'}).then(function(r){return r.arrayBuffer();}).then(function(buf){
       var d=parse(buf);if(d>=800&&d<=MAX_WAIT_MS-500)duration=d;else if(d>MAX_WAIT_MS-500)duration=MAX_WAIT_MS-500;
       dReady=true;check();
@@ -6021,6 +6030,32 @@ body.light-theme #walletCustomNotice .wallet-notice-actions button.mz-opt-wa{col
 body.light-theme #walletCustomNotice .wallet-notice-actions button.mz-opt-tg{color:#075985!important;background:linear-gradient(135deg,#f0f9ff,#e0f2fe)!important;border-color:#7dd3fc!important}
 @media(prefers-reduced-motion:reduce){body #walletCustomNotice,body #walletCustomNotice *,body #walletCustomNotice .wallet-notice-card{animation:none!important}}
 </style>
+<script id="mohab-image-stall-guard">
+(function(){
+  /* لو صورة منتج ظاهرة في الشاشة علقت أكثر من 7 ثوانٍ (اتصال بعيد/بطيء) ننتقل تلقائيًا للمسار البديل (CDN) بدل أن تبقى فارغة */
+  var seen=new WeakMap();
+  function tick(){
+    try{
+      var vh=window.innerHeight||800,now=Date.now();
+      document.querySelectorAll('#gamesGrid img, .price-item-icon, #modalGameImg').forEach(function(img){
+        if(img.complete&&img.naturalWidth>0){seen.delete(img);return;}
+        if(img.complete&&!img.naturalWidth&&img.dataset.mzFailed==='1')return;
+        var r=img.getBoundingClientRect();
+        if(r.bottom<-200||r.top>vh+300||r.width===0)return;
+        var src=img.getAttribute('src')||'';
+        if(!src||/^data:/i.test(src))return;
+        var rec=seen.get(img);
+        if(!rec||rec.src!==src){seen.set(img,{src:src,t:now});return;}
+        if(now-rec.t>7000&&Number(img.dataset.mzStage||0)<3){
+          seen.set(img,{src:src,t:now});
+          try{img.dispatchEvent(new Event('error'));}catch(_){}
+        }
+      });
+    }catch(_){}
+  }
+  setInterval(tick,2000);
+})();
+</script>
 <script id="mohab-scroll-reveal">
 (function(){
   const grid=document.getElementById('gamesGrid');
@@ -6067,6 +6102,33 @@ body.light-theme #walletCustomNotice .wallet-notice-actions button.mz-opt-tg{col
   prepare();
   // أمان: لو لم يجهز المؤثر بعد 20 ثانية نُظهر الكروت بدونه
   setTimeout(()=>grid.querySelectorAll('.game-card.mohab-reveal:not(.mohab-in):not(.mohab-shown)').forEach(c=>{if(!window.__mohabReady||!io)c.classList.remove('mohab-reveal');}),20000);
+  /* ===== حارس الظهور: يضمن ألا يبقى أي كرت داخل الشاشة مخفيًا (opacity:0) إذا تأخر/فشل المراقب (شاشات الكمبيوتر الكبيرة، الزوم، إعادة رسم القائمة...) ===== */
+  let sweepT=0;
+  function sweep(){
+    try{
+      if(!window.__mohabReady)return;
+      const vh=window.innerHeight||document.documentElement.clientHeight||800;
+      let i=0;
+      grid.querySelectorAll('.game-card.mohab-reveal:not(.mohab-in):not(.mohab-shown)').forEach(c=>{
+        if(c.offsetParent===null&&getComputedStyle(c).position!=='fixed')return; // مخفي بالفلتر/البحث
+        const r=c.getBoundingClientRect();
+        if(r.bottom>0&&r.top<vh)show(c,i++);
+      });
+    }catch(_){}
+  }
+  function sweepSoon(){clearTimeout(sweepT);sweepT=setTimeout(sweep,220);}
+  window.addEventListener('scroll',sweepSoon,{passive:true});
+  window.addEventListener('resize',sweepSoon);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')sweepSoon();});
+  document.addEventListener('mohab-ready',()=>{setTimeout(sweep,500);setTimeout(sweep,1500);});
+  new MutationObserver(()=>{sweepSoon();}).observe(grid,{childList:true});
+  let sweeps=0;const sweepIv=setInterval(()=>{sweep();if(++sweeps>40)clearInterval(sweepIv);},1500); // أول دقيقة تقريبًا
+  setInterval(sweep,6000);
+  // حل نهائي: أي كرت ما زال مخفيًا بعد 12 ثانية من جاهزية الموقع وهو داخل الشاشة يُظهَر مباشرة بدون مؤثر
+  document.addEventListener('mohab-ready',()=>{setTimeout(()=>{try{
+    const vh=window.innerHeight||800;
+    grid.querySelectorAll('.game-card.mohab-reveal:not(.mohab-in):not(.mohab-shown)').forEach(c=>{const r=c.getBoundingClientRect();if(r.bottom>0&&r.top<vh)c.classList.remove('mohab-reveal');});
+  }catch(_){}},12000);});
 })();
 </script>
 <!-- ===== MOHAB STORE: أسعار التجار (جملة) — إضافة مستقلة، لا تغيّر أي ميزة أخرى ===== -->
