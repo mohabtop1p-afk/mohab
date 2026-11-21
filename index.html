@@ -1773,7 +1773,8 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 
 
 <link rel="preconnect" href="https://picturetolink.com" crossorigin>
-<link rel="preload" as="image" href="https://picturetolink.com/i/f6xXM22J29.gif" fetchpriority="high">
+<link rel="preload" as="image" href="https://picturetolink.com/i/f6xXM22J29.gif" media="(max-width:899px)" fetchpriority="high">
+<link rel="preload" as="image" href="https://picturetolink.com/i/EN5ERuTTFz.gif" media="(min-width:900px)" fetchpriority="high">
 <style id="mohab-loader-gif">
   /* ===== شاشة التحميل: GIF بملء الشاشة + نص التحميل فوقه بدون إطار ===== */
   #mohabInitialLoader{padding:0!important;background:#0a1020!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
@@ -1784,6 +1785,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
     animation:none!important;display:block!important;border-radius:0!important;
   }
   #mohabInitialLoader .mohab-loader-card::before,#mohabInitialLoader .mohab-loader-card::after{display:none!important}
+  #mohabInitialLoader picture{display:contents}
   #mohabInitialLoader .mz-gif-loader{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;margin:0;border:0;display:block}
   @media (min-aspect-ratio:1/1){#mohabInitialLoader .mz-gif-loader{object-fit:contain}}
   #mohabInitialLoader .mz-gif-foot{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 9%);padding:0 24px;text-align:center;z-index:2}
@@ -1807,7 +1809,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
   <span class="mz-ld-orb o1" aria-hidden="true"></span><span class="mz-ld-orb o2" aria-hidden="true"></span>
   <div class="mz-ld-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="mohab-loader-card">
-    <img class="mz-gif-loader" id="mzGifLoader" src="https://picturetolink.com/i/f6xXM22J29.gif" alt="" width="260" height="260" loading="eager" fetchpriority="high" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+    <picture><source media="(min-width:900px)" srcset="https://picturetolink.com/i/EN5ERuTTFz.gif"><img class="mz-gif-loader" id="mzGifLoader" src="https://picturetolink.com/i/f6xXM22J29.gif" alt="" width="260" height="260" loading="eager" fetchpriority="high" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'"></picture>
     <div class="mz-gif-foot">
       <div class="mz-gif-text"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i><span>جاري تحميل الموقع</span><b class="mz-gif-dots" aria-hidden="true"><u>.</u><u>.</u><u>.</u></b></div>
       <div class="mohab-loader-bar" aria-hidden="true"><div class="mohab-loader-fill" id="mohabLoaderFill"></div></div>
@@ -1818,7 +1820,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 <script id="mohab-gif-timing">
 (function(){
   /* يضمن أن المستخدم يشاهد الـ GIF دورة كاملة قبل فتح الموقع */
-  var FALLBACK_MS=4000, MAX_WAIT_MS=9000, t0=Date.now(), img=document.getElementById('mzGifLoader'), url='https://picturetolink.com/i/f6xXM22J29.gif';
+  var FALLBACK_MS=4000, MAX_WAIT_MS=9000, t0=Date.now(), img=document.getElementById('mzGifLoader'), url=(window.matchMedia&&window.matchMedia('(min-width:900px)').matches)?'https://picturetolink.com/i/EN5ERuTTFz.gif':'https://picturetolink.com/i/f6xXM22J29.gif';
   var done,ready=new Promise(function(r){done=r;});
   window.__mzGifReady=ready;
   var fin=false;function finish(){if(!fin){fin=true;done();}}
@@ -3317,6 +3319,32 @@ globalGames = data || {};
             event?.stopPropagation();const menu=document.getElementById('autoTopupRecentMenu');if(menu)menu.classList.toggle('open');
         }
         document.addEventListener('click',function(e){const wrap=e.target?.closest?.('.auto-topup-recent-wrap');if(!wrap)document.getElementById('autoTopupRecentMenu')?.classList.remove('open');});
+        /* التحقق من صحة ID اللاعب عبر الـ API (Worker). آمن: أي فشل/عدم دعم من الـ Worker = يكمل الحفظ كالسابق، ولا يُرفض الـ ID إلا إذا أكّد الـ API صراحةً أنه غير صحيح. */
+        async function autoTopupCheckPlayerRemote(game,playerId){
+            try{
+                const packs=game&&game._autoParsedPacks||[];const pack=packs[0];if(!pack)return{valid:null};
+                const user=firebase.auth().currentUser;if(!user)return{valid:null};
+                const cfg=mzSnap(await mzDbGet('settings/autoTopupApi')).val()||{};
+                if(cfg.enabled===false||cfg.verifyEnabled===false||!/^https:\/\//i.test(String(cfg.workerUrl||'')))return{valid:null};
+                const p=pack.parameters||{};
+                const zone=String(p.server_id||p.zone_id||p.serverId||p.zoneId||'');
+                const idToken=await user.getIdToken();
+                const res=await walletFetchWithTimeout(cfg.workerUrl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},body:JSON.stringify({action:'checkplayer',service:String(pack.service),player_id:String(playerId),zone_id:zone,parameters:p,game_code:game.auto_game_code||autoTopupGameKey(game)}),cache:'no-store'},9000);
+                const d=await res.json().catch(()=>null);
+                if(!d||typeof d!=='object')return{valid:null};
+                const root=(d.data&&typeof d.data==='object')?d.data:d;
+                const nick=String(root.nickname||root.player_name||root.playerName||root.username||root.name||d.nickname||'').trim();
+                const reg=String(root.region||root.country||'').trim();
+                const text=String(d.message||d.msg||d.error||root.message||root.msg||'');
+                if(d.valid===true||d.is_valid===true||d.exists===true||d.found===true||root.valid===true)return{valid:true,nickname:nick,region:reg};
+                if(d.valid===false||d.is_valid===false||d.exists===false||d.found===false||root.valid===false||/^(invalid_?(id|player|user)|player_?not_?found|user_?not_?found|account_?not_?found)$/i.test(String(d.code||d.error_code||'')))
+                    return{valid:false,message:'الـ ID غير صحيح، تأكد منه وحاول مرة أخرى.'};
+                if(res.ok&&d.status!==false&&!d.error&&nick)return{valid:true,nickname:nick,region:reg};
+                if(d.status===false&&/(player|user|account|id|اللاعب|المعرف|الحساب|الآيدي)/i.test(text)&&/(not\s*found|incorrect|wrong|does\s*not\s*exist|invalid|غير\s*صحيح|غير\s*موجود|خاطئ|خطأ)/i.test(text)&&!/action|unauthori|token|auth|service|balance|رصيد|صلاحي/i.test(text))
+                    return{valid:false,message:'الـ ID غير صحيح، تأكد منه وحاول مرة أخرى.'};
+                return{valid:null};
+            }catch(e){return{valid:null};}
+        }
         async function saveAutoTopupPlayer(){
             const game=autoTopupSelectedGame;if(!game)return;
             const input=document.getElementById('autoTopupInlinePlayerId'),state=document.getElementById('autoTopupInlinePlayerState'),btn=document.getElementById('autoTopupInlineVerifyBtn');
@@ -3326,14 +3354,23 @@ globalGames = data || {};
             if(!walletUser){state.className='auto-topup-player-state warn';state.textContent='سجّل الدخول إلى حساب الموقع أولاً لحفظ معرفات ألعابك.';return;}
             const requestId=++autoTopupCheckRequest;btn.disabled=true;btn.textContent='جارٍ الحفظ...';
             try{
+                btn.textContent='جارٍ التحقق من الـ ID...';
+                const chk=await autoTopupCheckPlayerRemote(game,playerId);
+                if(requestId!==autoTopupCheckRequest)return;
+                if(chk.valid===false){
+                    autoTopupVerifiedPlayer=null;autoTopupSetLoginUi(false);
+                    state.className='auto-topup-player-state bad';state.innerHTML='<i class="fas fa-circle-xmark"></i> '+autoTopupEscape(chk.message||'الـ ID غير صحيح، تأكد منه وحاول مرة أخرى.');
+                    input?.focus();return;
+                }
+                const nick=chk.valid===true?String(chk.nickname||''):'',reg=chk.valid===true?String(chk.region||''):'',isOk=chk.valid===true;
                 const apath=autoTopupAccountPath(game),oldSnap=mzSnap(await mzDbGet(apath)),old=oldSnap.val()||{};
                 if(requestId!==autoTopupCheckRequest)return;
                 const recent=[...new Set([playerId,...autoTopupRecentList(old)])].slice(0,5);
-                await mzDbWrite(apath,{currentId:playerId,nickname:'',region:'',verified:false,recent,updatedAt:firebase.database.ServerValue.TIMESTAMP},'set');
+                await mzDbWrite(apath,{currentId:playerId,nickname:nick,region:reg,verified:isOk,recent,updatedAt:firebase.database.ServerValue.TIMESTAMP},'set');
                 if(requestId!==autoTopupCheckRequest)return;
-                autoTopupVerifiedPlayer={gameId:String(currentGameId),playerId,nickname:'',region:'',verified:false};
+                autoTopupVerifiedPlayer={gameId:String(currentGameId),playerId,nickname:nick,region:reg,verified:isOk};
                 const menu=document.getElementById('autoTopupRecentMenu');if(menu)menu.innerHTML=autoTopupRecentMenuMarkup(recent);
-                autoTopupSetLoginUi(true);state.className='auto-topup-player-state ok';state.innerHTML=autoTopupAccountStateHtml(playerId);
+                autoTopupSetLoginUi(true);state.className='auto-topup-player-state ok';state.innerHTML=autoTopupAccountStateHtml(playerId)+(nick?`<br><span class="auto-topup-saved-nickname">اسم اللاعب: ${autoTopupEscape(nick)}</span>`:'');
             }catch(error){if(requestId===autoTopupCheckRequest){state.className='auto-topup-player-state bad';state.textContent='تعذر حفظ المعرف. تحقق من اتصالك وصلاحيات حسابك.';}}
             finally{if(requestId===autoTopupCheckRequest){btn.disabled=false;btn.textContent=autoTopupVerifiedPlayer?'تسجيل الخروج':'تسجيل الدخول بالآيدي';}}
         }
