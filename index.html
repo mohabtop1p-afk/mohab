@@ -65,8 +65,8 @@ def('__mz',function(p,k){
     <link rel="preconnect" href="https://mohab-store-default-rtdb.firebaseio.com" crossorigin>
     <link rel="preconnect" href="https://picturetolink.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <link rel="preload" as="image" href="https://picturetolink.com/i/f6xXM22J29.gif" media="(max-width:899px)" fetchpriority="high">
-    <link rel="preload" as="image" href="https://picturetolink.com/i/EN5ERuTTFz.gif" media="(min-width:900px)" fetchpriority="high">
+    <link rel="preload" as="image" href="https://picturetolink.com/i/f6xXM22J29.gif" media="not all and (min-width:900px) and (hover:hover) and (pointer:fine)" fetchpriority="high">
+    <link rel="preload" as="image" href="https://picturetolink.com/i/EN5ERuTTFz.gif" media="(min-width:900px) and (hover:hover) and (pointer:fine)" fetchpriority="high">
     <!-- جلب المنتجات مبكرًا عبر REST قبل تحميل مكتبة Firebase (أسرع في أول زيارة) -->
     <script>(function(){try{window.__mohabGamesREST=fetch('https://mohab-store-default-rtdb.firebaseio.com/games.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}catch(e){window.__mohabGamesREST=Promise.resolve(null);}})();</script>
     <script>(function(){var DB='https://mohab-store-default-rtdb.firebaseio.com',pre={};window.__mohabFetchCfg=function(p){if(!pre[p]){try{pre[p]=fetch(DB+'/'+p+'.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}catch(e){pre[p]=Promise.resolve(null);}}return pre[p];};['settings/general','settings/visuals','settings/banners','settings/socials','settings/productCategories','settings/announcementTicker'].forEach(window.__mohabFetchCfg);})();</script>
@@ -1811,10 +1811,10 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 <style id="mohab-slider-v2">
 /* ===== السلايدر: مقاس موحد للهاتف والكمبيوتر =====
    النسبة 2:1 على كل الأجهزة  →  الصورة المثالية 2000 × 1000 بكسل
-   على الكمبيوتر يتوسط السلايدر بعرض أقصى 1000px (ارتفاع 500px) ليبقى متناسقًا مع باقي الصفحة */
-.slider-container{max-width:1000px}
+   على الشاشات العريضة (كمبيوتر أو وضع الكمبيوتر في الهاتف) يتوسط السلايدر بعرض أقصى 800px (ارتفاع 400px) ليبقى متناسقًا مع باقي الصفحة */
+.slider-container{max-width:800px}
 .slider{aspect-ratio:2/1!important;max-height:none!important}
-@media (max-width:1040px){.slider-container{max-width:100%}}
+@media (max-width:840px){.slider-container{max-width:100%}}
 /* الصورة المطابقة للمقاس تملأ الإطار بالكامل، وغير المطابقة تبقى كاملة بدون قص مع خلفية ضبابية */
 .slide.fit-cover{object-fit:cover!important}
 .slide-wrapper-box .slide{transition:opacity .45s ease}
@@ -1826,7 +1826,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
   <span class="mz-ld-orb o1" aria-hidden="true"></span><span class="mz-ld-orb o2" aria-hidden="true"></span>
   <div class="mz-ld-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="mohab-loader-card">
-    <picture><source media="(min-width:900px)" srcset="https://picturetolink.com/i/EN5ERuTTFz.gif"><img class="mz-gif-loader" id="mzGifLoader" src="https://picturetolink.com/i/f6xXM22J29.gif" alt="" width="260" height="260" loading="eager" fetchpriority="high" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'"></picture>
+    <picture><source media="(min-width:900px) and (hover:hover) and (pointer:fine)" srcset="https://picturetolink.com/i/EN5ERuTTFz.gif"><img class="mz-gif-loader" id="mzGifLoader" src="https://picturetolink.com/i/f6xXM22J29.gif" alt="" width="260" height="260" loading="eager" fetchpriority="high" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'"></picture>
     <div class="mz-gif-foot">
       <div class="mz-gif-text"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i><span>جاري تحميل الموقع</span><b class="mz-gif-dots" aria-hidden="true"><u>.</u><u>.</u><u>.</u></b></div>
       <div class="mohab-loader-bar" aria-hidden="true"><div class="mohab-loader-fill" id="mohabLoaderFill"></div></div>
@@ -1837,7 +1837,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 <script id="mohab-gif-timing">
 (function(){
   /* يضمن أن المستخدم يشاهد الـ GIF دورة كاملة قبل فتح الموقع */
-  var FALLBACK_MS=4000, MAX_WAIT_MS=6500, t0=Date.now(), img=document.getElementById('mzGifLoader'), url=(window.matchMedia&&window.matchMedia('(min-width:900px)').matches)?'https://picturetolink.com/i/EN5ERuTTFz.gif':'https://picturetolink.com/i/f6xXM22J29.gif';
+  var FALLBACK_MS=4000, MAX_WAIT_MS=6500, t0=Date.now(), img=document.getElementById('mzGifLoader'), url=(window.matchMedia&&window.matchMedia('(min-width:900px) and (hover:hover) and (pointer:fine)').matches)?'https://picturetolink.com/i/EN5ERuTTFz.gif':'https://picturetolink.com/i/f6xXM22J29.gif';
   var done,ready=new Promise(function(r){done=r;});
   window.__mzGifReady=ready;
   var fin=false;function finish(){if(!fin){fin=true;done();}}
