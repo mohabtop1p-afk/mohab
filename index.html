@@ -1808,6 +1808,17 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
   body.light-theme #mohabInitialLoader .mohab-loader-bar{background:rgba(255,255,255,.22)}
   @media (prefers-reduced-motion:reduce){#mohabInitialLoader .mz-gif-dots u{animation:none;opacity:1}}
 </style>
+<style id="mohab-slider-v2">
+/* ===== السلايدر: مقاس موحد للهاتف والكمبيوتر =====
+   النسبة 2:1 على كل الأجهزة  →  الصورة المثالية 2000 × 1000 بكسل
+   على الكمبيوتر يتوسط السلايدر بعرض أقصى 1000px (ارتفاع 500px) ليبقى متناسقًا مع باقي الصفحة */
+.slider-container{max-width:1000px}
+.slider{aspect-ratio:2/1!important;max-height:none!important}
+@media (max-width:1040px){.slider-container{max-width:100%}}
+/* الصورة المطابقة للمقاس تملأ الإطار بالكامل، وغير المطابقة تبقى كاملة بدون قص مع خلفية ضبابية */
+.slide.fit-cover{object-fit:cover!important}
+.slide-wrapper-box .slide{transition:opacity .45s ease}
+</style>
 </head>
 <body>
 
@@ -2811,6 +2822,30 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
         }, err => console.error('Social settings:', err));
 
         let sliderInterval; let totalSlides = 0; let sliderRecords = []; let sliderTimerToken=0;
+        /* اختيار صورة الهاتف أو الكمبيوتر: يمكن إضافة desktopUrl (أو urlDesktop) لأي بانر في settings/banners، وإن لم توجد تُستخدم نفس الصورة */
+        function pickSlideUrl(record){
+            let wide=false;try{wide=window.matchMedia('(min-width:768px)').matches;}catch(_){}
+            const d=record&&(record.desktopUrl||record.urlDesktop||record.desktop);
+            return (wide&&d)?d:record.url;
+        }
+        /* لو نسبة الصورة قريبة من نسبة الإطار (±15%) تملأ الإطار، وإلا تبقى كاملة بدون قص */
+        function fitSlideImage(img){
+            try{
+                const frame=document.getElementById('sliderWrapper');
+                if(!img||!img.naturalWidth||!frame||!frame.clientWidth||!frame.clientHeight)return;
+                const ir=img.naturalWidth/img.naturalHeight,fr=frame.clientWidth/frame.clientHeight;
+                img.classList.toggle('fit-cover',Math.abs(ir/fr-1)<=0.15);
+            }catch(_){}
+        }
+        try{
+            const mqSlide=window.matchMedia('(min-width:768px)');
+            const onSlideMq=()=>{
+                if(Array.isArray(sliderRecords)&&sliderRecords.some(r=>r&&(r.desktopUrl||r.urlDesktop||r.desktop)))initSlider(sliderRecords,true);
+                else document.querySelectorAll('#sliderWrapper .slide').forEach(fitSlideImage);
+            };
+            if(mqSlide.addEventListener)mqSlide.addEventListener('change',onSlideMq);else if(mqSlide.addListener)mqSlide.addListener(onSlideMq);
+            window.addEventListener('resize',()=>{clearTimeout(window.__mzFitT);window.__mzFitT=setTimeout(()=>document.querySelectorAll('#sliderWrapper .slide').forEach(fitSlideImage),200);});
+        }catch(_){}
         function initSlider(banners, isAuto) {
             const container=document.getElementById('sliderContainer');
             const wrapper=document.getElementById('sliderWrapper');
@@ -2826,11 +2861,11 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                 box.className='slide-wrapper-box'+(index===0?' active':'');
                 const loader=document.createElement('div'); loader.className='slide-loading';
                 const label=document.createElement('span'); label.textContent='جاري تجهيز الصورة'; label.style.cssText='font-size:10px;letter-spacing:0;color:#b6cbd5;font-weight:600'; loader.appendChild(label);
-                const blur=document.createElement('div'); blur.className='slide-bg-blur'; blur.style.backgroundImage=`url("${String(mohabImgSrc(record.url,360,0)).replace(/["\\]/g,'')}")`;
+                const blur=document.createElement('div'); blur.className='slide-bg-blur'; const picked=pickSlideUrl(record); blur.style.backgroundImage=`url("${String(mohabImgSrc(picked,360,0)).replace(/["\\]/g,'')}")`;
                 const img=document.createElement('img'); img.className='slide'; img.alt='MOHAB STORE Banner'; img.decoding='async'; img.loading=index===0?'eager':'lazy';
-                img.addEventListener('load',()=>{box.classList.add('loaded');},{once:true});
+                img.addEventListener('load',()=>{box.classList.add('loaded');fitSlideImage(img);},{once:true});
                 img.addEventListener('error',()=>{label.textContent='تعذر تحميل الصورة';loader.style.background='linear-gradient(135deg,#111827,#263548)';},{once:true});
-                img.src=mohabImgSrc(record.url,1000,0);
+                img.src=mohabImgSrc(picked,1600,0);
                 box.append(loader,blur,img); fragment.appendChild(box);
                 if(totalSlides>1){const dot=document.createElement('div');dot.className='dot'+(index===0?' active':'');dot.setAttribute('aria-label','الصورة '+(index+1));dot.onclick=()=>{goToSlide(index);scheduleNextSlide();};dots.appendChild(dot);}
             });
@@ -3328,29 +3363,30 @@ globalGames = data || {};
             event?.stopPropagation();const menu=document.getElementById('autoTopupRecentMenu');if(menu)menu.classList.toggle('open');
         }
         document.addEventListener('click',function(e){const wrap=e.target?.closest?.('.auto-topup-recent-wrap');if(!wrap)document.getElementById('autoTopupRecentMenu')?.classList.remove('open');});
-        /* التحقق من صحة ID اللاعب عبر الـ API (Worker). آمن: أي فشل/عدم دعم من الـ Worker = يكمل الحفظ كالسابق، ولا يُرفض الـ ID إلا إذا أكّد الـ API صراحةً أنه غير صحيح. */
+        /* التحقق من صحة ID اللاعب عبر الـ Worker (action: check_player).
+           - يُرفض الـ ID فقط إذا أكّد الـ Worker صراحةً أنه غير صحيح (PLAYER_NOT_FOUND / INVALID_PLAYER_ID_FORMAT).
+           - أي خطأ آخر (خدمة غير متاحة، لعبة غير مدعومة، انقطاع شبكة) = يكمل الحفظ كالمعتاد ولا يمنع الشحن.
+           - الألعاب المدعومة: freefire افتراضيًا، ويمكن إضافة ألعاب أخرى من settings/autoTopupApi/verifyGames (مصفوفة). */
+        function autoTopupVerifyCode(game,cfg){
+            if(autoTopupIsFreeFire(game))return 'freefire';
+            const sq=v=>String(v||'').toLowerCase().replace(/[\s_-]/g,'');
+            const code=sq(game&&game.auto_game_code);
+            const extra=Array.isArray(cfg&&cfg.verifyGames)?cfg.verifyGames.map(sq):[];
+            return code&&extra.indexOf(code)>-1?code:'';
+        }
         async function autoTopupCheckPlayerRemote(game,playerId){
             try{
-                const packs=game&&game._autoParsedPacks||[];const pack=packs[0];if(!pack)return{valid:null};
                 const user=firebase.auth().currentUser;if(!user)return{valid:null};
                 const cfg=mzSnap(await mzDbGet('settings/autoTopupApi')).val()||{};
                 if(cfg.enabled===false||cfg.verifyEnabled===false||!/^https:\/\//i.test(String(cfg.workerUrl||'')))return{valid:null};
-                const p=pack.parameters||{};
-                const zone=String(p.server_id||p.zone_id||p.serverId||p.zoneId||'');
+                const gameCode=autoTopupVerifyCode(game,cfg);
+                if(!gameCode)return{valid:null};
                 const idToken=await user.getIdToken();
-                const res=await walletFetchWithTimeout(cfg.workerUrl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},body:JSON.stringify({action:'checkplayer',service:String(pack.service),player_id:String(playerId),zone_id:zone,parameters:p,game_code:game.auto_game_code||autoTopupGameKey(game)}),cache:'no-store'},9000);
+                const res=await walletFetchWithTimeout(cfg.workerUrl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},body:JSON.stringify({action:'check_player',game_code:gameCode,game_name:String(game&&game.name||''),player_id:String(playerId)}),cache:'no-store'},16000);
                 const d=await res.json().catch(()=>null);
                 if(!d||typeof d!=='object')return{valid:null};
-                const root=(d.data&&typeof d.data==='object')?d.data:d;
-                const nick=String(root.nickname||root.player_name||root.playerName||root.username||root.name||d.nickname||'').trim();
-                const reg=String(root.region||root.country||'').trim();
-                const text=String(d.message||d.msg||d.error||root.message||root.msg||'');
-                if(d.valid===true||d.is_valid===true||d.exists===true||d.found===true||root.valid===true)return{valid:true,nickname:nick,region:reg};
-                if(d.valid===false||d.is_valid===false||d.exists===false||d.found===false||root.valid===false||/^(invalid_?(id|player|user)|player_?not_?found|user_?not_?found|account_?not_?found)$/i.test(String(d.code||d.error_code||'')))
-                    return{valid:false,message:'الـ ID غير صحيح، تأكد منه وحاول مرة أخرى.'};
-                if(res.ok&&d.status!==false&&!d.error&&nick)return{valid:true,nickname:nick,region:reg};
-                if(d.status===false&&/(player|user|account|id|اللاعب|المعرف|الحساب|الآيدي)/i.test(text)&&/(not\s*found|incorrect|wrong|does\s*not\s*exist|invalid|غير\s*صحيح|غير\s*موجود|خاطئ|خطأ)/i.test(text)&&!/action|unauthori|token|auth|service|balance|رصيد|صلاحي/i.test(text))
-                    return{valid:false,message:'الـ ID غير صحيح، تأكد منه وحاول مرة أخرى.'};
+                if(d.status===true&&d.nickname)return{valid:true,nickname:String(d.nickname),region:String(d.region||'')};
+                if(d.code==='PLAYER_NOT_FOUND'||d.code==='INVALID_PLAYER_ID_FORMAT')return{valid:false,message:String(d.message||'الـ ID غير صحيح، تأكد منه وحاول مرة أخرى.')};
                 return{valid:null};
             }catch(e){return{valid:null};}
         }
