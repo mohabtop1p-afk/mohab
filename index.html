@@ -2443,13 +2443,16 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                 const eq = line.indexOf('=');
                 if (eq < 1) return line;
                 const left = line.slice(0, eq);
-                const right = line.slice(eq + 1);
+                const rightFull = line.slice(eq + 1);
+                const barAt = rightFull.indexOf('|');
+                const right = barAt > -1 ? rightFull.slice(0, barAt) : rightFull;
+                const tail = barAt > -1 ? toLatin(rightFull.slice(barAt)).trim() : '';
                 const converted = toLatin(right).replace(/([0-9][0-9,]*(?:\.[0-9]+)?)(?=\s*(?:جنيه مصري|جنيه|ج\.م|EGP|ج)?(?:\s|$|بدل))/gi, (token) => {
                     const value = Number(token.replace(/,/g, ''));
                     if (!Number.isFinite(value)) return token;
                     return (Math.round((value / rate) * 100) / 100).toLocaleString('en-US', {maximumFractionDigits:2}) + ' $';
                 }).replace(/جنيه مصري|جنيه|ج\.م|EGP|ج(?=\s|$)/gi, '');
-                return left + '= ' + converted.replace(/\s+/g, ' ').trim();
+                return left + '= ' + converted.replace(/\s+/g, ' ').trim() + (tail ? ' ' + tail : '');
             }).join('\n');
         }
         db.ref('settings/usdPricing').on('value', snap => {
@@ -3252,7 +3255,17 @@ globalGames = data || {};
                 if(!name||!price||!/^\d+$/.test(service))return null;
                 const parameters={};
                 if(extra){extra.split('&').forEach(pair=>{const at=pair.indexOf('=');if(at>0){const k=pair.slice(0,at).trim(),v=pair.slice(at+1).trim();if(/^[a-zA-Z0-9_]{1,40}$/.test(k)&&v)parameters[k]=v;}});}
-                return {name,price,service,parameters};
+                let open=null;
+                if(/^(1|true|yes)$/i.test(String(parameters.open||''))){
+                    const nn=(v,d)=>{const n=Number(String(v==null?'':v).replace(/,/g,'').trim());return Number.isFinite(n)&&n>0?n:d;};
+                    const min=Math.max(1,Math.floor(nn(parameters.min,1)));
+                    const max=Math.max(min,Math.floor(nn(parameters.max,1000000)));
+                    const per=Math.max(1,nn(parameters.per,1));
+                    const step=Math.max(1,Math.floor(nn(parameters.step,1)));
+                    open={min,max,per,step,unit:String(parameters.unit||'').trim().slice(0,30)};
+                    ['open','min','max','per','step','unit'].forEach(k=>{delete parameters[k];});
+                }
+                return {name,price,service,parameters,open};
             }).filter(Boolean);
         }
         function autoTopupGameKey(game){
@@ -3321,7 +3334,7 @@ globalGames = data || {};
                 </div>
                 <div id="autoTopupInlinePlayerState" class="auto-topup-player-state ${stateClass}" aria-live="polite">${stateText}</div><div class="auto-topup-id-disclaimer"><i class="fas fa-shield-halved"></i><span>تأكد من صحة المعرّف قبل تأكيد الشحن.</span></div>
             </section>`;
-            const cards=packs.map((p,i)=>{const packIcon=String((game.package_icons&&game.package_icons[p.name])||icon||'').trim();const packIconHtml=packIcon?`<img referrerpolicy="no-referrer" class="price-item-icon" src="${autoTopupEscape(packIcon)}" alt="" loading="lazy" decoding="async">`:'<i class="fas fa-gem" style="font-size:30px;color:#06b6d4"></i>';return `<button type="button" class="price-card-modern auto-topup-price-card" data-auto-index="${i}" onclick="selectAutoTopupPack(${i})"><div class="price-card-content">${packIconHtml}<div class="item-details"><span class="item-quantity">${autoTopupEscape(p.name)}</span></div><div class="price-area"><div class="item-price-tag">${autoTopupEscape(p.price)}</div></div></div></button>`;}).join('');
+            const cards=packs.map((p,i)=>{if(p.open)return autoTopupOpenCardHtml(p,i,game,icon);const packIcon=String((game.package_icons&&game.package_icons[p.name])||icon||'').trim();const packIconHtml=packIcon?`<img referrerpolicy="no-referrer" class="price-item-icon" src="${autoTopupEscape(packIcon)}" alt="" loading="lazy" decoding="async">`:'<i class="fas fa-gem" style="font-size:30px;color:#06b6d4"></i>';return `<button type="button" class="price-card-modern auto-topup-price-card" data-auto-index="${i}" onclick="selectAutoTopupPack(${i})"><div class="price-card-content">${packIconHtml}<div class="item-details"><span class="item-quantity">${autoTopupEscape(p.name)}</span></div><div class="price-area"><div class="item-price-tag">${autoTopupEscape(p.price)}</div></div></div></button>`;}).join('');
             content.classList.add('auto-topup-prices-view');content.innerHTML=panel+(cards||'<div class="empty-msg" style="grid-column:1/-1">لا توجد باقات شحن صالحة حالياً. راجع إعدادات الأسعار داخل لوحة التحكم.</div>');
             document.getElementById('stepSelection').classList.remove('active');document.getElementById('stepPrices').classList.add('active');document.getElementById('modalScrollBox').scrollTop=0;
             const title=document.querySelector('#stepPrices .prices-top-bar span');if(title)title.textContent='باقات الشحن التلقائي';const shareBtn=document.querySelector('#stepPrices .prices-share-btn');if(shareBtn)shareBtn.style.visibility='hidden';
@@ -3445,7 +3458,7 @@ globalGames = data || {};
             try{if(walletUser&&autoTopupSelectedGame){const apath=autoTopupAccountPath(autoTopupSelectedGame);const old=(await mzDbGet(apath))||{};await mzDbWrite(apath,{currentId:'',nickname:'',region:'',verified:false,recent:autoTopupRecentList(old),updatedAt:firebase.database.ServerValue.TIMESTAMP},'update');}}catch(error){console.warn('تعذر تحديث حالة الحساب بعد تسجيل الخروج',error);}
         }
         async function selectAutoTopupPack(index){
-            const pack=autoTopupSelectedGame?._autoParsedPacks?.[index];if(!pack)return;
+            let pack=autoTopupSelectedGame?._autoParsedPacks?.[index];if(!pack)return;
             autoTopupSelectedPack=pack;
             const game=autoTopupSelectedGame;
             const input=document.getElementById('autoTopupInlinePlayerId');
@@ -3462,14 +3475,124 @@ globalGames = data || {};
             }
             const settingsSnap=mzSnap(await mzDbGet('settings/autoTopupApi'));const apiSettings=settingsSnap.val()||{};
             if(apiSettings.enabled===false||!/^https:\/\//i.test(String(apiSettings.workerUrl||''))){await walletShowNotice('الشحن غير متاح','خدمة الشحن التلقائي غير متاحة حالياً. تم الاحتفاظ بحسابك، حاول لاحقاً.','warning');return;}
+            if(pack.open){
+                const chosenPack=await autoTopupAskQuantity(pack,game);
+                if(!chosenPack)return;
+                pack=chosenPack;autoTopupSelectedPack=pack;
+            }
             const player=autoTopupVerifiedPlayer;
             const order={gameName:game.name,packName:pack.name,price:pack.price,method:'شحن تلقائي بالـ ID',
-                autoTopup:{service:pack.service,player_id:player.playerId,zone_id:String((pack.parameters||{}).server_id||(pack.parameters||{}).zone_id||(pack.parameters||{}).serverId||(pack.parameters||{}).zoneId||''),parameters:pack.parameters||{},workerUrl:apiSettings.workerUrl,game_code:game.auto_game_code||autoTopupGameKey(game),game_name:game.name,player_label:game.auto_player_label||'Player ID',nickname:player.nickname,verified:player.verified,account_key:autoTopupGameKey(game)}};
+                autoTopup:{service:pack.service,player_id:player.playerId,zone_id:String((pack.parameters||{}).server_id||(pack.parameters||{}).zone_id||(pack.parameters||{}).serverId||(pack.parameters||{}).zoneId||''),parameters:pack.parameters||{},quantity:pack.quantity||null,workerUrl:apiSettings.workerUrl,game_code:game.auto_game_code||autoTopupGameKey(game),game_name:game.name,player_label:game.auto_player_label||'Player ID',nickname:player.nickname,verified:player.verified,account_key:autoTopupGameKey(game)}};
             const ok=await walletShowNotice('تأكيد الشحن التلقائي',
                 `اللعبة: ${game.name}\nالباقة: ${pack.name}\nالسعر: ${pack.price}\n${game.auto_player_label||'Player ID'}: ${player.playerId}${player.nickname?'\nاسم الحساب: '+player.nickname:''}\n\nتأكد من صحة الـ ID. سيتم خصم قيمة الباقة من محفظتك ثم إرسال طلب الشحن تلقائياً. هل تريد المتابعة؟`,
                 'warning',true);
             if(!ok)return;
             await walletConfirmPurchase(order,()=>{});
+        }
+        /* ===== الكمية المفتوحة: بطاقة الباقة + نافذة اختيار الكمية ===== */
+        function autoTopupOpenCardHtml(p,i,game,icon){
+            const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2}),o=p.open,unit=o.unit?(' '+o.unit):'';
+            const packIcon=String((game.package_icons&&game.package_icons[p.name])||icon||'').trim();
+            const ico=packIcon?`<img referrerpolicy="no-referrer" class="price-item-icon" src="${autoTopupEscape(packIcon)}" alt="" loading="lazy" decoding="async">`:'<i class="fas fa-infinity"></i>';
+            return `<button type="button" class="price-card-modern auto-topup-price-card auto-open-card" data-auto-index="${i}" onclick="selectAutoTopupPack(${i})"><div class="price-card-content"><span class="auto-open-ico">${ico}</span><div class="item-details"><span class="item-quantity">${autoTopupEscape(p.name)}</span><small class="auto-open-sub"><i class="fas fa-sliders"></i> اختر الكمية بنفسك: من ${fmt(o.min)} إلى ${fmt(o.max)}${autoTopupEscape(unit)}</small></div><div class="price-area"><div class="item-price-tag">${autoTopupEscape(p.price)}</div><small class="auto-open-per">لكل ${fmt(o.per)}${autoTopupEscape(unit)}</small></div></div></button>`;
+        }
+        function autoTopupPriceNumber(text){
+            const t=String(text==null?'':text).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/,/g,'');
+            const m=t.match(/[0-9]+(?:\.[0-9]+)?/);return m?Number(m[0]):NaN;
+        }
+        function autoTopupOpenTotal(unitPrice,per,qty){
+            return Math.max(0.01,Math.ceil((qty/per)*unitPrice*100-1e-6)/100);
+        }
+        function autoTopupOpenFormat(total,priceText){
+            const cur=/\$|USD/i.test(priceText)?'USD':(/جنيه|EGP|ج\.م|ج(?:\s|$)/i.test(priceText)?'EGP':(typeof currentCurrency!=='undefined'?currentCurrency:'EGP'));
+            const s=Number(total).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
+            return {cur,text:cur==='USD'?s+' $':s+' جنيه'};
+        }
+        function autoTopupAskQuantity(pack,game){
+            return new Promise(resolve=>{
+                const o=pack.open,unitPrice=autoTopupPriceNumber(pack.price);
+                if(!(unitPrice>0)){walletShowNotice('تعذر تحديد السعر','سعر هذه الباقة غير صالح. تواصل مع الدعم.','warning');resolve(null);return;}
+                const old=document.getElementById('mzOpenQty');if(old)old.remove();
+                const esc=autoTopupEscape,fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
+                const toLatin=v=>String(v).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+                const maxOk=o.min+Math.floor((o.max-o.min)/o.step)*o.step;
+                const unitTxt=o.unit||'وحدة';
+                const cand=[o.min,o.min*2,o.min*5,o.min*10,o.min*25,o.min*50,o.min*100,maxOk].map(v=>o.min+Math.round((v-o.min)/o.step)*o.step).filter(v=>v>=o.min&&v<=maxOk);
+                const chips=[...new Set(cand)].slice(0,5);if(chips.indexOf(maxOk)<0)chips[chips.length-1]=maxOk;
+                const chipsHtml=[...new Set(chips)].map(v=>`<button type="button" class="mzoq-chip" data-v="${v}">${fmt(v)}</button>`).join('');
+                const host=document.createElement('div');host.id='mzOpenQty';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-label','اختيار الكمية');
+                host.innerHTML=`<div class="mzoq-card">
+                    <button type="button" class="mzoq-x" data-x aria-label="إغلاق"><i class="fas fa-xmark"></i></button>
+                    <div class="mzoq-head"><span class="mzoq-ico"><i class="fas fa-sliders"></i></span><div class="mzoq-ttl"><h3>اختر الكمية</h3><p>${esc(game.name||'')} · ${esc(pack.name)}</p></div></div>
+                    <div class="mzoq-range"><span><i class="fas fa-arrow-down"></i> الحد الأدنى <b>${fmt(o.min)}</b></span><span><i class="fas fa-arrow-up"></i> الحد الأقصى <b>${fmt(maxOk)}</b></span></div>
+                    <div class="mzoq-input">
+                        <button type="button" class="mzoq-step" data-dec aria-label="إنقاص"><i class="fas fa-minus"></i></button>
+                        <div class="mzoq-field"><input id="mzoqInput" type="text" inputmode="numeric" autocomplete="off" dir="ltr" maxlength="9" placeholder="0" aria-label="الكمية"><small>${esc(unitTxt)}</small></div>
+                        <button type="button" class="mzoq-step" data-inc aria-label="زيادة"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div class="mzoq-chips">${chipsHtml}</div>
+                    <div class="mzoq-err" id="mzoqErr" aria-live="polite"></div>
+                    <div class="mzoq-sum">
+                        <div class="mzoq-row"><span>سعر كل ${fmt(o.per)} ${esc(unitTxt)}</span><b>${esc(pack.price)}</b></div>
+                        <div class="mzoq-row"><span>الكمية المطلوبة</span><b id="mzoqQty">—</b></div>
+                        <div class="mzoq-total"><span>الإجمالي</span><strong id="mzoqTotal">—</strong></div>
+                    </div>
+                    <div class="mzoq-bal" id="mzoqBal"></div>
+                    <div class="mzoq-actions"><button type="button" class="mzoq-cancel" data-x>إلغاء</button><button type="button" class="mzoq-ok" id="mzoqOk" disabled><i class="fas fa-bolt"></i> متابعة</button></div>
+                </div>`;
+                document.body.appendChild(host);
+                const input=host.querySelector('#mzoqInput'),err=host.querySelector('#mzoqErr'),okBtn=host.querySelector('#mzoqOk'),qtyEl=host.querySelector('#mzoqQty'),totEl=host.querySelector('#mzoqTotal'),balEl=host.querySelector('#mzoqBal');
+                let done=false,current=0;
+                const finish=v=>{if(done)return;done=true;document.removeEventListener('keydown',onKey,true);host.classList.remove('open');setTimeout(()=>host.remove(),200);resolve(v);};
+                const readQty=()=>{const raw=toLatin(input.value).replace(/[^0-9]/g,'');if(raw!==input.value)input.value=raw;return raw?Number(raw):0;};
+                const refresh=()=>{
+                    const q=readQty();let msg='',valid=false;
+                    if(q){
+                        if(q<o.min)msg='الحد الأدنى للكمية هو '+fmt(o.min)+' '+unitTxt;
+                        else if(q>maxOk)msg='الحد الأقصى للكمية هو '+fmt(maxOk)+' '+unitTxt;
+                        else if((q-o.min)%o.step!==0)msg='الكمية يجب أن تزيد بمقدار '+fmt(o.step)+' (مثال: '+fmt(o.min)+'، '+fmt(o.min+o.step)+'، '+fmt(o.min+2*o.step)+')';
+                        else valid=true;
+                    }
+                    err.textContent=msg;host.classList.toggle('bad',!!msg);current=valid?q:0;
+                    host.querySelectorAll('.mzoq-chip').forEach(c=>c.classList.toggle('on',valid&&Number(c.dataset.v)===q));
+                    okBtn.disabled=!valid;balEl.textContent='';balEl.classList.remove('low');
+                    if(valid){
+                        const total=autoTopupOpenTotal(unitPrice,o.per,q),f=autoTopupOpenFormat(total,pack.price);
+                        qtyEl.textContent=fmt(q)+' '+unitTxt;totEl.textContent=f.text;
+                        const bal=f.cur==='USD'?(typeof walletBalanceUsd!=='undefined'?Number(walletBalanceUsd):NaN):(typeof walletBalanceEgp!=='undefined'?Number(walletBalanceEgp):NaN);
+                        if(Number.isFinite(bal)){
+                            const need=f.cur==='USD'?total:total;
+                            if(bal+0.0000001<need){balEl.classList.add('low');balEl.innerHTML='<i class="fas fa-triangle-exclamation"></i> رصيد محفظتك الحالي '+esc(fmt(bal))+(f.cur==='USD'?' $':' جنيه')+' ولا يكفي لهذه الكمية';}
+                            else{balEl.innerHTML='<i class="fas fa-wallet"></i> رصيد محفظتك '+esc(fmt(bal))+(f.cur==='USD'?' $':' جنيه');}
+                        }
+                    }else{qtyEl.textContent='—';totEl.textContent='—';}
+                };
+                const setQty=v=>{input.value=String(v);refresh();};
+                const bump=dir=>{
+                    const q=readQty();let n;
+                    if(!q)n=dir>0?o.min:maxOk;
+                    else{n=q+dir*o.step;if(n<o.min)n=o.min;if(n>maxOk)n=maxOk;}
+                    setQty(n);
+                };
+                const submit=()=>{
+                    refresh();if(!current)return;
+                    const q=current,total=autoTopupOpenTotal(unitPrice,o.per,q),f=autoTopupOpenFormat(total,pack.price);
+                    finish({name:pack.name+' — '+fmt(q)+(o.unit?' '+o.unit:''),price:f.text,service:pack.service,parameters:Object.assign({},pack.parameters||{},{quantity:String(q)}),quantity:q,open:o});
+                };
+                const onKey=e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();finish(null);}else if(e.key==='Enter'&&document.activeElement===input){e.preventDefault();submit();}};
+                document.addEventListener('keydown',onKey,true);
+                host.addEventListener('click',e=>{
+                    const t=e.target;if(t===host){finish(null);return;}
+                    if(t.closest('[data-x]')){finish(null);return;}
+                    if(t.closest('[data-dec]')){bump(-1);return;}
+                    if(t.closest('[data-inc]')){bump(1);return;}
+                    const chip=t.closest('.mzoq-chip');if(chip){setQty(chip.dataset.v);return;}
+                });
+                input.addEventListener('input',refresh);
+                okBtn.addEventListener('click',submit);
+                setQty(o.min);
+                requestAnimationFrame(()=>{host.classList.add('open');setTimeout(()=>{try{input.focus({preventScroll:true});input.select();}catch(_){}},120);});
+            });
         }
         function closeAutoTopupCheckout(){const box=document.getElementById('autoTopupCheckout');if(box){box.style.display='none';box.setAttribute('aria-hidden','true');}}
         async function confirmAutoTopupDetails(){
@@ -4629,7 +4752,7 @@ globalGames = data || {};
                     try{
                         const currentUser=firebase.auth().currentUser;if(!currentUser)throw new Error('AUTH_REQUIRED');
                         const idToken=await currentUser.getIdToken();
-                        const apiRes=await walletFetchWithTimeout(auto.workerUrl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},body:JSON.stringify({action:'neworder',service:String(auto.service),reference:code,player_id:String(auto.player_id),zone_id:String(auto.zone_id||''),parameters:auto.parameters||{}}),cache:'no-store'},15000);
+                        const apiRes=await walletFetchWithTimeout(auto.workerUrl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},body:JSON.stringify({action:'neworder',service:String(auto.service),reference:code,player_id:String(auto.player_id),zone_id:String(auto.zone_id||''),parameters:auto.parameters||{},...(auto.quantity?{quantity:Number(auto.quantity)}:{})}),cache:'no-store'},15000);
                         const apiData=await apiRes.json().catch(()=>({status:false}));
                         if(!apiRes.ok||apiData.status===false||apiData.error){
                             const refunded=await walletRefundAutoTopupOnce(balanceRef,orderRef,orderRef.key,finalCostEgp);
@@ -6168,6 +6291,62 @@ body.light-theme #walletCustomNotice .wallet-notice-actions button.mz-opt-tg{col
 })();
 </script>
 <!-- ===== MOHAB STORE: أسعار التجار (جملة) — إضافة مستقلة، لا تغيّر أي ميزة أخرى ===== -->
+<style id="mohab-open-qty-style">
+/* ===== الكمية المفتوحة ===== */
+.auto-open-card{grid-column:1/-1!important}
+.auto-open-card .price-card-content{flex-direction:row!important;justify-content:space-between!important;align-items:center!important;text-align:right!important;min-height:88px!important;gap:12px!important;padding:14px 16px!important}
+.auto-open-card .auto-open-ico{width:48px;height:48px;flex:0 0 48px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(6,182,212,.22),rgba(59,130,246,.2));color:var(--primary);font-size:22px;border:1px solid var(--mz-border-strong,rgba(6,182,212,.4))}
+.auto-open-card .auto-open-ico .price-item-icon{width:32px!important;height:32px!important;object-fit:contain}
+.auto-open-card .item-details{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.auto-open-card .auto-open-sub{color:var(--text-muted);font-size:.72rem;line-height:1.6;font-weight:700}
+.auto-open-card .auto-open-sub i{color:var(--primary);margin-inline-end:3px}
+.auto-open-card .price-area{align-items:center!important;flex:0 0 auto}
+.auto-open-card .auto-open-per{color:var(--text-muted);font-size:.68rem;font-weight:800}
+#mzOpenQty{position:fixed;inset:0;z-index:1000002;display:flex;align-items:center;justify-content:center;padding:16px;direction:rtl;background:var(--mz-overlay,rgba(3,7,14,.78));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;transition:opacity .2s}
+#mzOpenQty.open{opacity:1}
+#mzOpenQty .mzoq-card{position:relative;width:min(100%,430px);max-height:92vh;overflow:auto;background:linear-gradient(160deg,var(--mz-card,#0f1829),var(--mz-card-2,#121c2f));border:1px solid var(--mz-border-strong,rgba(6,182,212,.42));border-radius:26px;padding:20px 18px 18px;color:var(--text-main);box-shadow:var(--mz-shadow,0 22px 60px rgba(0,0,0,.5)),0 0 46px rgba(6,182,212,.12);transform:translateY(18px) scale(.97);transition:transform .25s cubic-bezier(.2,.9,.3,1.2)}
+#mzOpenQty.open .mzoq-card{transform:none}
+#mzOpenQty .mzoq-x{position:absolute;top:12px;left:12px;width:36px;height:36px;border-radius:12px;border:1px solid var(--mz-border,rgba(255,255,255,.1));background:var(--mz-tint,rgba(6,182,212,.1));color:var(--text-muted);cursor:pointer;font-size:15px}
+#mzOpenQty .mzoq-head{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding-inline-start:0;padding-left:44px}
+#mzOpenQty .mzoq-ico{width:50px;height:50px;flex:0 0 50px;border-radius:17px;display:grid;place-items:center;font-size:23px;color:#fff;background:linear-gradient(135deg,#06b6d4,#3b82f6);box-shadow:0 8px 20px rgba(6,182,212,.32)}
+#mzOpenQty .mzoq-ttl{min-width:0}
+#mzOpenQty h3{margin:0 0 3px;font-size:1.12rem;font-weight:900;color:var(--text-main)}
+#mzOpenQty .mzoq-ttl p{margin:0;font-size:.78rem;color:var(--text-muted);font-weight:700;line-height:1.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#mzOpenQty .mzoq-range{display:flex;gap:8px;margin-bottom:12px}
+#mzOpenQty .mzoq-range span{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 6px;border-radius:14px;background:var(--mz-tint,rgba(6,182,212,.1));border:1px solid var(--mz-border,rgba(6,182,212,.16));font-size:.7rem;font-weight:800;color:var(--text-muted)}
+#mzOpenQty .mzoq-range b{font-size:.95rem;color:var(--text-main);font-weight:900}
+#mzOpenQty .mzoq-range i{color:var(--primary);font-size:.7rem}
+#mzOpenQty .mzoq-input{display:flex;align-items:center;gap:10px}
+#mzOpenQty .mzoq-step{width:50px;height:58px;flex:0 0 50px;border-radius:16px;border:1px solid var(--mz-border-strong,rgba(6,182,212,.42));background:var(--mz-tint,rgba(6,182,212,.1));color:var(--primary);font-size:17px;cursor:pointer;transition:transform .12s,background .2s}
+#mzOpenQty .mzoq-step:active{transform:scale(.92);background:var(--mz-tint-strong,rgba(6,182,212,.18))}
+#mzOpenQty .mzoq-field{flex:1;min-width:0;text-align:center;border-radius:18px;background:var(--mz-input,#070b14);border:1.5px solid var(--mz-border-strong,rgba(6,182,212,.42));padding:6px 8px 7px;transition:border-color .2s,box-shadow .2s}
+#mzOpenQty .mzoq-field:focus-within{border-color:var(--primary);box-shadow:0 0 0 4px rgba(6,182,212,.16)}
+#mzOpenQty.bad .mzoq-field{border-color:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.13)}
+#mzOpenQty .mzoq-field input{width:100%;border:0;outline:0;background:transparent;color:var(--text-main);text-align:center;font:900 1.7rem/1.25 'Almarai',sans-serif;letter-spacing:.5px;padding:0;min-height:0}
+#mzOpenQty .mzoq-field input::placeholder{color:var(--text-muted);opacity:.5}
+#mzOpenQty .mzoq-field small{display:block;font-size:.72rem;font-weight:800;color:var(--text-muted)}
+#mzOpenQty .mzoq-chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 4px;justify-content:center}
+#mzOpenQty .mzoq-chip{padding:7px 13px;border-radius:999px;border:1px solid var(--mz-border-strong,rgba(6,182,212,.42));background:var(--mz-tint,rgba(6,182,212,.1));color:var(--text-main);font:800 .78rem 'Almarai',sans-serif;cursor:pointer;transition:transform .12s,background .2s}
+#mzOpenQty .mzoq-chip:active{transform:scale(.94)}
+#mzOpenQty .mzoq-chip.on{background:linear-gradient(135deg,#06b6d4,#3b82f6);color:#fff;border-color:transparent}
+#mzOpenQty .mzoq-err{min-height:20px;margin:4px 2px 6px;font-size:.78rem;font-weight:800;color:#ef4444;text-align:center;line-height:1.6}
+#mzOpenQty .mzoq-sum{border-radius:18px;border:1px solid var(--mz-border,rgba(6,182,212,.16));background:var(--mz-card-2,rgba(255,255,255,.03));padding:4px 14px}
+#mzOpenQty .mzoq-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--mz-border,rgba(255,255,255,.1));font-size:.84rem;color:var(--text-muted);font-weight:700}
+#mzOpenQty .mzoq-row b{color:var(--text-main);font-weight:900;direction:rtl}
+#mzOpenQty .mzoq-total{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px -6px 6px;padding:11px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.16));border:1px solid rgba(52,211,153,.4);font-weight:900;color:var(--text-main)}
+#mzOpenQty .mzoq-total strong{font-size:1.25rem;color:#34d399;direction:rtl}
+body.light-theme #mzOpenQty .mzoq-total strong{color:#047857}
+#mzOpenQty .mzoq-bal{min-height:18px;margin:9px 2px 0;font-size:.76rem;font-weight:800;color:var(--text-muted);text-align:center}
+#mzOpenQty .mzoq-bal i{margin-inline-end:4px;color:var(--primary)}
+#mzOpenQty .mzoq-bal.low{color:#f59e0b}#mzOpenQty .mzoq-bal.low i{color:#f59e0b}
+#mzOpenQty .mzoq-actions{display:flex;gap:10px;margin-top:14px}
+#mzOpenQty .mzoq-actions button{min-height:50px;border-radius:15px;border:0;font:900 .95rem 'Almarai',sans-serif;cursor:pointer;transition:transform .12s,opacity .2s}
+#mzOpenQty .mzoq-actions button:active{transform:scale(.97)}
+#mzOpenQty .mzoq-cancel{flex:1;background:var(--mz-tint,rgba(255,255,255,.08));color:var(--text-main);border:1px solid var(--mz-border,rgba(255,255,255,.12))!important}
+#mzOpenQty .mzoq-ok{flex:2;background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff;box-shadow:0 10px 22px rgba(16,185,129,.28)}
+#mzOpenQty .mzoq-ok:disabled{opacity:.4;box-shadow:none;cursor:not-allowed}
+@media(max-width:560px){#mzOpenQty{align-items:flex-end;padding:0}#mzOpenQty .mzoq-card{width:100%;max-width:none;border-radius:26px 26px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}}
+</style>
 <style id="mohab-wholesale-style">
 #mzWsBar{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;margin:0 0 8px;padding:8px 12px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);color:#2b1a00;font-weight:900;font-size:.84rem;line-height:1.5;text-align:center;font-family:inherit;box-shadow:0 2px 10px rgba(245,158,11,.35)}
 #mzWsBar[hidden]{display:none!important}
