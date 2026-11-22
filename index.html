@@ -6895,5 +6895,29 @@ window.mzCart={open:openCart,count:function(){return qtyOf(items.filter(function
 })();
 </script>
 
+
+<script id="mzOrdersFix">
+/* ===== حماية زر «طلباتي» في الشريط السفلي: يفتح صفحة الطلبات دايمًا ===== */
+(function(){
+'use strict';
+function openOrders(){
+  var logged=false;try{logged=!!walletUser;}catch(e){}
+  if(!logged){try{openWallet();}catch(e){console.error(e);}return;}
+  try{openWalletOrdersPage();}catch(e){console.error('openWalletOrdersPage failed',e);}
+  /* لو الدالة الأصلية فشلت لأي سبب، نفتح الصفحة يدويًا */
+  var pg=document.getElementById('walletOrdersPage');
+  if(pg&&!pg.classList.contains('open')){pg.classList.add('open');pg.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
+  try{if(typeof walletOrdersListener!=='undefined'&&!walletOrdersListener)walletListenOrders();}catch(e){console.error(e);}
+}
+function handler(e){
+  var t=e.target&&e.target.closest?e.target.closest('#walletOrdersDockBtn'):null;
+  if(!t)return;
+  e.stopPropagation();e.preventDefault();   /* يمنع التنفيذ المزدوج من onclick القديم */
+  openOrders();
+}
+document.addEventListener('click',handler,true);
+window.mzOpenOrders=openOrders;
+})();
+</script>
 </body>
 </html>
