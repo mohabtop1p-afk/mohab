@@ -4360,7 +4360,7 @@ globalGames = data || {};
                 const code='MTU-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
                 try {
                     const orderRef=db.ref(`wallet_orders/${walletUser.uid}`).push();
-                    await orderRef.set({code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,price:order.price,method:order.method,status:'pending_payment',paymentType:'whatsapp',createdAt:firebase.database.ServerValue.TIMESTAMP});
+                    await orderRef.set({code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,price:order.price,method:order.method,...(order.cartItems?(window.mzcOnOrderPlaced&&window.mzcOnOrderPlaced(order),{isCart:true,cartItems:order.cartItems,itemsCount:order.cartCount||order.cartItems.length}):{}),status:'pending_payment',paymentType:'whatsapp',createdAt:firebase.database.ServerValue.TIMESTAMP});
                     walletListenOrders();
                     let msg=`مرحباً، أريد طلب شحن غير مدفوع من MOHAB STORE\n🎮 اللعبة/المنتج: ${order.gameName}\n📦 الباقة: ${order.packName}\n💰 السعر: ${order.price}\n⚙️ طريقة الشحن: ${order.method}\n🧾 كود الطلب: ${code}\n⏳ الحالة: بانتظار الدفع عبر تليجرام`;
                     const copied=await launchTelegramText(msg);
@@ -4371,7 +4371,7 @@ globalGames = data || {};
                 const code='MWU-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
                 try {
                     const orderRef=db.ref(`wallet_orders/${walletUser.uid}`).push();
-                    await orderRef.set({code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,price:order.price,method:order.method,status:'pending_payment',paymentType:'whatsapp',createdAt:firebase.database.ServerValue.TIMESTAMP});
+                    await orderRef.set({code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,price:order.price,method:order.method,...(order.cartItems?(window.mzcOnOrderPlaced&&window.mzcOnOrderPlaced(order),{isCart:true,cartItems:order.cartItems,itemsCount:order.cartCount||order.cartItems.length}):{}),status:'pending_payment',paymentType:'whatsapp',createdAt:firebase.database.ServerValue.TIMESTAMP});
                     walletListenOrders();
                     let msg=`مرحباً، أريد طلب شحن غير مدفوع من MOHAB STORE\n🎮 اللعبة/المنتج: ${order.gameName}\n📦 الباقة: ${order.packName}\n💰 السعر: ${order.price}\n⚙️ طريقة الشحن: ${order.method}\n🧾 كود الطلب: ${code}\n⏳ الحالة: بانتظار الدفع عبر واتساب`;
                     launchWhatsAppText(msg);
@@ -4478,7 +4478,8 @@ globalGames = data || {};
                     const mzRow=(ic,k,v,cls)=>`<div class="mz-ord-row${cls?' '+cls:''}"><span class="mz-ord-k"><i class="fas fa-${ic}"></i>${k}</span><b class="mz-ord-v" dir="auto">${v}</b></div>`;
                     const mzRows=[];
                     mzRows.push(mzRow('hashtag','كود الطلب',walletEscape(o.code||o.key)));
-                    mzRows.push(mzRow('tag','السعر',walletEscape(o.price||'—')));
+                    mzRows.push(mzRow('tag',o.isCart?'إجمالي السلة':'السعر',walletEscape(o.price||'—')));
+                    if(o.isCart&&o.cartItems){Object.values(o.cartItems).forEach(function(ci){mzRows.push(mzRow('cart-shopping',walletEscape((ci.game||'')+' — '+(ci.pack||'')),walletEscape('× '+(ci.qty||1)+(ci.lineTotal?' = '+ci.lineTotal:''))));});}
                     mzRows.push(mzRow('bolt','طريقة الشحن',walletEscape(o.method||'يتم التأكيد مع الدعم')));
                     mzRows.push(mzRow('wallet','طريقة الدفع',walletEscape(o.paymentType==='wallet'?'محفظة MOHAB STORE':o.paymentType==='whatsapp'?(String(o.code||'').indexOf('MTU-')===0?'تليجرام — غير مدفوع':'واتساب — غير مدفوع'):'غير محددة')));
                     if(Number(o.discountPercent)>0)mzRows.push(mzRow('percent','الخصم المطبق',walletEscape(o.discountPercent)+'%'));
@@ -4494,7 +4495,7 @@ globalGames = data || {};
                     }
                     if(o.rejectionReason)mzRows.push(mzRow('circle-exclamation','سبب الرفض',walletEscape(o.rejectionReason),'warn'));
                     if(o.shippedAt)mzRows.push(mzRow('truck-fast','تاريخ الشحن',new Date(o.shippedAt).toLocaleString('ar-EG')));
-                    return `<article class="mz-ord" data-status="${walletEscape(String(o.status||'new'))}"><header class="mz-ord-head"><b class="mz-ord-title">${walletEscape(o.game||o.gameName||'منتج')} — ${walletEscape(o.pack||o.packName||'باقة')}</b><span class="mz-ord-chip">${walletEscape(labels[o.status]||o.status||'تم تسجيل الطلب')}</span></header><div class="mz-ord-body">${mzRows.join('')}</div>${historyHtml}<footer class="mz-ord-foot"><div class="mz-ord-dates"><span><i class="fas fa-calendar-days"></i>تاريخ الطلب: ${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</span>${o.updatedAt?`<span><i class="fas fa-arrows-rotate"></i>آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</span>`:''}</div>${o.autoTopup&&o.status==='processing'?`<button type="button" class="wallet-receipt-btn" style="margin-inline-end:8px" onclick="walletRecheckProcessingOrders(true);this.disabled=true;this.textContent='جارٍ التحقق…'"><i class="fas fa-rotate"></i> تحديث الحالة</button>`:''}<button type="button" class="wallet-receipt-btn" onclick="walletShowOrderReceipt('${walletEscape(o.key)}')"><i class="fas fa-receipt"></i> عرض الوصل</button></footer></article>`;
+                    return `<article class="mz-ord" data-status="${walletEscape(String(o.status||'new'))}"><header class="mz-ord-head"><b class="mz-ord-title">${o.isCart?walletEscape('🛒 سلة مشتريات — '+(o.itemsCount||'')+' منتج'):walletEscape(o.game||o.gameName||'منتج')+' — '+walletEscape(o.pack||o.packName||'باقة')}</b><span class="mz-ord-chip">${walletEscape(labels[o.status]||o.status||'تم تسجيل الطلب')}</span></header><div class="mz-ord-body">${mzRows.join('')}</div>${historyHtml}<footer class="mz-ord-foot"><div class="mz-ord-dates"><span><i class="fas fa-calendar-days"></i>تاريخ الطلب: ${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</span>${o.updatedAt?`<span><i class="fas fa-arrows-rotate"></i>آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</span>`:''}</div>${o.autoTopup&&o.status==='processing'?`<button type="button" class="wallet-receipt-btn" style="margin-inline-end:8px" onclick="walletRecheckProcessingOrders(true);this.disabled=true;this.textContent='جارٍ التحقق…'"><i class="fas fa-rotate"></i> تحديث الحالة</button>`:''}<button type="button" class="wallet-receipt-btn" onclick="walletShowOrderReceipt('${walletEscape(o.key)}')"><i class="fas fa-receipt"></i> عرض الوصل</button></footer></article>`;
                 }).join(''):'لا توجد طلبات شحن حتى الآن.';
                 if(list)list.innerHTML=html;
                 if(legacy)legacy.innerHTML=html;
@@ -4806,7 +4807,7 @@ globalGames = data || {};
                 code='MWP-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
                 orderRef=db.ref(`wallet_orders/${walletUser.uid}`).push();
                 const auto=order.autoTopup||null;
-                await orderRef.set({code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,price:order.price,originalPrice:order.price,chargedAmountEgp:finalCostEgp,chargedAmountUsd:finalCostUsd,discountPercent:couponPercent,discountAmountEgp:discountEgp,currency,costUsd:finalCostUsd,method:order.method,status:auto?'paid':'paid',paymentType:'wallet',createdAt:firebase.database.ServerValue.TIMESTAMP,...(auto?{serviceId:String(auto.service),playerId:String(auto.player_id),zoneId:String(auto.zone_id||''),parameters:auto.parameters||{},autoTopup:true,gameCode:String(auto.game_code||''),gameAccountKey:String(auto.account_key||''),playerLabel:String(auto.player_label||'Player ID'),playerNickname:'',playerIdVerified:false}: {})});
+                await orderRef.set({code,uid:walletUser.uid,email:walletUser.email||'',displayName:walletUser.displayName||'',game:order.gameName,pack:order.packName,price:order.price,originalPrice:order.price,chargedAmountEgp:finalCostEgp,chargedAmountUsd:finalCostUsd,discountPercent:couponPercent,discountAmountEgp:discountEgp,currency,costUsd:finalCostUsd,method:order.method,...(order.cartItems?(window.mzcOnOrderPlaced&&window.mzcOnOrderPlaced(order),{isCart:true,cartItems:order.cartItems,itemsCount:order.cartCount||order.cartItems.length}):{}),status:auto?'paid':'paid',paymentType:'wallet',createdAt:firebase.database.ServerValue.TIMESTAMP,...(auto?{serviceId:String(auto.service),playerId:String(auto.player_id),zoneId:String(auto.zone_id||''),parameters:auto.parameters||{},autoTopup:true,gameCode:String(auto.game_code||''),gameAccountKey:String(auto.account_key||''),playerLabel:String(auto.player_label||'Player ID'),playerNickname:'',playerIdVerified:false}: {})});
                 const updatedWallet=result.snapshot.val()||{};walletBalanceEgp=Number(updatedWallet.balanceEgp||0);walletBalanceUsd=Number(updatedWallet.balanceUsd||0);walletNextDiscount=updatedWallet.nextDiscount||null;walletDisplayBalance();
                 if(auto){
                     try{
@@ -6667,5 +6668,232 @@ body.light-theme #mzNoteOv .mzn-box{background:#fff;color:#172033;border-color:r
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start); else start();
 })();
 </script>
+
+<style id="mzcCss">
+#mzcFab{position:fixed;left:14px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:640;width:56px;height:56px;border:0;border-radius:50%;display:none;place-items:center;font-size:22px;color:#fff;background:linear-gradient(135deg,#06b6d4,#3b82f6);box-shadow:0 10px 28px rgba(6,182,212,.4);cursor:pointer}
+#mzcFab.show{display:grid}#mzcFab:active{transform:scale(.94)}
+#mzcFab b{position:absolute;top:-5px;right:-5px;min-width:22px;height:22px;padding:0 5px;border-radius:11px;background:#ef4444;color:#fff;font-size:12px;display:grid;place-items:center;box-sizing:border-box;border:2px solid var(--mz-card,#0f1829)}
+.mzc-ov{position:fixed;inset:0;z-index:999990;background:var(--mz-overlay,rgba(3,7,14,.78));display:none;align-items:flex-end;justify-content:center;direction:rtl;font-family:inherit}
+.mzc-ov.open{display:flex;animation:mzcIn .18s ease}@keyframes mzcIn{from{opacity:0}to{opacity:1}}
+.mzc-card{width:min(100%,560px);max-height:90vh;overflow:auto;background:var(--mz-card,#0f1829);color:var(--mz-text,inherit);border:1px solid var(--mz-border-strong,rgba(6,182,212,.42));border-radius:26px 26px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:var(--mz-shadow,0 22px 60px rgba(0,0,0,.5));box-sizing:border-box}
+@media(min-width:700px){.mzc-ov{align-items:center}.mzc-card{border-radius:26px}}
+.mzc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.mzc-head h3{margin:0;font-size:1.1rem}.mzc-x{width:38px;height:38px;border-radius:12px;border:1px solid var(--mz-border,rgba(148,163,184,.25));background:var(--mz-tint,rgba(6,182,212,.1));color:inherit;font-size:22px;cursor:pointer}
+.mzc-sum{background:var(--mz-card-2,#121c2f);border:1px solid var(--mz-border,rgba(6,182,212,.16));border-radius:16px;padding:13px 14px;line-height:1.8;margin-bottom:14px}
+.mzc-sum small{opacity:.65;display:block}.mzc-sum b{font-size:1rem;overflow-wrap:anywhere}
+.mzc-qtyrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.mzc-step{display:inline-flex;align-items:center;gap:4px;background:var(--mz-input,#070b14);border:1px solid var(--mz-border,rgba(6,182,212,.2));border-radius:14px;padding:3px}
+.mzc-step button{width:38px;height:38px;border:0;border-radius:11px;background:var(--mz-tint-strong,rgba(6,182,212,.18));color:inherit;font-size:20px;font-weight:900;cursor:pointer}
+.mzc-step button:disabled{opacity:.35}.mzc-step span{min-width:36px;text-align:center;font-weight:900;font-size:1.05rem}
+.mzc-total{display:flex;justify-content:space-between;align-items:center;font-weight:900;margin:6px 0 14px;font-size:1.05rem}.mzc-total em{font-style:normal;color:#34d399;font-size:1.2rem}
+.mzc-btns{display:grid;gap:9px}.mzc-btn{min-height:48px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.mzc-btn.p{color:#fff;background:linear-gradient(110deg,#06b6d4,#3b82f6)}.mzc-btn.s{color:inherit;background:var(--mz-tint-strong,rgba(6,182,212,.15));border:1px solid var(--mz-border-strong,rgba(6,182,212,.4))}
+.mzc-btn.g{color:inherit;background:transparent;border:1px solid var(--mz-border,rgba(148,163,184,.3));min-height:42px;font-weight:700}.mzc-btn:disabled{opacity:.45}
+.mzc-sec{font-size:.82rem;font-weight:900;opacity:.75;margin:14px 0 8px}
+.mzc-item{background:var(--mz-card-2,#121c2f);border:1px solid var(--mz-border,rgba(6,182,212,.16));border-radius:16px;padding:12px;margin-bottom:9px}
+.mzc-item-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.mzc-item-top b{display:block;overflow-wrap:anywhere}.mzc-item-top small{opacity:.65}
+.mzc-item-line{color:#34d399;font-weight:900;white-space:nowrap}
+.mzc-item-ft{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;flex-wrap:wrap}
+.mzc-link{background:none;border:0;color:inherit;opacity:.75;font:inherit;font-size:.78rem;cursor:pointer;padding:6px 8px;border-radius:9px}.mzc-link:hover{background:var(--mz-tint,rgba(6,182,212,.1))}.mzc-link.d{color:#f87171;opacity:1}
+.mzc-empty{text-align:center;padding:30px 10px;opacity:.7;line-height:1.9}
+.mzc-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(168px + env(safe-area-inset-bottom,0px));z-index:999995;background:var(--mz-card,#0f1829);color:inherit;border:1px solid var(--mz-border-strong,rgba(6,182,212,.42));border-radius:14px;padding:10px 14px;display:none;align-items:center;gap:12px;font-size:.85rem;font-weight:800;box-shadow:var(--mz-shadow,0 10px 30px rgba(0,0,0,.4));direction:rtl;white-space:nowrap}
+.mzc-toast.show{display:flex;animation:mzcIn .18s ease}.mzc-toast button{background:none;border:0;color:#22d3ee;font:inherit;font-weight:900;cursor:pointer}
+</style>
+
+<script id="mzcScript">
+/* ===== نظام السلة — MOHAB STORE ===== */
+(function(){
+'use strict';
+var KEY='mohab_cart_v2', stored=load(), owner=stored.uid, items=stored.items, cartRef=null, cartListener=null, pushT=null;
+var E=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+function load(){try{var o=JSON.parse(localStorage.getItem(KEY)||'{}');return {uid:o.uid||null,items:Array.isArray(o.items)?o.items:[]};}catch(e){return {uid:null,items:[]};}}
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify({uid:owner,items:items}));}catch(e){}}
+function persist(){saveLocal();badge();if(owner)schedulePush();}
+
+/* ---------- المزامنة مع Firebase: wallet_carts/{uid} ---------- */
+function clean(list){
+  var out=[];(list||[]).forEach(function(i){
+    if(!i||!i.id||!(Number(i.n)>0))return;
+    out.push({id:String(i.id).slice(0,500),game:String(i.game||'').slice(0,200),pack:String(i.pack||'').slice(0,300),method:String(i.method||'').slice(0,100),
+      price:String(i.price||'').slice(0,100),n:Number(i.n),cur:i.cur==='USD'?'USD':'EGP',qty:Math.max(1,Math.min(99,Math.round(Number(i.qty)||1))),saved:!!i.saved});
+  });return out.slice(0,99);}
+function mergeLists(a,b){var m=clean(a);clean(b).forEach(function(x){var e=m.filter(function(y){return y.id===x.id;})[0];if(e){e.qty=Math.min(99,e.qty+x.qty);e.saved=e.saved&&x.saved;}else m.push(x);});return m.slice(0,99);}
+function schedulePush(){clearTimeout(pushT);pushT=setTimeout(function(){pushT=null;push();},400);}
+function push(){
+  if(!owner||typeof db==='undefined')return;
+  var list=clean(items),r=db.ref('wallet_carts/'+owner);
+  var op=list.length?r.set({items:list,updatedAt:firebase.database.ServerValue.TIMESTAMP}):r.remove();
+  op.catch(function(e){console.warn('cart sync failed',e&&e.code);});
+}
+function detach(){if(cartRef&&cartListener)cartRef.off('value',cartListener);cartRef=null;cartListener=null;}
+function attach(uid){
+  detach();cartRef=db.ref('wallet_carts/'+uid);
+  cartListener=function(snap){
+    if(pushT)return; /* تعديل محلي لسه بيتبعت */
+    var v=snap.val(),list=clean(v&&v.items?Object.values(v.items):[]);
+    if(JSON.stringify(list)===JSON.stringify(clean(items)))return;
+    items=list;saveLocal();badge();var c=$('mzcCart');if(c&&c.classList.contains('open'))renderCart();
+  };
+  cartRef.on('value',cartListener,function(e){console.warn('cart listen failed',e&&e.code);});
+}
+function onUser(u){
+  if(!u){ /* تسجيل خروج: نفرّغ نسخة الجهاز عشان ما تظهرش لمستخدم تاني */
+    if(owner){detach();owner=null;items=[];saveLocal();badge();var c=$('mzcCart');if(c&&c.classList.contains('open'))renderCart();}
+    return;}
+  var uid=u.uid;
+  db.ref('wallet_carts/'+uid).once('value').then(function(snap){
+    var v=snap.val(),remote=clean(v&&v.items?Object.values(v.items):[]),merged;
+    if(owner===uid)merged=remote;                 /* نسخة نفس الحساب: السيرفر هو المرجع */
+    else if(owner===null)merged=mergeLists(remote,items); /* سلة زائر قبل الدخول تتدمج مع سلة الحساب */
+    else merged=remote;                           /* سلة حساب آخر على نفس الجهاز: تتجاهل */
+    var changed=JSON.stringify(merged)!==JSON.stringify(remote);
+    owner=uid;items=merged;saveLocal();badge();attach(uid);
+    if(changed)push();
+    var c=$('mzcCart');if(c&&c.classList.contains('open'))renderCart();
+  }).catch(function(e){console.warn('cart load failed (تأكد من نشر قواعد wallet_carts)',e&&e.code);});
+}
+function startSync(tries){
+  try{if(typeof db!=='undefined'&&window.firebase&&firebase.apps&&firebase.apps.length){firebase.auth().onAuthStateChanged(onUser);return;}}catch(e){}
+  if((tries||0)<50)setTimeout(function(){startSync((tries||0)+1);},200);
+}
+function rate(){return Number(typeof walletFxRate!=='undefined'?walletFxRate:50)||50;}
+function parse(t){t=String(t||'');var m=t.replace(/,/g,'').match(/\d+(?:\.\d+)?/);
+  var cur=/\$|USD/i.test(t)?'USD':(/جنيه|EGP|ج\.م|ج(?:\s|$)/i.test(t)?'EGP':(typeof currentCurrency!=='undefined'?currentCurrency:'EGP'));
+  return {n:m?Number(m[0]):NaN,cur:cur};}
+function num(n){return (Math.round(n*100)/100).toLocaleString('en-US',{maximumFractionDigits:2});}
+function money(n,cur){return cur==='USD'?num(n)+' $':num(n)+' جنيه';}
+function sum(list){ /* يجمع بعملة واحدة؛ لو مختلطة يحوّل لعملة الموقع الحالية */
+  var curs={};list.forEach(function(i){curs[i.cur]=1;});
+  var keys=Object.keys(curs),target=keys.length===1?keys[0]:((typeof currentCurrency!=='undefined'&&currentCurrency)||'EGP'),r=rate(),t=0;
+  list.forEach(function(i){var v=i.n*i.qty;if(i.cur!==target)v=target==='EGP'?v*r:v/r;t+=v;});
+  return {n:t,cur:target,text:money(t,target)};}
+function qtyOf(list){return list.reduce(function(a,i){return a+i.qty;},0);}
+function $(id){return document.getElementById(id);}
+
+/* ---------- عناصر الواجهة ---------- */
+function ensureUi(){
+  if($('mzcFab'))return;
+  var fab=document.createElement('button');fab.id='mzcFab';fab.type='button';fab.setAttribute('aria-label','السلة');
+  fab.innerHTML='<i class="fas fa-cart-shopping"></i><b id="mzcBadge">0</b>';fab.onclick=openCart;document.body.appendChild(fab);
+  var a=document.createElement('div');a.id='mzcSheet';a.className='mzc-ov';document.body.appendChild(a);
+  a.addEventListener('click',function(e){if(e.target===a)closeSheet();});
+  var c=document.createElement('div');c.id='mzcCart';c.className='mzc-ov';document.body.appendChild(c);
+  c.addEventListener('click',function(e){if(e.target===c)closeCart();});
+  var t=document.createElement('div');t.id='mzcToast';t.className='mzc-toast';document.body.appendChild(t);
+  badge();
+}
+function badge(){var f=$('mzcFab');if(!f)return;var n=qtyOf(items.filter(function(i){return !i.saved;})),has=items.length>0;
+  f.classList.toggle('show',has);var b=$('mzcBadge');if(b){b.textContent=n>99?'99+':n;b.style.display=n?'grid':'none';}}
+function toast(msg){var t=$('mzcToast');t.innerHTML='<span>'+E(msg)+'</span><button type="button">عرض السلة</button>';
+  t.querySelector('button').onclick=function(){t.classList.remove('show');openCart();};t.classList.add('show');
+  clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.remove('show');},3200);}
+
+/* ---------- نافذة اختيار الكمية (تظهر عند الضغط على أي باقة) ---------- */
+var origOpen=window.openWhatsApp;
+function getD(el,k){return decodeURIComponent(el.getAttribute(k)||'');}
+window.openWhatsApp=function(el){
+  try{
+    ensureUi();
+    var d={game:getD(el,'data-game'),pack:getD(el,'data-pack'),price:getD(el,'data-price'),method:getD(el,'data-method')};
+    var p=parse(d.price);
+    if(!(p.n>0)){return origOpen.call(this,el);}
+    d.n=p.n;d.cur=p.cur;d.qty=1;showSheet(d);
+  }catch(e){console.error(e);return origOpen.call(this,el);}
+};
+function showSheet(d){
+  var a=$('mzcSheet');
+  a.innerHTML='<div class="mzc-card" role="dialog" aria-modal="true"><div class="mzc-head"><h3>🛍️ اختر الكمية</h3><button class="mzc-x" type="button" data-x>×</button></div>'
+   +'<div class="mzc-sum"><small>'+E(d.game)+'</small><b>'+E(d.pack)+'</b><small>سعر الوحدة: '+E(d.price)+'</small></div>'
+   +'<div class="mzc-qtyrow"><span style="font-weight:800">الكمية</span><div class="mzc-step"><button type="button" data-m>−</button><span id="mzcQ">1</span><button type="button" data-p>+</button></div></div>'
+   +'<div class="mzc-total"><span>الإجمالي</span><em id="mzcT"></em></div>'
+   +'<div class="mzc-btns"><button class="mzc-btn p" type="button" data-now><i class="fas fa-bolt"></i> اطلب الآن</button>'
+   +'<button class="mzc-btn s" type="button" data-add><i class="fas fa-cart-plus"></i> أضف للسلة</button>'
+   +'<button class="mzc-btn g" type="button" data-x>إلغاء</button></div></div>';
+  function up(){$('mzcQ').textContent=d.qty;$('mzcT').textContent=money(d.n*d.qty,d.cur);a.querySelector('[data-m]').disabled=d.qty<=1;a.querySelector('[data-p]').disabled=d.qty>=99;}
+  a.onclick=function(e){var t=e.target;if(t===a||t.closest('[data-x]'))return closeSheet();
+    if(t.closest('[data-m]')){if(d.qty>1)d.qty--;return up();}
+    if(t.closest('[data-p]')){if(d.qty<99)d.qty++;return up();}
+    if(t.closest('[data-add]')){add(d);closeSheet();toast('تمت إضافة '+d.qty+' إلى السلة ✓');return;}
+    if(t.closest('[data-now]')){closeSheet();buyNow(d);}};
+  up();a.classList.add('open');
+}
+function closeSheet(){var a=$('mzcSheet');if(a)a.classList.remove('open');}
+function buyNow(d){ /* طلب مباشر لمنتج واحد بكمية — يستخدم نفس المسار القديم (محفظة / واتساب / تليجرام) */
+  var q=d.qty,price=q>1?d.price.replace(/\d[\d,]*(?:\.\d+)?/,num(d.n*q)):d.price,pack=q>1?d.pack+' × '+q:d.pack;
+  var map={'data-game':d.game,'data-pack':pack,'data-price':price,'data-method':d.method};
+  origOpen({getAttribute:function(k){return encodeURIComponent(map[k]||'');}});
+}
+
+/* ---------- منطق السلة ---------- */
+function add(d){
+  var id=[d.game,d.pack,d.method,d.price].join('||'),ex=items.filter(function(i){return i.id===id;})[0];
+  if(ex){ex.qty=Math.min(99,ex.qty+d.qty);ex.saved=false;}
+  else items.push({id:id,game:d.game,pack:d.pack,method:d.method,price:d.price,n:d.n,cur:d.cur,qty:d.qty,saved:false});
+  persist();
+}
+function find(id){return items.filter(function(i){return i.id===id;})[0];}
+
+/* ---------- نافذة السلة ---------- */
+function openCart(){ensureUi();renderCart();$('mzcCart').classList.add('open');document.body.style.overflow='hidden';}
+function closeCart(){var c=$('mzcCart');if(c)c.classList.remove('open');document.body.style.overflow='';}
+function rowHtml(i,saved){
+  return '<div class="mzc-item"><div class="mzc-item-top"><div><small>'+E(i.game)+'</small><b>'+E(i.pack)+'</b><small>'+E(i.price)+' للوحدة</small></div><span class="mzc-item-line">'+E(money(i.n*i.qty,i.cur))+'</span></div>'
+   +'<div class="mzc-item-ft"><div class="mzc-step" data-id="'+E(i.id)+'"><button type="button" data-a="dec">−</button><span>'+i.qty+'</span><button type="button" data-a="inc">+</button></div><div>'
+   +'<button class="mzc-link" type="button" data-id="'+E(i.id)+'" data-a="'+(saved?'tocart':'later')+'">'+(saved?'🛒 نقل للسلة':'🔖 حفظ لوقت لاحق')+'</button>'
+   +'<button class="mzc-link d" type="button" data-id="'+E(i.id)+'" data-a="del">حذف</button></div></div></div>';
+}
+function renderCart(){
+  var c=$('mzcCart'),act=items.filter(function(i){return !i.saved;}),sv=items.filter(function(i){return i.saved;}),h='';
+  h+='<div class="mzc-card" role="dialog" aria-modal="true"><div class="mzc-head"><h3>🛒 سلة المشتريات</h3><button class="mzc-x" type="button" data-a="close">×</button></div>';
+  if(!act.length&&!sv.length)h+='<div class="mzc-empty">السلة فاضية.<br>اختر أي باقة واضغط «أضف للسلة».</div>';
+  if(act.length){
+    h+=act.map(function(i){return rowHtml(i,false);}).join('');
+    var t=sum(act);
+    h+='<div class="mzc-total"><span>الإجمالي ('+qtyOf(act)+' قطعة)</span><em>'+E(t.text)+'</em></div>'
+      +'<div class="mzc-btns"><button class="mzc-btn p" type="button" data-a="checkout"><i class="fas fa-circle-check"></i> إتمام الطلب</button>'
+      +'<button class="mzc-btn g" type="button" data-a="clear">تفريغ السلة</button></div>';
+  }else if(sv.length)h+='<div class="mzc-empty">لا توجد منتجات في السلة حاليًا.</div>';
+  if(sv.length)h+='<div class="mzc-sec">🔖 محفوظ لوقت لاحق ('+sv.length+')</div>'+sv.map(function(i){return rowHtml(i,true);}).join('');
+  c.innerHTML=h+'</div>';
+  c.onclick=function(e){
+    if(e.target===c)return closeCart();
+    var b=e.target.closest('[data-a]');if(!b)return;var a=b.getAttribute('data-a'),id=b.getAttribute('data-id')||(b.parentNode&&b.parentNode.getAttribute&&b.parentNode.getAttribute('data-id')),i=id&&find(id);
+    if(a==='close')return closeCart();
+    if(a==='checkout')return checkout();
+    if(a==='clear'){items=items.filter(function(x){return x.saved;});persist();return renderCart();}
+    if(!i)return;
+    if(a==='inc')i.qty=Math.min(99,i.qty+1);
+    else if(a==='dec'){if(i.qty>1)i.qty--;else items=items.filter(function(x){return x!==i;});}
+    else if(a==='del')items=items.filter(function(x){return x!==i;});
+    else if(a==='later')i.saved=true;
+    else if(a==='tocart')i.saved=false;
+    persist();renderCart();
+  };
+}
+
+/* ---------- إتمام الطلب: رسالة واحدة / سجل واحد بكل المنتجات ---------- */
+function checkout(){
+  var act=items.filter(function(i){return !i.saved;});if(!act.length)return;
+  var t=sum(act),n=qtyOf(act);
+  var lines=act.map(function(i,k){return (k+1)+'. '+i.game+' — '+i.pack+' × '+i.qty+' = '+money(i.n*i.qty,i.cur);});
+  var order={gameName:'سلة مشتريات ('+n+' قطعة)',packName:lines.join('\n'),price:t.text,method:'سلة مشتريات',cartCount:n,
+    cartItems:act.map(function(i){return {game:i.game,pack:i.pack,method:i.method,price:i.price,qty:i.qty,lineTotal:money(i.n*i.qty,i.cur)};})};
+  var launch=function(code,paid){
+    var text='مرحباً، أريد طلب شحن (سلة مشتريات):\n\n'+lines.join('\n')+'\n\n📦 عدد القطع: '+n+'\n💰 الإجمالي: '+(paid||t.text);
+    if(code)text+='\n\n✅ الطلب مدفوع من محفظة MOHAB STORE\n🧾 كود الدفع: '+code;
+    window.location.href='https://wa.me/201125808758?text='+encodeURIComponent(text);
+  };
+  closeCart();
+  if(typeof walletUser==='undefined'||!walletUser){window.mzcOnOrderPlaced();launch();return;}
+  walletChooseOrderMode(order,launch).catch(function(e){console.error(e);});
+}
+/* تُستدعى عند تسجيل الطلب فعليًا: تفريغ المنتجات المطلوبة وإبقاء «المحفوظ لوقت لاحق» */
+window.mzcOnOrderPlaced=function(){items=items.filter(function(i){return i.saved;});persist();};
+
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){ensureUi();startSync();});else{ensureUi();startSync();}
+window.mzCart={open:openCart,count:function(){return qtyOf(items.filter(function(i){return !i.saved;}));}};
+})();
+</script>
+
 </body>
 </html>
