@@ -65,11 +65,9 @@ def('__mz',function(p,k){
     <link rel="preconnect" href="https://mohab-store-default-rtdb.firebaseio.com" crossorigin>
     <link rel="preconnect" href="https://picturetolink.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <link rel="preload" as="image" href="https://picturetolink.com/i/f6xXM22J29.gif" media="not all and (min-width:900px) and (hover:hover) and (pointer:fine)" fetchpriority="high">
-    <link rel="preload" as="image" href="https://picturetolink.com/i/EN5ERuTTFz.gif" media="(min-width:900px) and (hover:hover) and (pointer:fine)" fetchpriority="high">
     <!-- جلب المنتجات مبكرًا عبر REST قبل تحميل مكتبة Firebase (أسرع في أول زيارة) -->
     <script>(function(){try{window.__mohabGamesREST=fetch('https://mohab-store-default-rtdb.firebaseio.com/games.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}catch(e){window.__mohabGamesREST=Promise.resolve(null);}})();</script>
-    <script>(function(){var DB='https://mohab-store-default-rtdb.firebaseio.com',pre={};window.__mohabFetchCfg=function(p){if(!pre[p]){try{pre[p]=fetch(DB+'/'+p+'.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}catch(e){pre[p]=Promise.resolve(null);}}return pre[p];};['settings/general','settings/visuals','settings/banners','settings/socials','settings/productCategories','settings/announcementTicker'].forEach(window.__mohabFetchCfg);})();</script>
+    <script>(function(){var DB='https://mohab-store-default-rtdb.firebaseio.com',pre={};window.__mohabFetchCfg=function(p){if(!pre[p]){try{pre[p]=fetch(DB+'/'+p+'.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}catch(e){pre[p]=Promise.resolve(null);}}return pre[p];};['settings/general','settings/visuals','settings/banners','settings/socials','settings/productCategories','settings/announcementTicker','settings/introScreen'].forEach(window.__mohabFetchCfg);})();</script>
     <title>MOHAB STORE | المتجر الرسمي</title>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://g.top4top.io">
@@ -1782,31 +1780,52 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 
 
 <style id="mohab-loader-gif">
-  /* ===== شاشة التحميل: GIF بملء الشاشة + نص التحميل فوقه بدون إطار ===== */
-  #mohabInitialLoader{padding:0!important;background:#0a1020!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  /* ===== شاشة المقدمة الجديدة: مربعات صور تتحرك بميل + لوجو بالمنتصف (بديل الـ GIF) ===== */
+  #mohabInitialLoader{--in-a:#0a1020;--in-b:#111c36;--in-tile:rgba(255,255,255,.07);--in-tile-bd:rgba(148,163,184,.24);--in-tile-sh:0 6px 18px rgba(0,0,0,.35);--in-text:#f8fafc;--in-pill:rgba(10,16,32,.62);--in-pill-bd:rgba(148,163,184,.25);--in-bar:rgba(255,255,255,.14);--in-vig:rgba(10,16,32,.92);--in-vig0:rgba(10,16,32,0);--in-glow:rgba(34,211,238,.55);--in-card:rgba(17,28,54,.72)}
+  #mohabInitialLoader[data-theme="light"],body.light-theme #mohabInitialLoader{--in-a:#f4f7fb;--in-b:#dfe9f6;--in-tile:#ffffff;--in-tile-bd:rgba(51,65,85,.14);--in-tile-sh:0 6px 16px rgba(15,23,42,.12);--in-text:#172033;--in-pill:rgba(255,255,255,.78);--in-pill-bd:rgba(51,65,85,.16);--in-bar:rgba(15,23,42,.12);--in-vig:rgba(244,247,251,.94);--in-vig0:rgba(244,247,251,0);--in-glow:rgba(8,145,178,.45);--in-card:rgba(255,255,255,.82)}
+  #mohabInitialLoader,body.light-theme #mohabInitialLoader{padding:0!important;overflow:hidden;background:radial-gradient(70% 50% at 50% 0%,rgba(6,182,212,.20),transparent 70%),radial-gradient(60% 45% at 100% 100%,rgba(99,102,241,.16),transparent 70%),linear-gradient(160deg,var(--in-a),var(--in-b))!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
   #mohabInitialLoader::before,#mohabInitialLoader .mz-ld-orb,#mohabInitialLoader .mz-ld-dots{display:none!important}
-  #mohabInitialLoader .mohab-loader-card,body.light-theme #mohabInitialLoader .mohab-loader-card{
-    position:absolute!important;inset:0!important;width:100%!important;max-width:none!important;height:100%!important;
-    background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important;
-    animation:none!important;display:block!important;border-radius:0!important;
-  }
+  #mohabInitialLoader .mohab-loader-card,body.light-theme #mohabInitialLoader .mohab-loader-card{position:absolute!important;inset:0!important;width:100%!important;max-width:none!important;height:100%!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important;animation:none!important;display:block!important;border-radius:0!important}
   #mohabInitialLoader .mohab-loader-card::before,#mohabInitialLoader .mohab-loader-card::after{display:none!important}
-  #mohabInitialLoader picture{display:contents}
-  #mohabInitialLoader .mz-gif-loader{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;margin:0;border:0;display:block}
-  @media (min-aspect-ratio:1/1){#mohabInitialLoader .mz-gif-loader{object-fit:contain}}
-  #mohabInitialLoader .mz-gif-foot{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 9%);padding:0 24px;text-align:center;z-index:2}
-  #mohabInitialLoader .mz-gif-text{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 0 14px;background:none;border:0;
-    font-weight:800;font-size:16px;color:#fff!important;letter-spacing:.3px;text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 16px rgba(0,0,0,.75)}
-  #mohabInitialLoader .mz-gif-text i{color:#22d3ee;font-size:16px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}
+  /* المربعات */
+  #mohabInitialLoader .mz-in-wrap{position:absolute;inset:0;overflow:hidden;direction:ltr;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14%,#000 86%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 14%,#000 86%,transparent 100%)}
+  #mohabInitialLoader .mz-in-stage{position:absolute;left:50%;top:50%;display:flex;flex-direction:column;gap:var(--g,18px);transform:translate(-50%,-50%) rotate(var(--in-tilt,-12deg));opacity:0;transition:opacity .7s ease}
+  #mohabInitialLoader .mz-in-stage.on{opacity:1}
+  #mohabInitialLoader .mz-in-row{flex:none;height:var(--t,80px);overflow:visible}
+  #mohabInitialLoader .mz-in-track{display:flex;width:max-content;height:100%;will-change:transform;animation:mzInSlide var(--dur,30s) linear infinite}
+  #mohabInitialLoader .mz-in-row.rev .mz-in-track{animation-direction:reverse}
+  @keyframes mzInSlide{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+  #mohabInitialLoader .mz-in-tile{flex:none;display:block;width:var(--t,80px);height:var(--t,80px);margin-right:var(--g,18px);border-radius:22%;overflow:hidden;background:var(--in-tile);border:1px solid var(--in-tile-bd);box-shadow:var(--in-tile-sh);box-sizing:border-box}
+  #mohabInitialLoader .mz-in-tile img{display:block;width:100%;height:100%;object-fit:cover;-webkit-user-drag:none;user-select:none}
+  #mohabInitialLoader .mz-in-tile.mz-contain img{object-fit:contain;padding:14%;box-sizing:border-box}
+  #mohabInitialLoader .mz-in-stage[data-fit="cover"] .mz-in-tile img{object-fit:cover;padding:0}
+  #mohabInitialLoader .mz-in-stage[data-fit="contain"] .mz-in-tile img{object-fit:contain;padding:14%;box-sizing:border-box}
+  #mohabInitialLoader .mz-in-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 52% 34% at 50% 50%,var(--in-vig) 0%,var(--in-vig) 38%,var(--in-vig0) 100%)}
+  /* اللوجو */
+  #mohabInitialLoader .mz-in-logo{position:absolute;left:50%;top:50%;width:var(--lg,124px);height:var(--lg,124px);transform:translate(-50%,-50%);z-index:3;display:none;align-items:center;justify-content:center;animation:mzInFloat 4.2s ease-in-out infinite}
+  #mohabInitialLoader .mz-in-logo.on{display:flex}
+  #mohabInitialLoader .mz-in-logo::before{content:"";position:absolute;inset:-26px;border-radius:50%;background:radial-gradient(circle,var(--in-glow) 0%,transparent 68%);animation:mzInGlow 2.6s ease-in-out infinite}
+  #mohabInitialLoader .mz-in-ring{position:absolute;inset:-7px;border-radius:32%;padding:3px;background:conic-gradient(from 0deg,#22d3ee,#6366f1,#ec4899,#f59e0b,#22d3ee);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:mzInSpin 5s linear infinite;opacity:.9}
+  #mohabInitialLoader .mz-in-face{position:relative;width:100%;height:100%;border-radius:28%;overflow:hidden;background:var(--in-card);box-shadow:0 12px 34px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}
+  #mohabInitialLoader .mz-in-face img{width:100%;height:100%;object-fit:contain;display:block;padding:10%;box-sizing:border-box}
+  #mohabInitialLoader .mz-in-face::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-120%);animation:mzInShine 3.4s ease-in-out infinite}
+  @keyframes mzInSpin{to{transform:rotate(360deg)}}
+  @keyframes mzInGlow{0%,100%{transform:scale(.9);opacity:.65}50%{transform:scale(1.12);opacity:1}}
+  @keyframes mzInFloat{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 6px))}}
+  @keyframes mzInShine{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+  /* نص التحميل */
+  #mohabInitialLoader .mz-gif-foot{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 8%);padding:0 24px;text-align:center;z-index:4}
+  #mohabInitialLoader .mz-gif-text{display:inline-flex;align-items:center;justify-content:center;gap:9px;margin:0 0 14px;padding:8px 18px;border-radius:999px;background:var(--in-pill);border:1px solid var(--in-pill-bd);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font-weight:800;font-size:16px;color:var(--in-text)!important;letter-spacing:.3px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  #mohabInitialLoader .mz-gif-text i{color:#22d3ee;font-size:16px}
+  body.light-theme #mohabInitialLoader .mz-gif-text i,#mohabInitialLoader[data-theme="light"] .mz-gif-text i{color:#0891b2}
   #mohabInitialLoader .mz-gif-dots{display:inline-flex;direction:ltr;color:#22d3ee}
   #mohabInitialLoader .mz-gif-dots u{text-decoration:none;animation:mzGifDot 1.2s infinite both}
   #mohabInitialLoader .mz-gif-dots u:nth-child(2){animation-delay:.2s}
   #mohabInitialLoader .mz-gif-dots u:nth-child(3){animation-delay:.4s}
   @keyframes mzGifDot{0%,80%,100%{opacity:.15}40%{opacity:1}}
-  #mohabInitialLoader .mohab-loader-bar{width:min(300px,70%);margin:0 auto;height:5px;background:rgba(255,255,255,.22);box-shadow:none}
-  body.light-theme #mohabInitialLoader .mz-gif-text{color:#fff!important}
-  body.light-theme #mohabInitialLoader .mohab-loader-bar{background:rgba(255,255,255,.22)}
-  @media (prefers-reduced-motion:reduce){#mohabInitialLoader .mz-gif-dots u{animation:none;opacity:1}}
+  #mohabInitialLoader .mohab-loader-bar{width:min(300px,70%);margin:0 auto;height:5px;background:var(--in-bar);box-shadow:none}
+  body.light-theme #mohabInitialLoader .mohab-loader-bar{background:var(--in-bar)}
+  @media (prefers-reduced-motion:reduce){#mohabInitialLoader .mz-in-track,#mohabInitialLoader .mz-in-logo,#mohabInitialLoader .mz-in-logo::before,#mohabInitialLoader .mz-in-ring,#mohabInitialLoader .mz-in-face::after{animation:none}#mohabInitialLoader .mz-gif-dots u{animation:none;opacity:1}}
 </style>
 <style id="mohab-slider-v2">
 /* ===== السلايدر: مقاس موحد للهاتف والكمبيوتر =====
@@ -1826,9 +1845,11 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
   <span class="mz-ld-orb o1" aria-hidden="true"></span><span class="mz-ld-orb o2" aria-hidden="true"></span>
   <div class="mz-ld-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="mohab-loader-card">
-    <picture><source media="(min-width:900px) and (hover:hover) and (pointer:fine)" srcset="https://picturetolink.com/i/EN5ERuTTFz.gif"><img class="mz-gif-loader" id="mzGifLoader" src="https://picturetolink.com/i/f6xXM22J29.gif" alt="" width="260" height="260" loading="eager" fetchpriority="high" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'"></picture>
+    <div class="mz-in-wrap" aria-hidden="true"><div class="mz-in-stage" id="mzInStage"></div></div>
+    <div class="mz-in-vig" aria-hidden="true"></div>
+    <div class="mz-in-logo" id="mzInLogo" aria-hidden="true"><span class="mz-in-ring"></span><div class="mz-in-face"><img id="mzInLogoImg" alt="" decoding="async" referrerpolicy="no-referrer"></div></div>
     <div class="mz-gif-foot">
-      <div class="mz-gif-text"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i><span>جاري تحميل الموقع</span><b class="mz-gif-dots" aria-hidden="true"><u>.</u><u>.</u><u>.</u></b></div>
+      <div class="mz-gif-text"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i><span id="mzInText">جاري تحميل الموقع</span><b class="mz-gif-dots" aria-hidden="true"><u>.</u><u>.</u><u>.</u></b></div>
       <div class="mohab-loader-bar" aria-hidden="true"><div class="mohab-loader-fill" id="mohabLoaderFill"></div></div>
     </div>
     <div class="mohab-loader-error" id="mohabLoaderError"></div>
@@ -1836,45 +1857,84 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 </div>
 <script id="mohab-gif-timing">
 (function(){
-  /* يضمن أن المستخدم يشاهد الـ GIF دورة كاملة قبل فتح الموقع */
-  var FALLBACK_MS=4000, MAX_WAIT_MS=6500, t0=Date.now(), img=document.getElementById('mzGifLoader'), url=(window.matchMedia&&window.matchMedia('(min-width:900px) and (hover:hover) and (pointer:fine)').matches)?'https://picturetolink.com/i/EN5ERuTTFz.gif':'https://picturetolink.com/i/f6xXM22J29.gif';
-  var done,ready=new Promise(function(r){done=r;});
-  window.__mzGifReady=ready;
-  var fin=false;function finish(){if(!fin){fin=true;done();}}
-  setTimeout(finish,MAX_WAIT_MS);                      // حد أقصى حتى لا يعلق التحميل
-  function schedule(ms){var left=Math.max(0,ms-(Date.now()-gifShown));setTimeout(finish,left);}
-  var gifShown=Date.now(),duration=FALLBACK_MS,dReady=false,iReady=false;
-  function check(){ if(dReady&&iReady){gifShown=gifShown||Date.now();schedule(duration);} }
-  function parse(buf){ // مجموع زمن إطارات الـ GIF
-    var b=new Uint8Array(buf),i=0,total=0;
-    if(b.length<14||String.fromCharCode(b[0],b[1],b[2])!=='GIF')return 0;
-    var flags=b[10];i=13;if(flags&0x80)i+=3*(1<<((flags&7)+1));
-    while(i<b.length){
-      var t=b[i++];
-      if(t===0x21){var l=b[i++];
-        if(l===0xF9){total+=(b[i+2]|(b[i+3]<<8))*10||0;}
-        if(l===0xF9)total=total; 
-        while(i<b.length){var n=b[i++];if(!n)break;i+=n;}
-      }else if(t===0x2C){i+=8;var f=b[i++];if(f&0x80)i+=3*(1<<((f&7)+1));i++;
-        while(i<b.length){var n2=b[i++];if(!n2)break;i+=n2;}
-      }else if(t===0x3B)break;else break;
+  /* مقدمة الموقع: مربعات صور تتحرك + لوجو. الإعدادات من السيستم (settings/introScreen) */
+  var KEY='mohab-intro-v1',DEF_TEXT='جاري تحميل الموقع';
+  var ov=document.getElementById('mohabInitialLoader'),stage=document.getElementById('mzInStage'),logoBox=document.getElementById('mzInLogo'),logoImg=document.getElementById('mzInLogoImg'),txt=document.getElementById('mzInText');
+  var done,ready=new Promise(function(r){done=r;});window.__mzGifReady=ready;
+  if(!ov||!stage){done();return;}
+  try{var th=localStorage.getItem('mohab-store-theme');ov.setAttribute('data-theme',th==='light'?'light':'dark');}catch(e){ov.setAttribute('data-theme','dark');}
+  var cfg=null,sig='',settled=false,tShown=0,durMs=4000;
+  function safe(u){try{return window.mzSafeUrl?window.mzSafeUrl(u):(/^(https?:|data:image\/)/i.test(u)?u:'');}catch(e){return '';}}
+  function num(v,d,lo,hi){v=Number(v);if(!isFinite(v))v=d;return Math.min(hi,Math.max(lo,v));}
+  function normalize(raw,gen){
+    raw=(raw&&typeof raw==='object')?raw:{};gen=(gen&&typeof gen==='object')?gen:{};
+    var imgs=[],src=raw.images;
+    if(src&&typeof src==='object'){
+      var list=Array.isArray(src)?src.map(function(v,i){return {k:String(i),v:v};}):Object.keys(src).map(function(k){return {k:k,v:src[k]};});
+      list=list.filter(function(x){return x.v;}).sort(function(a,b){var ta=(a.v&&a.v.t)||0,tb=(b.v&&b.v.t)||0;return ta-tb||(a.k<b.k?-1:1);});
+      list.forEach(function(x){var s=safe(typeof x.v==='string'?x.v:(x.v&&x.v.src)||'');if(s)imgs.push(s);});
     }
-    return total;
+    var speed=['slow','normal','fast'].indexOf(raw.speed)>-1?raw.speed:'normal';
+    var fit=['auto','cover','contain'].indexOf(raw.fit)>-1?raw.fit:'auto';
+    return {enabled:raw.enabled!==false,duration:num(raw.duration,5,0,600),text:String(raw.text||'').trim().slice(0,60)||DEF_TEXT,speed:speed,tilt:num(raw.tilt,-12,-35,35),fit:fit,logo:safe(raw.logo||gen.logo||''),images:imgs};
   }
-  var cn=navigator.connection||{},slowNet=!!(cn.saveData||/(^|-)(2g|3g)$/.test(cn.effectiveType||''));
-  if(slowNet){setTimeout(function(){if(!iReady)finish();},3500);}   // اتصال بطيء: لا نعطّل الموقع بانتظار الـ GIF
-  try{
-    if(slowNet){dReady=true;check();}else
-    fetch(url,{mode:'cors',cache:'force-cache'}).then(function(r){return r.arrayBuffer();}).then(function(buf){
-      var d=parse(buf);if(d>=800&&d<=MAX_WAIT_MS-500)duration=d;else if(d>MAX_WAIT_MS-500)duration=MAX_WAIT_MS-500;
-      dReady=true;check();
-    }).catch(function(){dReady=true;check();});
-  }catch(e){dReady=true;}
-  function shown(){gifShown=Date.now();iReady=true;check();}
-  if(img){
-    if(img.complete&&img.naturalWidth>0)shown();
-    else{img.addEventListener('load',shown);img.addEventListener('error',finish);}
-  }else finish();
+  function build(c){
+    stage.innerHTML='';stage.classList.remove('on');
+    if(!c.enabled||!c.images.length){stage.style.display='none';return;}
+    stage.style.display='';
+    var vw=window.innerWidth||360,vh=window.innerHeight||640;
+    var t=Math.round(Math.min(104,Math.max(60,vw*0.16))),g=Math.round(t*0.28),p=t+g;
+    var a=Math.abs(c.tilt)*Math.PI/180,W=Math.ceil(vw*Math.cos(a)+vh*Math.sin(a))+2*p,H=Math.ceil(vh*Math.cos(a)+vw*Math.sin(a))+2*p;
+    var rows=Math.ceil(H/p),perHalf=Math.ceil(W/p)+1,n=c.images.length;
+    var spd={slow:22,normal:40,fast:70}[c.speed];
+    stage.style.width=W+'px';stage.style.height=(rows*p)+'px';
+    stage.style.setProperty('--t',t+'px');stage.style.setProperty('--g',g+'px');stage.style.setProperty('--in-tilt',c.tilt+'deg');
+    stage.setAttribute('data-fit',c.fit);
+    var frag=document.createDocumentFragment();
+    for(var r=0;r<rows;r++){
+      var half='';
+      for(var i=0;i<perHalf;i++){half+='<i class="mz-in-tile"><img src="'+c.images[(r*3+i)%n].replace(/"/g,'&quot;')+'" alt="" decoding="async" referrerpolicy="no-referrer" draggable="false"></i>';}
+      var row=document.createElement('div');row.className='mz-in-row'+(r%2?' rev':'');
+      var track=document.createElement('div');track.className='mz-in-track';
+      var dur=(perHalf*p/spd)*(0.92+((r*37)%16)/100);
+      track.style.setProperty('--dur',dur.toFixed(1)+'s');track.style.animationDelay='-'+(((r*53)%100)/100*dur).toFixed(1)+'s';
+      track.innerHTML=half+half;row.appendChild(track);frag.appendChild(row);
+    }
+    stage.appendChild(frag);
+    var lg=Math.round(Math.min(150,Math.max(96,Math.min(vw,vh)*0.3)));ov.style.setProperty('--lg',lg+'px');
+    requestAnimationFrame(function(){stage.classList.add('on');});
+  }
+  stage.addEventListener('error',function(e){var im=e.target;if(im&&im.tagName==='IMG'&&im.parentNode)im.parentNode.style.visibility='hidden';},true);
+  stage.addEventListener('load',function(e){var im=e.target;if(!im||im.tagName!=='IMG'||!im.parentNode)return;var r=im.naturalWidth/(im.naturalHeight||1);if(r<0.85||r>1.18)im.parentNode.classList.add('mz-contain');},true);
+  function apply(c,force){
+    var s=JSON.stringify(c);if(!force&&s===sig)return;sig=s;cfg=c;
+    if(txt)txt.textContent=c.text;
+    if(c.logo){logoImg.onerror=function(){logoBox.classList.remove('on');};logoImg.src=c.logo;logoBox.classList.add('on');}else{logoBox.classList.remove('on');}
+    build(c);
+    durMs=c.enabled?c.duration*1000:0;
+    if(!tShown)tShown=Date.now();
+  }
+  var cached=null;try{cached=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){}
+  if(cached&&typeof cached==='object'&&Array.isArray(cached.images))apply(cached);else apply(normalize(null,null));
+  function fetchCfg(){
+    if(!window.__mohabFetchCfg){settled=true;return;}
+    var to=new Promise(function(r){setTimeout(function(){r('timeout');},3500);});
+    Promise.race([Promise.all([window.__mohabFetchCfg('settings/introScreen'),window.__mohabFetchCfg('settings/general')]),to]).then(function(res){
+      if(res&&res!=='timeout'){
+        var c=normalize(res[0],res[1]);
+        apply(c);
+        try{localStorage.setItem(KEY,JSON.stringify(c));}catch(e){}
+      }
+      settled=true;
+    }).catch(function(){settled=true;});
+  }
+  fetchCfg();
+  var rt=null;window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){if(document.getElementById('mohabInitialLoader')&&cfg)apply(cfg,true);},250);});
+  /* الموقع لا يفتح قبل انتهاء مدة المقدمة المحددة من السيستم */
+  var iv=setInterval(function(){
+    if(settled&&Date.now()-tShown>=durMs){clearInterval(iv);done();}
+  },100);
+  setTimeout(function(){clearInterval(iv);done();},(600+8)*1000);
 })();
 </script>
 <script id="mohab-initial-loader-controller">
