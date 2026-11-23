@@ -7018,9 +7018,10 @@ async function load(){
   }catch(_){}
   applyHome();
 }
-function ready(){return !!(S.api&&S.api.enabled===true&&/^https:\/\//i.test(String(S.api.workerUrl||''))&&platforms().length);}
+function enabledFlag(){return !!(S.api&&S.api.enabled===true&&/^https:\/\//i.test(String(S.api.workerUrl||'')));}
+function ready(){return enabledFlag()&&platforms().length>0;}
 function applyHome(){
-  var on=ready();window.__smmEnabled=on;
+  var on=enabledFlag();window.__smmEnabled=on;
   var b=$('smmHomeBanner');if(b){b.classList.toggle('show',on);}
   var t=(S.cat&&S.cat.title)||'خدمات السوشيال ميديا',st=(S.cat&&S.cat.subtitle)||'متابعين • لايكات • مشاهدات لكل المنصات';
   if($('smmBannerTitle'))$('smmBannerTitle').textContent=t;if($('smmBannerSub'))$('smmBannerSub').textContent=st;
@@ -7065,7 +7066,7 @@ window.openSmmPage=async function(fromRoute){
   if(!fromRoute){try{mohabPushRoute('smm',{smm:true,mohabRoute:'smm'});}catch(_){}}
   S.view='platforms';render();
   await load();
-  if(!ready()){$('smmBody').innerHTML='<div class="smm-empty">خدمات التزويد غير متاحة حالياً. حاول لاحقاً.</div>';return;}
+  if(!ready()){$('smmBody').innerHTML='<div class="smm-empty">'+(enabledFlag()?'سيتم إضافة الخدمات قريباً.':'خدمات التزويد غير متاحة حالياً. حاول لاحقاً.')+'</div>';return;}
   render();
 };
 window.closeSmmPage=function(fromPop){
@@ -7279,6 +7280,8 @@ window.smmRefillOrder=async function(key){
 
 /* تحميل أولي لإظهار الزر الرئيسي (لا يظهر شيء إلا بعد إعداد الخدمة من لوحة التحكم) */
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(load,300);});else setTimeout(load,300);
+[2500,7000,15000].forEach(function(t){setTimeout(function(){if(!window.__smmEnabled)load();},t);});
+try{firebase.auth().onAuthStateChanged(function(){setTimeout(function(){if(!window.__smmEnabled)load();},800);});}catch(_){}
 })();
 </script>
 <!-- ===================== نهاية إضافة تزويد السوشيال ميديا ===================== -->
