@@ -2150,6 +2150,12 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
       .product-category-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
     </style>
 
+<button type="button" id="smmHomeBanner" onclick="openSmmPage()" aria-label="خدمات السوشيال ميديا">
+  <span class="smm-bn-ic"><i class="fas fa-rocket"></i></span>
+  <span><b id="smmBannerTitle">خدمات السوشيال ميديا</b><small id="smmBannerSub">متابعين • لايكات • مشاهدات لكل المنصات</small></span>
+  <i class="fas fa-chevron-left smm-bn-go"></i>
+</button>
+
     <div class="container">
         <div class="games-grid" id="gamesGrid">
             <div class="game-skeleton" aria-hidden="true"><i class="sk-img"></i><i class="sk-t"></i><i class="sk-b"></i></div><div class="game-skeleton" aria-hidden="true"><i class="sk-img"></i><i class="sk-t"></i><i class="sk-b"></i></div><div class="game-skeleton" aria-hidden="true"><i class="sk-img"></i><i class="sk-t"></i><i class="sk-b"></i></div><div class="game-skeleton" aria-hidden="true"><i class="sk-img"></i><i class="sk-t"></i><i class="sk-b"></i></div><div class="game-skeleton" aria-hidden="true"><i class="sk-img"></i><i class="sk-t"></i><i class="sk-b"></i></div><div class="game-skeleton" aria-hidden="true"><i class="sk-img"></i><i class="sk-t"></i><i class="sk-b"></i></div>
@@ -2983,7 +2989,8 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                 star: sv('<path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/>'),
                 link: sv('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>')
             };
-            const tones = { chat:'wa', megaphone:'wa', send:'tg', box:'ord', shield:'sh', facebook:'fb', instagram:'ig', youtube:'yt', star:'st', link:'df' };
+            P.smm = sv('<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>');
+            const tones = { smm:'smm', chat:'wa', megaphone:'wa', send:'tg', box:'ord', shield:'sh', facebook:'fb', instagram:'ig', youtube:'yt', star:'st', link:'df' };
             const pick = s => {
                 const plat = String(s.platform || '').toLowerCase(), name = String(s.name || '');
                 if (plat === 'whatsapp') return /قنا|channel/i.test(name) ? 'megaphone' : 'chat';
@@ -2999,6 +3006,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                 htmlString += item('a', 'href="' + mzEsc(mzSafeUrl(s.url) || '#') + '" target="_blank" rel="noopener noreferrer"', key, mzEsc(s.name));
             });
             htmlString += item('a', 'href="https://t.me/mohabstore_1" target="_blank" rel="noopener noreferrer"', 'send', 'قناة التليجرام');
+            htmlString += item('button', 'type="button" onclick="openSmmPage()" id="smmDockBtn"' + (window.__smmEnabled ? '' : ' style="display:none"'), 'smm', 'تزويد');
             htmlString += item('button', 'type="button" onclick="openWalletOrdersPage()" id="walletOrdersDockBtn"', 'box', 'طلباتي', '<em id="walletOrdersDockBadge" class="mz-dk-badge" style="display:none">0</em>');
             htmlString += item('button', 'type="button" onclick="openRecovery()" id="recoveryDockBtn"', 'shield', 'كشف الاستعادة');
             dock.innerHTML = htmlString;
@@ -4431,7 +4439,7 @@ globalGames = data || {};
         function openWalletOrdersPage(){
             if(!walletUser){openWallet();return;}
             walletMarkOrdersRead();
-            setTimeout(()=>walletRecheckProcessingOrders(true),300);
+            setTimeout(()=>walletRecheckProcessingOrders(true),300);setTimeout(()=>{try{window.smmRefreshOrders&&window.smmRefreshOrders(true);}catch(_){}},500);
             const page=document.getElementById('walletOrdersPage');if(page){page.classList.add('open');page.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
         }
         function closeWalletOrdersPage(fromPopState=false){const page=document.getElementById('walletOrdersPage');if(page){page.classList.remove('open');page.setAttribute('aria-hidden','true');}document.body.style.overflow='';if(walletOrdersHistoryPushed){walletOrdersHistoryPushed=false;if(!fromPopState && history.state && history.state.mohabWalletOrders)history.back();}}
@@ -4493,9 +4501,10 @@ globalGames = data || {};
                     } else if(o.playerNickname){
                         mzRows.push(mzRow('user','اسم اللاعب',walletEscape(o.playerNickname)));
                     }
+                    if(o.smm){(window.smmOrderRows?window.smmOrderRows(o,mzRow):[]).forEach(r=>mzRows.push(r));}
                     if(o.rejectionReason)mzRows.push(mzRow('circle-exclamation','سبب الرفض',walletEscape(o.rejectionReason),'warn'));
                     if(o.shippedAt)mzRows.push(mzRow('truck-fast','تاريخ الشحن',new Date(o.shippedAt).toLocaleString('ar-EG')));
-                    return `<article class="mz-ord" data-status="${walletEscape(String(o.status||'new'))}"><header class="mz-ord-head"><b class="mz-ord-title">${o.isCart?walletEscape('🛒 سلة مشتريات — '+(o.itemsCount||'')+' منتج'):walletEscape(o.game||o.gameName||'منتج')+' — '+walletEscape(o.pack||o.packName||'باقة')}</b><span class="mz-ord-chip">${walletEscape(labels[o.status]||o.status||'تم تسجيل الطلب')}</span></header><div class="mz-ord-body">${mzRows.join('')}</div>${historyHtml}<footer class="mz-ord-foot"><div class="mz-ord-dates"><span><i class="fas fa-calendar-days"></i>تاريخ الطلب: ${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</span>${o.updatedAt?`<span><i class="fas fa-arrows-rotate"></i>آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</span>`:''}</div>${o.autoTopup&&o.status==='processing'?`<button type="button" class="wallet-receipt-btn" style="margin-inline-end:8px" onclick="walletRecheckProcessingOrders(true);this.disabled=true;this.textContent='جارٍ التحقق…'"><i class="fas fa-rotate"></i> تحديث الحالة</button>`:''}<button type="button" class="wallet-receipt-btn" onclick="walletShowOrderReceipt('${walletEscape(o.key)}')"><i class="fas fa-receipt"></i> عرض الوصل</button></footer></article>`;
+                    return `<article class="mz-ord" data-status="${walletEscape(String(o.status||'new'))}"><header class="mz-ord-head"><b class="mz-ord-title">${o.isCart?walletEscape('🛒 سلة مشتريات — '+(o.itemsCount||'')+' منتج'):walletEscape(o.game||o.gameName||'منتج')+' — '+walletEscape(o.pack||o.packName||'باقة')}</b><span class="mz-ord-chip">${walletEscape(o.smm&&o.smmLabel?o.smmLabel:(labels[o.status]||o.status||'تم تسجيل الطلب'))}</span></header><div class="mz-ord-body">${mzRows.join('')}</div>${historyHtml}<footer class="mz-ord-foot"><div class="mz-ord-dates"><span><i class="fas fa-calendar-days"></i>تاريخ الطلب: ${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</span>${o.updatedAt?`<span><i class="fas fa-arrows-rotate"></i>آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</span>`:''}</div>${window.smmOrderButtons?window.smmOrderButtons(o):''}${o.autoTopup&&o.status==='processing'?`<button type="button" class="wallet-receipt-btn" style="margin-inline-end:8px" onclick="walletRecheckProcessingOrders(true);this.disabled=true;this.textContent='جارٍ التحقق…'"><i class="fas fa-rotate"></i> تحديث الحالة</button>`:''}<button type="button" class="wallet-receipt-btn" onclick="walletShowOrderReceipt('${walletEscape(o.key)}')"><i class="fas fa-receipt"></i> عرض الوصل</button></footer></article>`;
                 }).join(''):'لا توجد طلبات شحن حتى الآن.';
                 if(list)list.innerHTML=html;
                 if(legacy)legacy.innerHTML=html;
@@ -6919,5 +6928,360 @@ document.addEventListener('click',handler,true);
 window.mzOpenOrders=openOrders;
 })();
 </script>
+<!-- ===================== MOHAB STORE: صفحة تزويد السوشيال ميديا (إضافة مستقلة) ===================== -->
+<style id="smmStyles">
+#smmHomeBanner{display:none;max-width:900px;width:calc(100% - 40px);margin:6px auto 14px;padding:14px 16px;border-radius:20px;cursor:pointer;border:1px solid rgba(244,63,94,.38);background:linear-gradient(135deg,rgba(244,63,94,.16),rgba(59,130,246,.14));color:var(--text-main,#f8fafc);align-items:center;gap:14px;font-family:inherit;text-align:right}
+#smmHomeBanner.show{display:flex}
+#smmHomeBanner .smm-bn-ic{flex:0 0 46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:21px;color:#fff;background:linear-gradient(135deg,#f43f5e,#8b5cf6)}
+#smmHomeBanner b{display:block;font-size:.98rem;font-weight:900}
+#smmHomeBanner small{display:block;margin-top:3px;color:var(--text-muted,#94a3b8);font-size:.74rem;line-height:1.6}
+#smmHomeBanner .smm-bn-go{margin-inline-start:auto;color:var(--text-muted,#94a3b8)}
+#bottomDock .mz-dk-smm{--dk:#f43f5e;--dk-rgb:244,63,94}
+#smmPage{display:none;position:fixed;inset:0;z-index:605;background:var(--bg-deep,#090d16);color:var(--text-main,#f8fafc);flex-direction:column;direction:rtl;font-family:inherit}
+#smmPage.open{display:flex;animation:fadeIn .18s ease}
+#smmPage .smm-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--surface-border,rgba(255,255,255,.08));background:var(--surface,#131c2e)}
+#smmPage .smm-back{width:40px;height:40px;flex:0 0 40px;border-radius:13px;border:1px solid var(--surface-border,rgba(255,255,255,.12));background:transparent;color:inherit;cursor:pointer;font-size:16px}
+#smmPage .smm-title{font-weight:900;font-size:1.02rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#smmPage .smm-bal{font-size:.74rem;font-weight:800;padding:7px 11px;border-radius:12px;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.35);color:#34d399;white-space:nowrap}
+#smmBody{flex:1;overflow-y:auto;padding:14px 14px 90px;max-width:760px;width:100%;margin:0 auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
+#smmBody .smm-sub{color:var(--text-muted,#94a3b8);font-size:.8rem;line-height:1.8;margin:2px 2px 14px}
+.smm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:560px){.smm-grid{grid-template-columns:repeat(3,1fr)}}
+.smm-plat{border:1px solid var(--surface-border,rgba(255,255,255,.1));background:var(--surface,#131c2e);border-radius:20px;padding:18px 10px 14px;text-align:center;cursor:pointer;color:inherit;font-family:inherit;transition:transform .15s,border-color .2s}
+.smm-plat:active{transform:scale(.97)}
+.smm-plat:hover{border-color:var(--primary,#06b6d4)}
+.smm-plat .smm-ico{width:58px;height:58px;margin:0 auto 10px;border-radius:17px;display:grid;place-items:center;background:rgba(6,182,212,.1);overflow:hidden;font-size:26px;color:var(--primary,#06b6d4)}
+.smm-plat .smm-ico img{width:100%;height:100%;object-fit:contain}
+.smm-plat b{display:block;font-size:.92rem;font-weight:900}
+.smm-plat small{display:block;margin-top:4px;color:var(--text-muted,#94a3b8);font-size:.7rem}
+.smm-svc{display:block;width:100%;text-align:right;border:1px solid var(--surface-border,rgba(255,255,255,.1));background:var(--surface,#131c2e);border-radius:18px;padding:14px;margin-bottom:10px;cursor:pointer;color:inherit;font-family:inherit}
+.smm-svc:active{transform:scale(.99)}
+.smm-svc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.smm-svc b{font-size:.92rem;line-height:1.6;font-weight:900}
+.smm-price{flex:0 0 auto;text-align:left;color:#34d399;font-weight:900;font-size:.95rem;white-space:nowrap}
+.smm-price small{display:block;color:var(--text-muted,#94a3b8);font-weight:700;font-size:.64rem}
+.smm-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.smm-tag{font-size:.66rem;font-weight:800;padding:4px 9px;border-radius:999px;background:rgba(148,163,184,.12);color:var(--text-muted,#94a3b8)}
+.smm-tag.ok{background:rgba(16,185,129,.14);color:#34d399}
+.smm-form{background:var(--surface,#131c2e);border:1px solid var(--surface-border,rgba(255,255,255,.1));border-radius:20px;padding:16px}
+.smm-form label{display:block;font-size:.78rem;font-weight:800;margin:12px 0 6px;color:var(--text-muted,#94a3b8)}
+.smm-form input,.smm-form textarea{width:100%;box-sizing:border-box;padding:13px;border-radius:13px;border:1px solid var(--surface-border,rgba(255,255,255,.14));background:var(--bg-deep,#090d16);color:var(--text-main,#f8fafc);font:inherit;font-size:.92rem}
+.smm-form textarea{min-height:130px;resize:vertical;line-height:1.7}
+.smm-form input[dir=ltr]{text-align:left}
+.smm-total{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:13px 14px;border-radius:15px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);font-weight:900}
+.smm-total span:last-child{color:#34d399;font-size:1.1rem}
+.smm-note{margin-top:12px;font-size:.72rem;line-height:1.8;color:var(--text-muted,#94a3b8)}
+.smm-buy{width:100%;margin-top:14px;padding:15px;border:0;border-radius:15px;cursor:pointer;font:900 .98rem inherit;font-family:inherit;color:#fff;background:linear-gradient(135deg,#f43f5e,#8b5cf6)}
+.smm-buy:disabled{opacity:.55;cursor:wait}
+.smm-err{margin-top:10px;color:#f87171;font-size:.78rem;font-weight:800;min-height:1em}
+.smm-empty{text-align:center;color:var(--text-muted,#94a3b8);padding:40px 10px;font-size:.88rem}
+.smm-prog{height:7px;border-radius:99px;background:rgba(148,163,184,.2);overflow:hidden;margin:2px 0 4px}
+.smm-prog i{display:block;height:100%;background:linear-gradient(90deg,#06b6d4,#34d399);border-radius:99px}
+.smm-ord-btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
+.smm-ord-btns button{border:1px solid rgba(6,182,212,.4);background:rgba(6,182,212,.1);color:#67e8f9;border-radius:11px;padding:8px 12px;font:800 .74rem inherit;font-family:inherit;cursor:pointer}
+.smm-ord-btns button.warn{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.1);color:#fca5a5}
+body.light-theme #smmPage .smm-bal{color:#047857}
+body.light-theme .smm-total span:last-child,body.light-theme .smm-price{color:#047857}
+</style>
+
+
+<section id="smmPage" aria-hidden="true" role="dialog" aria-modal="true" aria-label="خدمات السوشيال ميديا">
+  <div class="smm-head">
+    <button type="button" class="smm-back" onclick="smmBack()" aria-label="رجوع"><i class="fas fa-arrow-right"></i></button>
+    <div class="smm-title" id="smmPageTitle">خدمات السوشيال ميديا</div>
+    <div class="smm-bal" id="smmBalance" style="display:none"></div>
+  </div>
+  <div id="smmBody"><div class="smm-empty">جارٍ التحميل…</div></div>
+</section>
+
+<script id="mohab-smm">
+(function(){
+'use strict';
+var S={api:null,cat:null,view:'platforms',platform:null,svcKey:null,loaded:false,buying:false};
+var $=function(id){return document.getElementById(id);};
+var esc=function(v){return (window.mzEsc||function(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});})(v);};
+var safeUrl=function(u){return window.mzSafeUrl?window.mzSafeUrl(u):'';};
+function fx(){try{return Number(walletFxRate)||50;}catch(_){return 50;}}
+function cur(){try{return currentCurrency;}catch(_){return 'EGP';}}
+function money(egp){egp=Number(egp)||0;return cur()==='USD'?(egp/fx()).toFixed(2)+' $':egp.toFixed(2)+' جنيه';}
+function user(){try{return walletUser;}catch(_){return null;}}
+function notice(t,m,type,confirm){try{return walletShowNotice(t,m,type||'info',!!confirm);}catch(e){alert(t+'\n'+m);return Promise.resolve(!confirm||window.confirm(m));}}
+function totalFor(svc,qty){return Math.max(0.01,Math.ceil((qty/1000)*Number(svc.pricePer1000Egp)*100-1e-6)/100);}
+function isComments(svc){return /comment/i.test(String(svc&&svc.type||''));}
+function services(){var o=(S.cat&&S.cat.services)||{};return Object.keys(o).map(function(k){var s=o[k]||{};s._key=k;return s;}).filter(function(s){return s&&s.enabled!==false&&s.providerServiceId&&Number(s.pricePer1000Egp)>0;});}
+function platforms(){var p=(S.cat&&S.cat.platforms)||{},svcs=services();return Object.keys(p).map(function(k){var x=p[k]||{};x._key=k;x._count=svcs.filter(function(s){return s.platform===k;}).length;return x;}).filter(function(x){return x.name&&x.enabled!==false&&x._count>0;}).sort(function(a,b){return (Number(a.order)||99)-(Number(b.order)||99);});}
+
+async function load(){
+  try{
+    var r=await Promise.all([mzDbGet('settings/smmApi').catch(function(){return null;}),mzDbGet('settings/smmCatalog').catch(function(){return null;})]);
+    S.api=r[0]||null;S.cat=r[1]||null;S.loaded=true;
+  }catch(_){}
+  applyHome();
+}
+function ready(){return !!(S.api&&S.api.enabled===true&&/^https:\/\//i.test(String(S.api.workerUrl||''))&&platforms().length);}
+function applyHome(){
+  var on=ready();window.__smmEnabled=on;
+  var b=$('smmHomeBanner');if(b){b.classList.toggle('show',on);}
+  var t=(S.cat&&S.cat.title)||'خدمات السوشيال ميديا',st=(S.cat&&S.cat.subtitle)||'متابعين • لايكات • مشاهدات لكل المنصات';
+  if($('smmBannerTitle'))$('smmBannerTitle').textContent=t;if($('smmBannerSub'))$('smmBannerSub').textContent=st;
+  var d=$('smmDockBtn');if(d)d.style.display=on?'':'none';
+}
+
+function render(){
+  var body=$('smmBody'),title=$('smmPageTitle');if(!body)return;
+  var baseTitle=(S.cat&&S.cat.title)||'خدمات السوشيال ميديا';
+  updBalance();
+  if(S.view==='platforms'){
+    title.textContent=baseTitle;
+    var ps=platforms();
+    body.innerHTML=(S.cat&&S.cat.subtitle?'<div class="smm-sub">'+esc(S.cat.subtitle)+'</div>':'')+(ps.length?'<div class="smm-grid">'+ps.map(function(p){
+      var ic=safeUrl(p.icon);return '<button type="button" class="smm-plat" data-plat="'+esc(p._key)+'"><span class="smm-ico">'+(ic?'<img src="'+esc(ic)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<i class="fas fa-share-nodes"></i>')+'</span><b>'+esc(p.name)+'</b><small>'+p._count+' خدمة</small></button>';}).join('')+'</div>':'<div class="smm-empty">لا توجد خدمات متاحة الآن.</div>');
+  }else if(S.view==='services'){
+    var pl=((S.cat.platforms||{})[S.platform])||{};title.textContent=pl.name||'الخدمات';
+    var list=services().filter(function(s){return s.platform===S.platform;}).sort(function(a,b){return (Number(a.order)||999)-(Number(b.order)||999);});
+    body.innerHTML=list.length?list.map(function(s){
+      return '<button type="button" class="smm-svc" data-svc="'+esc(s._key)+'"><div class="smm-svc-top"><b>'+esc(s.name)+'</b><span class="smm-price">'+money(s.pricePer1000Egp)+'<small>لكل 1000</small></span></div>'+(s.desc?'<div class="smm-note" style="margin-top:6px">'+esc(s.desc)+'</div>':'')+'<div class="smm-tags"><span class="smm-tag">من '+Number(s.min).toLocaleString('en-US')+' إلى '+Number(s.max).toLocaleString('en-US')+'</span>'+(s.refill?'<span class="smm-tag ok">ضمان تعويض</span>':'')+(isComments(s)?'<span class="smm-tag">تعليقات مخصصة</span>':'')+'</div></button>';}).join(''):'<div class="smm-empty">لا توجد خدمات في هذا القسم.</div>';
+  }else if(S.view==='order'){
+    var svc=((S.cat.services||{})[S.svcKey]);if(!svc){S.view='platforms';return render();}
+    title.textContent=svc.name;
+    var cm=isComments(svc);
+    body.innerHTML='<div class="smm-form"><div class="smm-svc-top"><b>'+esc(svc.name)+'</b><span class="smm-price">'+money(svc.pricePer1000Egp)+'<small>لكل 1000</small></span></div>'+(svc.desc?'<div class="smm-note">'+esc(svc.desc)+'</div>':'')+
+      '<label for="smmLink">رابط الحساب / المنشور</label><input id="smmLink" type="text" dir="ltr" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://...">'+
+      (cm?'<label for="smmComments">التعليقات (كل تعليق في سطر)</label><textarea id="smmComments" placeholder="تعليق 1&#10;تعليق 2"></textarea>':'<label for="smmQty">الكمية (من '+Number(svc.min).toLocaleString('en-US')+' إلى '+Number(svc.max).toLocaleString('en-US')+')</label><input id="smmQty" type="number" inputmode="numeric" min="'+Number(svc.min)+'" max="'+Number(svc.max)+'" step="1" placeholder="'+Number(svc.min)+'">')+
+      '<div class="smm-total"><span>الإجمالي</span><span id="smmTotal">—</span></div>'+
+      '<div class="smm-err" id="smmErr"></div>'+
+      '<button type="button" class="smm-buy" id="smmBuyBtn"><i class="fas fa-bolt"></i> تأكيد الطلب</button>'+
+      '<div class="smm-note"><i class="fas fa-circle-info"></i> تأكد أن الحساب أو المنشور <b>عام (Public)</b> وأن الرابط صحيح، ولا تغيّره أثناء التنفيذ. سيتم خصم المبلغ من محفظتك، ويمكنك متابعة التقدم من «طلباتي».</div></div>';
+    var upd=function(){var q=cm?commentsCount():Number(($('smmQty')||{}).value);var ok=Number.isFinite(q)&&q>0;$('smmTotal').textContent=ok?money(totalFor(svc,q)):'—';};
+    var qe=$('smmQty'),ce=$('smmComments');if(qe)qe.addEventListener('input',upd);if(ce)ce.addEventListener('input',upd);
+  }
+}
+function commentsCount(){var e=$('smmComments');return e?String(e.value||'').split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean).length:0;}
+function updBalance(){var b=$('smmBalance');if(!b)return;if(!user()){b.style.display='none';return;}try{b.textContent='رصيدك: '+money(Number(walletBalanceEgp)||0);b.style.display='';}catch(_){b.style.display='none';}}
+
+window.openSmmPage=async function(fromRoute){
+  var p=$('smmPage');if(!p)return;
+  p.classList.add('open');p.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+  if(!fromRoute){try{mohabPushRoute('smm',{smm:true,mohabRoute:'smm'});}catch(_){}}
+  S.view='platforms';render();
+  await load();
+  if(!ready()){$('smmBody').innerHTML='<div class="smm-empty">خدمات التزويد غير متاحة حالياً. حاول لاحقاً.</div>';return;}
+  render();
+};
+window.closeSmmPage=function(fromPop){
+  var p=$('smmPage');if(!p||!p.classList.contains('open'))return;
+  p.classList.remove('open');p.setAttribute('aria-hidden','true');document.body.style.overflow='';
+  if(!fromPop){try{if(history.state&&history.state.smm)history.back();else mohabReplaceRoute('',{});}catch(_){}}
+};
+window.smmBack=function(){
+  if(S.view==='order'){S.view='services';render();}
+  else if(S.view==='services'){S.view='platforms';render();}
+  else window.closeSmmPage();
+};
+window.addEventListener('popstate',function(){var p=$('smmPage');if(p&&p.classList.contains('open'))window.closeSmmPage(true);});
+document.addEventListener('click',function(e){
+  var pl=e.target.closest&&e.target.closest('[data-plat]');if(pl&&$('smmBody').contains(pl)){S.platform=pl.getAttribute('data-plat');S.view='services';render();$('smmBody').scrollTop=0;return;}
+  var sv=e.target.closest&&e.target.closest('[data-svc]');if(sv&&$('smmBody').contains(sv)){S.svcKey=sv.getAttribute('data-svc');S.view='order';render();$('smmBody').scrollTop=0;return;}
+  if(e.target.closest&&e.target.closest('#smmBuyBtn'))buy();
+});
+
+/* ---------- الشراء ---------- */
+function workerFetch(url,payload,idToken,ms){
+  return walletFetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},body:JSON.stringify(payload),cache:'no-store'},ms||20000);
+}
+async function refundOnce(orderKey,amountEgp){
+  var u=user();if(!u)return false;
+  var ref=db.ref('wallet_users/'+u.uid),rk='smm_'+String(orderKey).replace(/[.#$\[\]\/]/g,'_'),rate=fx();
+  var tx=await ref.transaction(function(c){
+    if(!c||typeof c!=='object')return;
+    c.autoTopupRefunds=c.autoTopupRefunds&&typeof c.autoTopupRefunds==='object'?c.autoTopupRefunds:{};
+    if(c.autoTopupRefunds[rk])return;
+    var old=Number.isFinite(Number(c.balanceEgp))?Number(c.balanceEgp):Number(c.balanceUsd||0)*rate;
+    c.balanceEgp=Math.round((old+Number(amountEgp||0))*100)/100;c.balanceUsd=Math.round((c.balanceEgp/rate)*10000)/10000;
+    c.autoTopupRefunds[rk]=true;c.updatedAt=Date.now();return c;
+  });
+  if(tx.committed){try{var v=tx.snapshot.val()||{};walletBalanceEgp=Number(v.balanceEgp||0);walletBalanceUsd=Number(v.balanceUsd||0);walletDisplayBalance();}catch(_){}}
+  return tx.committed;
+}
+function setBusy(b,t){var x=$('smmBuyBtn');if(x){x.disabled=!!b;if(t)x.innerHTML=t;}}
+function showErr(m){var e=$('smmErr');if(e)e.textContent=m||'';}
+
+async function buy(){
+  if(S.buying)return;
+  var svcCached=(S.cat.services||{})[S.svcKey];if(!svcCached)return;
+  var u=user();
+  if(!u){await notice('تسجيل الدخول مطلوب','سجّل الدخول إلى حسابك أولاً لإتمام الطلب من المحفظة.','warning');try{openWallet();}catch(_){}return;}
+  showErr('');
+  var cm=isComments(svcCached),link=String(($('smmLink')||{}).value||'').trim(),qty,comments='';
+  if(!link||/\s/.test(link)||link.length>500){showErr('اكتب رابطاً صحيحاً بدون مسافات.');return;}
+  if(cm){comments=String(($('smmComments')||{}).value||'').split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean).join('\n');qty=comments?comments.split('\n').length:0;}
+  else qty=Number(($('smmQty')||{}).value);
+  S.buying=true;setBusy(true,'جارٍ التحقق…');
+  try{
+    /* قراءة حديثة للسعر والحدود قبل الخصم */
+    var svc=await mzDbGet('settings/smmCatalog/services/'+encodeURIComponent(S.svcKey));
+    var api=await mzDbGet('settings/smmApi');
+    if(!svc||svc.enabled===false||!api||api.enabled!==true||!/^https:\/\//i.test(String(api.workerUrl||''))){showErr('الخدمة غير متاحة حالياً.');return;}
+    if(Number(svc.pricePer1000Egp)!==Number(svcCached.pricePer1000Egp)||Number(svc.min)!==Number(svcCached.min)||Number(svc.max)!==Number(svcCached.max)){
+      S.cat.services[S.svcKey]=svc;render();showErr('تم تحديث السعر أو الحدود. راجع البيانات ثم أكّد الطلب مرة أخرى.');return;}
+    if(!Number.isInteger(qty)||qty<Number(svc.min)||qty>Number(svc.max)){showErr('الكمية يجب أن تكون بين '+Number(svc.min).toLocaleString('en-US')+' و '+Number(svc.max).toLocaleString('en-US')+'.');return;}
+    var cost=totalFor(svc,qty),rate=fx();
+    var plat=((S.cat.platforms||{})[svc.platform]||{}).name||'';
+    var ok=await notice('تأكيد طلب التزويد','المنصة: '+plat+'\nالخدمة: '+svc.name+'\nالكمية: '+qty.toLocaleString('en-US')+'\nالرابط: '+link+'\nالإجمالي: '+money(cost)+'\n\nسيتم خصم المبلغ من محفظتك وإرسال الطلب للتنفيذ. هل تريد المتابعة؟','warning',true);
+    if(!ok)return;
+    setBusy(true,'جارٍ تنفيذ الطلب…');
+    var balRef=db.ref('wallet_users/'+u.uid);
+    var tx=await balRef.transaction(function(c){
+      if(!c||typeof c!=='object')return;
+      var be=Number.isFinite(Number(c.balanceEgp))?Number(c.balanceEgp):Number(c.balanceUsd||0)*rate;
+      if(be+0.0000001<cost)return;
+      c.balanceEgp=Math.round((be-cost)*100)/100;c.balanceUsd=Math.round((c.balanceEgp/rate)*10000)/10000;c.updatedAt=Date.now();return c;
+    });
+    if(!tx.committed){showErr('رصيد المحفظة غير كافٍ أو تعذر تأكيد العملية. لم يتم خصم أي مبلغ.');return;}
+    try{var v=tx.snapshot.val()||{};walletBalanceEgp=Number(v.balanceEgp||0);walletBalanceUsd=Number(v.balanceUsd||0);walletDisplayBalance();updBalance();}catch(_){}
+    var code='SMM-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+    var orderRef=db.ref('wallet_orders/'+u.uid).push(),key=orderRef.key;
+    var cost$=Math.round((cost/rate)*10000)/10000;
+    try{
+      await orderRef.set({code:code,uid:u.uid,email:u.email||'',displayName:u.displayName||'',game:plat||'تزويد سوشيال',pack:svc.name,
+        price:(cur()==='USD'?(cost/rate).toFixed(2)+' $':cost.toFixed(2)+' جنيه'),originalPrice:cost.toFixed(2)+' جنيه',chargedAmountEgp:cost,chargedAmountUsd:cost$,baseAmountEgp:cost,
+        discountPercent:0,discountAmountEgp:0,currency:'EGP',costUsd:cost$,method:'تزويد سوشيال ميديا',status:'paid',paymentType:'wallet',createdAt:firebase.database.ServerValue.TIMESTAMP,
+        smm:true,smmServiceKey:S.svcKey,smmPlatform:svc.platform||'',smmLink:link,smmQuantity:qty,smmComments:comments,smmPer1000Egp:Number(svc.pricePer1000Egp),
+        smmRefill:!!svc.refill,smmCancel:!!svc.cancel,smmState:'pending',smmLabel:'قيد المراجعة'});
+    }catch(e){
+      console.error('SMM order create failed',e);
+      try{await refundOnce(key,cost);}catch(_){}
+      showErr('تعذر تسجيل الطلب، وتمت إعادة المبلغ إلى محفظتك.');return;
+    }
+    try{walletListenOrders();}catch(_){}
+    var idToken=await firebase.auth().currentUser.getIdToken(),data=null,uncertain=false;
+    try{
+      var res=await workerFetch(api.workerUrl,{action:'smm_add',orderKey:key},idToken,30000);
+      data=await res.json().catch(function(){return null;});
+      if(!data||(res.status>=500&&data.code!=='PROVIDER_REJECTED'))uncertain=true;
+    }catch(e){uncertain=true;}
+    var T=firebase.database.ServerValue.TIMESTAMP;
+    if(data&&data.status===true&&data.order){
+      await orderRef.update({status:'processing',providerOrderId:String(data.order),smmState:'pending',smmLabel:'قيد المراجعة',updatedAt:T,topupUpdatedAt:T}).catch(function(){});
+      showDone(code,key,'تم إرسال طلبك بنجاح','يمكنك متابعة حالته وعدد ما وصل من «طلباتي».');
+    }else if(data&&data.status===false&&data.code!=='DUPLICATE'&&data.code!=='INTERNAL'){
+      var refunded=false;try{refunded=await refundOnce(key,cost);}catch(_){}
+      await orderRef.update({status:'rejected',refundIssued:refunded,refundAmountEgp:cost,rejectionReason:String(data.message||'تعذر تنفيذ الطلب'),smmFinal:true,smmLabel:'مرفوض — تم رد المبلغ',updatedAt:T}).catch(function(){});
+      try{walletListenOrders();}catch(_){}
+      showErr((data.message||'تعذر تنفيذ الطلب.')+(refunded?' تم رد المبلغ إلى محفظتك.':''));
+    }else{
+      await orderRef.update({status:'processing',smmNeedsReview:true,topupError:'بانتظار تأكيد نتيجة مزود الخدمة',updatedAt:T}).catch(function(){});
+      showDone(code,key,'تم حفظ طلبك','لم يصلنا تأكيد نهائي بعد. راجع «طلباتي» قبل إعادة المحاولة حتى لا يتكرر الخصم، أو تواصل مع الدعم.');
+    }
+  }catch(e){console.error('SMM buy',e);showErr('حدث خطأ غير متوقع. راجع «طلباتي» قبل إعادة المحاولة.');}
+  finally{S.buying=false;setBusy(false,'<i class="fas fa-bolt"></i> تأكيد الطلب');}
+}
+function showDone(code,key,title,msg){
+  $('smmBody').innerHTML='<div class="smm-form" style="text-align:center"><div style="font-size:46px;color:#34d399"><i class="fas fa-circle-check"></i></div><h3 style="margin:10px 0 6px">'+esc(title)+'</h3><div class="smm-note">'+esc(msg)+'<br>كود الطلب: <b dir="ltr">'+esc(code)+'</b></div>'+
+   '<button type="button" class="smm-buy" id="smmGoOrders">عرض طلباتي</button><button type="button" class="smm-buy" style="background:var(--surface-hover,#1e293b)" id="smmGoHome">طلب جديد</button></div>';
+  $('smmGoOrders').onclick=function(){window.closeSmmPage();setTimeout(function(){try{openWalletOrdersPage();}catch(_){}},250);};
+  $('smmGoHome').onclick=function(){S.view='platforms';render();};
+}
+
+/* ---------- تتبع الطلبات (يعمل مع صفحة طلباتي) ---------- */
+var busy=false,lastCheck={};
+var LABELS={pending:'قيد المراجعة',in_progress:'جاري التنفيذ',completed:'تم التنفيذ بالكامل',partial:'اكتمل جزئياً — تم رد قيمة المتبقي',canceled:'ملغي — تم رد المبلغ'};
+async function refresh(force){
+  if(busy)return;var u=user();if(!u)return;
+  var cache;try{cache=walletOrdersCache;}catch(_){return;}
+  if(!Array.isArray(cache))return;
+  var now=Date.now();
+  var pend=cache.filter(function(o){return o&&o.smm&&o.providerOrderId&&!o.smmFinal&&(force||now-(lastCheck[o.key]||0)>25000);}).slice(0,40);
+  if(!pend.length)return;
+  busy=true;
+  try{
+    if(!S.api){S.api=await mzDbGet('settings/smmApi').catch(function(){return null;});}
+    var url=S.api&&S.api.workerUrl;if(!/^https:\/\//i.test(String(url||'')))return;
+    var idToken=await firebase.auth().currentUser.getIdToken();
+    pend.forEach(function(o){lastCheck[o.key]=now;});
+    var res=await workerFetch(url,{action:'smm_status',items:pend.map(function(o){return{key:o.key};})},idToken,20000);
+    var d=await res.json().catch(function(){return null;});
+    if(!d||d.status!==true||!d.results)return;
+    for(var i=0;i<pend.length;i++){
+      var o=pend[i],r=d.results[o.key];if(!r||r.error||!r.state)continue;
+      var ref=db.ref('wallet_orders/'+u.uid+'/'+o.key),T=firebase.database.ServerValue.TIMESTAMP;
+      var qty=Number(o.smmQuantity)||0,remains=r.remains!=null&&r.remains!==''?Number(r.remains):null,start=r.start_count!=null&&r.start_count!==''?Number(r.start_count):null;
+      var upd={smmState:r.state,smmLabel:LABELS[r.state]||o.smmLabel||'',smmProviderStatus:String(r.raw||''),smmStart:Number.isFinite(start)?start:null,smmRemains:Number.isFinite(remains)?remains:null,updatedAt:T};
+      var charged=Number(o.chargedAmountEgp)||0;
+      if(r.state==='completed'){upd.status='shipped';upd.smmRemains=0;upd.smmFinal=true;upd.shippedAt=T;}
+      else if(r.state==='partial'){
+        var rem=Number.isFinite(remains)&&qty>0?Math.min(remains,qty):0,amt=Math.round(charged*(rem/qty)*100)/100;
+        var okR=amt>0?await refundOnce(o.key,amt).catch(function(){return null;}):true;
+        if(okR===null)continue; /* خطأ اتصال: نعيد المحاولة في الدورة القادمة بدل إنهاء الطلب بدون رد */
+        upd.status='shipped';upd.smmFinal=true;upd.shippedAt=T;upd.smmRefundEgp=amt;upd.refundIssued=true;
+      }else if(r.state==='canceled'){
+        var okC=await refundOnce(o.key,charged).catch(function(){return null;});
+        if(okC===null)continue;
+        upd.status='cancelled';upd.smmFinal=true;upd.smmRefundEgp=charged;upd.refundIssued=true;
+      }
+      var changed=o.smmState!==r.state||o.smmRemains!==upd.smmRemains||o.smmStart!==upd.smmStart;
+      if(changed){var ek=ref.child('statusHistory').push().key;upd['statusHistory/'+ek]={status:upd.status||o.status||'processing',at:T,details:upd.smmLabel};}
+      await ref.update(upd).catch(function(e){console.warn('smm update',e);});
+    }
+  }catch(e){console.warn('SMM refresh',e);}
+  finally{busy=false;}
+}
+window.smmRefreshOrders=refresh;
+setInterval(function(){if(document.visibilityState==='visible')refresh(false);},30000);
+setTimeout(function(){refresh(false);},4000);
+
+/* أزرار + صفوف طلباتي (يستدعيها render الطلبات) */
+window.smmOrderButtons=function(o){
+  if(!o||!o.smm)return '';
+  var b='';
+  if(!o.smmFinal&&o.providerOrderId)b+='<button type="button" onclick="smmRefreshOrders(true);this.disabled=true;this.textContent=\'جارٍ التحقق…\'"><i class="fas fa-rotate"></i> تحديث الحالة</button>';
+  if(!o.smmFinal&&o.smmCancel&&o.smmState==='pending'&&o.providerOrderId)b+='<button type="button" class="warn" onclick="smmCancelOrder(\''+esc(o.key)+'\')"><i class="fas fa-ban"></i> إلغاء الطلب</button>';
+  if(o.smmFinal&&o.smmState==='completed'&&o.smmRefill&&o.providerOrderId)b+='<button type="button" onclick="smmRefillOrder(\''+esc(o.key)+'\')"><i class="fas fa-shield-heart"></i> طلب تعويض</button>';
+  return b?'<div class="smm-ord-btns">'+b+'</div>':'';
+};
+window.smmOrderRows=function(o,row){
+  var rows=[],n=function(v){return Number(v).toLocaleString('en-US');};
+  rows.push(row('link','الرابط','<span dir="ltr" style="word-break:break-all">'+esc(o.smmLink||'—')+'</span>'));
+  rows.push(row('hashtag','الكمية المطلوبة',esc(n(o.smmQuantity||0))));
+  var q=Number(o.smmQuantity)||0,rem=o.smmRemains!=null?Number(o.smmRemains):null;
+  if(o.smmStart!=null&&Number.isFinite(Number(o.smmStart)))rows.push(row('flag-checkered','العدّاد عند البدء',esc(n(o.smmStart))));
+  if(rem!=null&&q>0){
+    var done=Math.max(0,q-rem),pct=Math.min(100,Math.round(done/q*100));
+    rows.push(row('chart-simple','تم تسليم',esc(n(done))+' من '+esc(n(q))+' ('+pct+'%)'));
+    rows.push('<div class="smm-prog"><i style="width:'+pct+'%"></i></div>');
+    if(rem>0)rows.push(row('hourglass-half','المتبقي',esc(n(rem))));
+  }
+  if(Number(o.smmRefundEgp)>0)rows.push(row('rotate-left','تم رد',esc(Number(o.smmRefundEgp).toFixed(2))+' جنيه','warn'));
+  if(o.smmNeedsReview&&!o.providerOrderId)rows.push(row('circle-exclamation','ملاحظة','بانتظار تأكيد الإرسال — لا تكرر الطلب','warn'));
+  if(o.smmRefillId)rows.push(row('shield-heart','طلب التعويض','رقم '+esc(o.smmRefillId)));
+  return rows;
+};
+window.smmCancelOrder=async function(key){
+  if(!await notice('إلغاء الطلب','هل تريد محاولة إلغاء هذا الطلب؟ لو تم الإلغاء سيُرد المبلغ لمحفظتك.','warning',true))return;
+  try{
+    var idToken=await firebase.auth().currentUser.getIdToken();
+    var res=await workerFetch(S.api.workerUrl,{action:'smm_cancel',orderKey:key},idToken,20000),d=await res.json().catch(function(){return null;});
+    if(d&&d.status===true){await notice('تم إرسال طلب الإلغاء','سيتم تحديث الحالة ورد المبلغ تلقائياً خلال لحظات.','success');setTimeout(function(){refresh(true);},1500);}
+    else await notice('تعذر الإلغاء',(d&&d.message)||'لا يمكن إلغاء هذا الطلب الآن.','warning');
+  }catch(e){await notice('تعذر الإلغاء','حدث خطأ في الاتصال. حاول لاحقاً.','warning');}
+};
+window.smmRefillOrder=async function(key){
+  var o=(function(){try{return walletOrdersCache.find(function(x){return x.key===key;});}catch(_){return null;}})();
+  if(o&&o.smmRefillAt&&Date.now()-Number(o.smmRefillAt)<86400000){await notice('تم الطلب مسبقاً','تم إرسال طلب تعويض خلال آخر 24 ساعة.','info');return;}
+  if(!await notice('طلب تعويض','سيتم إرسال طلب تعويض لهذا الطلب. هل تريد المتابعة؟','warning',true))return;
+  try{
+    var u=user(),idToken=await firebase.auth().currentUser.getIdToken();
+    var res=await workerFetch(S.api.workerUrl,{action:'smm_refill',orderKey:key},idToken,20000),d=await res.json().catch(function(){return null;});
+    if(d&&d.status===true){await db.ref('wallet_orders/'+u.uid+'/'+key).update({smmRefillId:String(d.refill),smmRefillAt:firebase.database.ServerValue.TIMESTAMP}).catch(function(){});await notice('تم إرسال طلب التعويض','رقم الطلب: '+d.refill,'success');}
+    else await notice('تعذر طلب التعويض',(d&&d.message)||'غير متاح الآن.','warning');
+  }catch(e){await notice('تعذر طلب التعويض','حدث خطأ في الاتصال. حاول لاحقاً.','warning');}
+};
+
+/* تحميل أولي لإظهار الزر الرئيسي (لا يظهر شيء إلا بعد إعداد الخدمة من لوحة التحكم) */
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(load,300);});else setTimeout(load,300);
+})();
+</script>
+<!-- ===================== نهاية إضافة تزويد السوشيال ميديا ===================== -->
+
 </body>
 </html>
