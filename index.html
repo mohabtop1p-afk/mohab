@@ -2694,6 +2694,7 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 
         window.addEventListener('popstate', function(e) {
             if(walletOrdersSkipPopstate){walletOrdersSkipPopstate=false;return;}
+            { const smmP=document.getElementById('smmPage'); if(smmP && smmP.classList.contains('open')) return; }
             const walletOrdersPage=document.getElementById('walletOrdersPage');
             if(walletOrdersPage && walletOrdersPage.classList.contains('open')) { closeWalletOrdersPage(true); return; }
             if (document.getElementById('walletPage') && document.getElementById('walletPage').classList.contains('open')) {
@@ -4502,7 +4503,7 @@ globalGames = data || {};
                 if(count)count.textContent=orderRows.length+' طلب';
                 if(dockBtn)dockBtn.style.display=walletUser?'flex':'none';
                 const labels={pending_payment:'بانتظار الدفع',paid:'تم الدفع',processing:'تم إرسال الطلب',shipped:'تم الشحن',rejected:'المنتج غير متوفر الآن',topup_failed:'المنتج غير متوفر الآن',cancelled:'ملغي'};
-                const html=orderRows.length?orderRows.map(o=>{
+                const html=orderRows.length?orderRows.map(o0=>{const o=(o0&&o0.smm&&window.smmEff)?window.smmEff(o0):o0;
                     const history=Object.values(o.statusHistory||{}).sort((a,b)=>Number(a.at||0)-Number(b.at||0));
                     const historyHtml=history.length?`<div class="mz-ord-timeline"><b><i class="fas fa-clock-rotate-left"></i> سجل تحديثات الطلب</b>${history.map(h=>`<small><i class="fas fa-circle"></i><span>${walletEscape(labels[h.status]||h.status||'تحديث')} — ${h.at?new Date(h.at).toLocaleString('ar-EG'):'—'}${h.details?` — ${walletEscape(h.details)}`:''}</span></small>`).join('')}</div>`:'';
                     const mzRow=(ic,k,v,cls)=>`<div class="mz-ord-row${cls?' '+cls:''}"><span class="mz-ord-k"><i class="fas fa-${ic}"></i>${k}</span><b class="mz-ord-v" dir="auto">${v}</b></div>`;
@@ -4526,7 +4527,7 @@ globalGames = data || {};
                     if(o.smm){(window.smmOrderRows?window.smmOrderRows(o,mzRow):[]).forEach(r=>mzRows.push(r));}
                     if(o.rejectionReason)mzRows.push(mzRow('circle-exclamation','سبب الرفض',walletEscape(o.rejectionReason),'warn'));
                     if(o.shippedAt)mzRows.push(mzRow('truck-fast','تاريخ الشحن',new Date(o.shippedAt).toLocaleString('ar-EG')));
-                    return `<article class="mz-ord" data-status="${walletEscape(String(o.status||'new'))}"><header class="mz-ord-head"><b class="mz-ord-title">${o.isCart?walletEscape('🛒 سلة مشتريات — '+(o.itemsCount||'')+' منتج'):walletEscape(o.game||o.gameName||'منتج')+' — '+walletEscape(o.pack||o.packName||'باقة')}</b><span class="mz-ord-chip">${walletEscape(o.smm&&o.smmLabel?o.smmLabel:(labels[o.status]||o.status||'تم تسجيل الطلب'))}</span></header><div class="mz-ord-body">${mzRows.join('')}</div>${historyHtml}<footer class="mz-ord-foot"><div class="mz-ord-dates"><span><i class="fas fa-calendar-days"></i>تاريخ الطلب: ${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</span>${o.updatedAt?`<span><i class="fas fa-arrows-rotate"></i>آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</span>`:''}</div>${window.smmOrderButtons?window.smmOrderButtons(o):''}${o.autoTopup&&o.status==='processing'?`<button type="button" class="wallet-receipt-btn" style="margin-inline-end:8px" onclick="walletRecheckProcessingOrders(true);this.disabled=true;this.textContent='جارٍ التحقق…'"><i class="fas fa-rotate"></i> تحديث الحالة</button>`:''}<button type="button" class="wallet-receipt-btn" onclick="walletShowOrderReceipt('${walletEscape(o.key)}')"><i class="fas fa-receipt"></i> عرض الوصل</button></footer></article>`;
+                    return `<article class="mz-ord" data-status="${walletEscape(String(o.status||'new'))}"><header class="mz-ord-head"><b class="mz-ord-title">${o.isCart?walletEscape('🛒 سلة مشتريات — '+(o.itemsCount||'')+' منتج'):walletEscape(o.game||o.gameName||'منتج')+' — '+walletEscape(o.pack||o.packName||'باقة')}</b><span class="mz-ord-chip">${walletEscape(o.smm&&window.smmChipText?window.smmChipText(o):(labels[o.status]||o.status||'تم تسجيل الطلب'))}</span></header><div class="mz-ord-body">${mzRows.join('')}</div>${historyHtml}<footer class="mz-ord-foot"><div class="mz-ord-dates"><span><i class="fas fa-calendar-days"></i>تاريخ الطلب: ${o.createdAt?new Date(o.createdAt).toLocaleString('ar-EG'):'—'}</span>${o.updatedAt?`<span><i class="fas fa-arrows-rotate"></i>آخر تحديث: ${new Date(o.updatedAt).toLocaleString('ar-EG')}</span>`:''}</div>${window.smmOrderButtons?window.smmOrderButtons(o):''}${o.autoTopup&&o.status==='processing'?`<button type="button" class="wallet-receipt-btn" style="margin-inline-end:8px" onclick="walletRecheckProcessingOrders(true);this.disabled=true;this.textContent='جارٍ التحقق…'"><i class="fas fa-rotate"></i> تحديث الحالة</button>`:''}<button type="button" class="wallet-receipt-btn" onclick="walletShowOrderReceipt('${walletEscape(o.key)}')"><i class="fas fa-receipt"></i> عرض الوصل</button></footer></article>`;
                 }).join(''):'لا توجد طلبات شحن حتى الآن.';
                 if(list)list.innerHTML=html;
                 if(legacy)legacy.innerHTML=html;
@@ -7050,6 +7051,60 @@ window.mzOpenOrders=openOrders;
 .smm-ord-btns button.warn{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.1);color:#fca5a5}
 body.light-theme #smmPage .smm-bal,body.light-theme .smm-sum div:last-child span:last-child,body.light-theme .smm-price{color:#047857}
 body.light-theme .smm-notice{color:#b45309}
+
+/* ===== مربع تتبع الطلب (جديد) ===== */
+@keyframes smmSpin{to{transform:rotate(360deg)}}
+@keyframes smmPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--tc) 55%,transparent)}70%{box-shadow:0 0 0 9px transparent}}
+@keyframes smmStripe{from{background-position:0 0}to{background-position:28px 0}}
+.smm-noanim .smm-ord{animation:none}
+.smm-ord{--tc:#f59e0b;position:relative;overflow:hidden;padding:15px 15px 13px}
+.smm-ord::before{content:"";position:absolute;top:0;bottom:0;right:0;width:4px;background:var(--tc);opacity:.9}
+.smm-ord.t-wait{--tc:#f59e0b}.smm-ord.t-proc{--tc:#a78bfa}.smm-ord.t-run{--tc:#3b82f6}.smm-ord.t-done{--tc:#10b981}.smm-ord.t-part{--tc:#f97316}.smm-ord.t-bad{--tc:#ef4444}
+.smm-ohead{display:flex;gap:11px;align-items:flex-start}
+.smm-oico{flex:0 0 42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:17px;color:var(--tc);background:color-mix(in srgb,var(--tc) 15%,transparent);border:1px solid color-mix(in srgb,var(--tc) 38%,transparent)}
+.smm-oico.spin i{animation:smmSpin 2.4s linear infinite}.smm-oico.pulse{animation:smmPulse 1.8s ease-out infinite}
+.smm-ot{flex:1;min-width:0}
+.smm-ot .smm-otitle{display:block;font-size:.9rem;font-weight:900;line-height:1.6;overflow-wrap:anywhere}
+.smm-ot .smm-osub{display:block;margin-top:2px;color:var(--text-muted,#94a3b8);font-size:.68rem}
+.smm-st{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.smm-st.proc{background:rgba(167,139,250,.16);color:#c4b5fd;border-color:rgba(167,139,250,.25)}
+.smm-st.part{background:rgba(249,115,22,.16);color:#fdba74;border-color:rgba(249,115,22,.25)}
+.smm-trk{margin-top:12px;padding:13px;border-radius:18px;background:rgba(2,6,23,.38);border:1px solid rgba(148,163,184,.13)}
+.smm-trk-main{display:flex;align-items:center;gap:14px}
+.smm-ring{position:relative;flex:0 0 86px;width:86px;height:86px}
+.smm-ring svg{width:100%;height:100%;display:block}
+.smm-ring circle{fill:none;stroke-width:7;stroke-linecap:round;transform:rotate(-90deg);transform-origin:40px 40px}
+.smm-ring .bg{stroke:rgba(148,163,184,.2)}
+.smm-ring .fg{stroke:var(--tc);transition:stroke-dasharray .8s ease;filter:drop-shadow(0 0 5px color-mix(in srgb,var(--tc) 60%,transparent))}
+.smm-rv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+.smm-rv b{font-size:1.12rem;font-weight:900;font-variant-numeric:tabular-nums}
+.smm-rv span{font-size:.58rem;color:var(--text-muted,#94a3b8);margin-top:2px}
+.smm-nums{flex:1;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.smm-num{padding:8px 4px;border-radius:12px;background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.12);text-align:center;min-width:0}
+.smm-num span{display:block;font-size:.6rem;color:var(--text-muted,#94a3b8);margin-bottom:3px}
+.smm-num b{display:block;font-size:.95rem;font-weight:900;font-variant-numeric:tabular-nums}
+.smm-num.g b{color:#34d399}.smm-num.o b{color:#fbbf24}
+.smm-prog.live i{background:repeating-linear-gradient(135deg,var(--tc) 0 10px,color-mix(in srgb,var(--tc) 70%,#fff) 10px 20px);background-size:28px 28px;animation:smmStripe .9s linear infinite}
+.smm-prog.fin i{background:var(--tc)}
+.smm-steps{display:flex;margin:10px 0 2px;direction:rtl}
+.smm-steps .s{flex:1;position:relative;text-align:center;min-width:0}
+.smm-steps .s:not(:last-child)::after{content:"";position:absolute;top:14px;left:-50%;width:100%;height:2px;background:rgba(148,163,184,.22);z-index:0}
+.smm-steps .s.ln::after{background:var(--tc)}
+.smm-steps .d{position:relative;z-index:1;width:29px;height:29px;margin:0 auto;border-radius:50%;display:grid;place-items:center;font-size:12px;background:#0f172a;border:2px solid rgba(148,163,184,.3);color:#64748b}
+.smm-steps .s.done .d{background:var(--tc);border-color:var(--tc);color:#fff}
+.smm-steps .s.cur .d{border-color:var(--tc);color:var(--tc);animation:smmPulse 1.8s ease-out infinite}
+.smm-steps .s.cur.fin .d{background:var(--tc);color:#fff;animation:none}
+.smm-steps .t{display:block;margin-top:5px;font-size:.58rem;color:var(--text-muted,#94a3b8);line-height:1.4;font-weight:700}
+.smm-steps .s.done .t,.smm-steps .s.cur .t{color:var(--text-main,#f8fafc)}
+.smm-info{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:11px;font-size:.68rem;color:var(--text-muted,#94a3b8);line-height:1.8}
+.smm-info span{display:inline-flex;align-items:center;gap:5px}.smm-info i{color:var(--tc);font-size:.7rem}
+.smm-lnk{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 10px;border-radius:12px;background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.12);font-size:.7rem}
+.smm-lnk span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:left;color:#67e8f9}
+.smm-lnk button{flex:0 0 auto;border:0;background:rgba(6,182,212,.14);color:#67e8f9;border-radius:9px;padding:5px 9px;font:800 .66rem inherit;font-family:inherit;cursor:pointer}
+.smm-note2{display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:9px 11px;border-radius:12px;font-size:.72rem;line-height:1.8;font-weight:700;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.28);color:#93c5fd}
+.smm-note2 i{margin-top:5px}.smm-note2.ok{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:#6ee7b7}.smm-note2.warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.32);color:#fcd34d}.smm-note2.bad{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.32);color:#fca5a5}
+.smm-ord-btns button i{margin-inline-end:5px}
+@media(max-width:380px){.smm-ring{flex-basis:74px;width:74px;height:74px}.smm-num b{font-size:.84rem}}
 @media(prefers-reduced-motion:reduce){#smmPage *,#smmHomeBanner,#smmHomeBanner *{animation:none!important}}
 </style>
 
@@ -7066,7 +7121,7 @@ body.light-theme .smm-notice{color:#b45309}
 <script id="mohab-smm">
 (function(){
 'use strict';
-var S={api:null,cat:null,view:'platforms',platform:null,svcKey:null,q:'',loaded:false,buying:false,avail:null,from:'platforms'};
+var S={api:null,cat:null,view:'platforms',platform:null,svcKey:null,q:'',loaded:false,buying:false,avail:null,from:'platforms',pushes:0};
 var $=function(id){return document.getElementById(id);};
 var esc=function(v){return (window.mzEsc||function(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});})(v);};
 var safeUrl=function(u){return window.mzSafeUrl?window.mzSafeUrl(u):'';};
@@ -7077,6 +7132,58 @@ function money(egp){egp=Number(egp)||0;return cur()==='USD'?(egp/fx()).toFixed(2
 function user(){try{return walletUser;}catch(_){return null;}}
 function notice(t,m,type,confirm){try{return walletShowNotice(t,m,type||'info',!!confirm);}catch(e){alert(t+'\n'+m);return Promise.resolve(!confirm||window.confirm(m));}}
 function totalFor(svc,qty){return Math.max(0.01,Math.ceil((qty/1000)*Number(svc.pricePer1000Egp)*100-1e-6)/100);}
+
+/* ---------- تخزين بيانات التتبع محليًا (يضمن عمل التتبع حتى لو قواعد Firebase منعت الكتابة) ---------- */
+var LIVE={},LIVE_UID=null;
+function liveKey(){var u=user();return 'mohab_smm_live_v2_'+(u?u.uid:'guest');}
+function liveLoad(){var u=user(),id=u?u.uid:'guest';if(LIVE_UID===id)return;LIVE_UID=id;try{LIVE=JSON.parse(localStorage.getItem(liveKey())||'{}')||{};}catch(_){LIVE={};}}
+function liveSave(){try{var ks=Object.keys(LIVE);if(ks.length>150){ks.sort(function(a,b){return (LIVE[a].at||0)-(LIVE[b].at||0);}).slice(0,ks.length-150).forEach(function(k){delete LIVE[k];});}localStorage.setItem(liveKey(),JSON.stringify(LIVE));}catch(_){}}
+function liveSet(key,patch){liveLoad();var c=LIVE[key]||{};Object.keys(patch).forEach(function(k){if(patch[k]!==undefined)c[k]=patch[k];});c.at=Date.now();LIVE[key]=c;liveSave();}
+/* يدمج بيانات الطلب من قاعدة البيانات مع آخر بيانات حية وصلت من المزود */
+function eff(o){
+  if(!o||!o.smm)return o;liveLoad();var l=LIVE[o.key];if(!l)return o;
+  var e=Object.assign({},o);
+  if(!e.providerOrderId&&l.pid)e.providerOrderId=String(l.pid);
+  if(!e.smmFinal&&l.state){
+    e.smmState=l.state;if(l.remains!==undefined)e.smmRemains=l.remains;if(l.start!==undefined)e.smmStart=l.start;
+    e.smmProviderStatus=l.raw||e.smmProviderStatus;e.smmLabel=l.label||e.smmLabel;
+    if(l.final){e.smmFinal=true;if(l.status)e.status=l.status;if(l.refund!=null)e.smmRefundEgp=l.refund;if(l.refundPending)e.smmRefundPending=true;}
+  }
+  if(l.cancelReq&&!e.smmFinal)e.smmCancelRequested=true;
+  e.smmCheckedAt=l.at||0;
+  return e;
+}
+window.smmEff=eff;
+var ST={
+  sending:{t:'جارٍ الإرسال',ic:'fa-paper-plane',c:'wait'},
+  unlinked:{t:'بانتظار تأكيد المزود',ic:'fa-hourglass-half',c:'wait'},
+  pending:{t:'قيد الانتظار',ic:'fa-clock',c:'wait'},
+  processing:{t:'قيد المعالجة',ic:'fa-gear',c:'proc'},
+  in_progress:{t:'قيد التنفيذ',ic:'fa-play',c:'run'},
+  completed:{t:'مكتمل',ic:'fa-circle-check',c:'done'},
+  partial:{t:'مكتمل جزئياً',ic:'fa-circle-half-stroke',c:'part'},
+  canceled:{t:'ملغي',ic:'fa-ban',c:'bad'},
+  rejected:{t:'مرفوض',ic:'fa-circle-xmark',c:'bad'}
+};
+function stateOf(o){
+  if(o.status==='rejected')return 'rejected';
+  if(o.smmState&&ST[o.smmState]&&(o.providerOrderId||o.smmFinal))return o.smmState;
+  if(o.status==='cancelled')return 'canceled';
+  if(o.status==='shipped')return 'completed';
+  if(o.providerOrderId)return 'pending';
+  return o.smmNeedsReview?'unlinked':'sending';
+}
+window.smmChipText=function(o){var e=eff(o);return (ST[stateOf(e)]||ST.pending).t;};
+function ago(ts){ts=Number(ts)||0;if(!ts)return '';var s=Math.max(0,Math.round((Date.now()-ts)/1000));if(s<10)return 'الآن';if(s<60)return 'منذ '+s+' ثانية';var m=Math.round(s/60);if(m<60)return 'منذ '+m+' دقيقة';var h=Math.round(m/60);if(h<24)return 'منذ '+h+' ساعة';return new Date(ts).toLocaleDateString('ar-EG');}
+function calc(o){
+  var q=Number(o.smmQuantity)||0,k=stateOf(o),rem=(o.smmRemains!=null&&o.smmRemains!==''&&Number.isFinite(Number(o.smmRemains)))?Math.max(0,Math.min(q,Number(o.smmRemains))):null,done=0;
+  if(k==='completed'){done=q;rem=0;}
+  else if(rem!=null){done=Math.max(0,q-rem);}
+  else if(k==='pending'||k==='processing'||k==='sending'||k==='unlinked'||k==='rejected'){done=0;rem=q;}
+  var pct=q>0?Math.min(100,Math.round(done/q*100)):0;
+  return {q:q,k:k,rem:rem,done:done,pct:pct};
+}
+
 function isComments(svc){return /comment/i.test(String(svc&&svc.type||''));}
 function color(c){return /^#[0-9a-f]{6}$/i.test(String(c||''))?c:'#06b6d4';}
 function iconHtml(u,fallback){
@@ -7101,8 +7208,8 @@ function applyHome(){
   if($('smmBannerTitle'))$('smmBannerTitle').textContent=t;if($('smmBannerSub'))$('smmBannerSub').textContent=st;
   var d=$('smmDockBtn');if(d)d.style.display=on?'':'none';
 }
-function myOrders(){try{return (walletOrdersCache||[]).filter(function(o){return o&&o.smm;});}catch(_){return [];}}
-function updDot(){var d=$('smmOrdersDot');if(!d)return;var n=myOrders().filter(function(o){return !o.smmFinal;}).length;d.textContent=n;d.style.display=n?'grid':'none';}
+function myOrders(){try{return (walletOrdersCache||[]).filter(function(o){return o&&o.smm;}).map(eff);}catch(_){return [];}}
+function updDot(){var d=$('smmOrdersDot');if(!d)return;var n=myOrders().filter(function(o){return !o.smmFinal&&o.status!=='rejected'&&o.status!=='cancelled';}).length;d.textContent=n;d.style.display=n?'grid':'none';}
 function updBalance(){var b=$('smmBalance');if(!b)return;if(!user()){b.style.display='none';return;}try{b.textContent=money(Number(walletBalanceEgp)||0);b.style.display='';}catch(_){b.style.display='none';}}
 
 function render(){
@@ -7143,10 +7250,10 @@ function render(){
     S._upd=upd;var qe=$('smmQty'),ce=$('smmComments');if(qe)qe.addEventListener('input',upd);if(ce)ce.addEventListener('input',upd);
     checkAvail(svc);
   }else if(S.view==='orders'){
-    title.textContent='طلباتي';
+    title.textContent='طلباتي';body.classList.remove('smm-noanim');
     var os=myOrders().sort(function(a,b){return (Number(b.createdAt)||0)-(Number(a.createdAt)||0);});
     body.innerHTML='<div class="smm-fade">'+(!user()?'<div class="smm-empty">سجّل الدخول لعرض طلباتك.</div>':(os.length?os.map(ordHtml).join(''):'<div class="smm-empty">لا توجد طلبات تزويد بعد.</div>'))+'</div>';
-    window.smmRefreshOrders(false);
+    window.smmRefreshOrders(true);
   }
 }
 function platformsHtml(ps){
@@ -7175,24 +7282,74 @@ function quickList(s){
   return raw.filter(function(q){return q>=Number(s.min)&&q<=Number(s.max);}).slice(0,6);
 }
 function commentsCount(){var e=$('smmComments');return e?String(e.value||'').split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean).length:0;}
-function ordHtml(o){
-  var q=Number(o.smmQuantity)||0,rem=o.smmRemains!=null&&Number.isFinite(Number(o.smmRemains))?Math.max(0,Math.min(q,Number(o.smmRemains))):null;
-  var done=rem!=null&&q>0?Math.max(0,q-rem):(o.smmState==='completed'?q:0),pct=q>0?Math.min(100,Math.round(done/q*100)):0;
-  if(o.smmState==='completed'){done=q;rem=0;pct=100;}
-  var cls=(o.smmState==='completed'||o.smmState==='partial')?'done':(o.smmState==='canceled'||o.status==='rejected'||o.status==='cancelled'?'bad':(o.smmState==='in_progress'?'run':''));
-  var lab=o.smmLabel||({pending:'قيد الانتظار',paid:'قيد المراجعة',processing:'جاري التنفيذ',shipped:'مكتمل',rejected:'مرفوض',cancelled:'ملغي'})[o.smmState||o.status]||'قيد المراجعة';
-  var delivered=q>0?'<div class="smm-track-numbers"><div class="smm-track-stat"><span>تم التسليم</span><b>'+N(done)+' / '+N(q)+'</b></div><div class="smm-track-stat"><span>المتبقي</span><b>'+(rem==null?'بانتظار بيانات المزود':N(rem))+'</b></div></div><div class="smm-prog"><i style="width:'+pct+'%"></i></div><div class="smm-track-meta"><span>نسبة الإنجاز</span><b>'+pct+'%</b></div>':'';
-  return '<div class="smm-ord"><div class="smm-ord-top"><b>'+esc(o.game||'')+' — '+esc(o.pack||'')+'</b><span class="smm-st '+cls+'">'+esc(lab)+'</span></div>'+
-   delivered+
-   '<small>'+(o.smmStart!=null?'العداد عند البدء: <b>'+N(o.smmStart)+'</b><br>':'')+'الرابط: <span dir="ltr">'+esc(o.smmLink||'')+'</span><br>كود الطلب: <span dir="ltr">'+esc(o.code||'')+'</span> • الإجمالي: '+esc(money(o.chargedAmountEgp))+(Number(o.smmRefundEgp)>0?' • تم رد '+esc(Number(o.smmRefundEgp).toFixed(2))+' جنيه':'')+(o.smmCancelRequested&&!o.smmFinal?' • طلب الإلغاء قيد المعالجة':'')+(o.smmRefundPending?' • استرداد المتبقي يحتاج مراجعة الدعم':'')+'</small>'+
-   (window.smmOrderButtons?window.smmOrderButtons(o):'')+'</div>';
+function stepsHtml(c,o){
+  var k=c.k,bad=(k==='canceled'||k==='rejected'),part=(k==='partial'),fin=(k==='completed'||bad||part);
+  var cur=({sending:0,unlinked:0,pending:1,processing:1,in_progress:2,completed:3,partial:3,canceled:3,rejected:3})[k];if(cur==null)cur=1;
+  var lbl=['تم الاستلام','قيد الانتظار','قيد التنفيذ',bad?(k==='rejected'?'مرفوض':'ملغي'):(part?'مكتمل جزئياً':'مكتمل')];
+  var ic=['fa-receipt','fa-clock','fa-bolt',bad?'fa-xmark':(part?'fa-circle-half-stroke':'fa-check')];
+  var flags=null;if(bad){flags=[true,!!o.providerOrderId&&k!=='rejected',c.done>0];}
+  var h='<div class="smm-steps">';
+  for(var i=0;i<4;i++){
+    var cl='s';
+    if(flags&&i<3){cl+=flags[i]?' done':'';}
+    else if(i<cur)cl+=' done';
+    else if(i===cur)cl+=' cur'+((fin&&i===3)||(k==='sending'&&false)?' fin':'');
+    var lineOn=flags?(i<3&&flags[i]&&(i===2||flags[i+1]||i+1===3)):(i<cur);
+    if(lineOn)cl+=' ln';
+    h+='<div class="'+cl+'"><span class="d"><i class="fas '+ic[i]+'"></i></span><span class="t">'+lbl[i]+'</span></div>';
+  }
+  return h+'</div>';
 }
+function ordHtml(o){
+  o=eff(o);var c=calc(o),k=c.k,st=ST[k]||ST.pending,fin=!!o.smmFinal||k==='completed'||k==='canceled'||k==='rejected'||k==='partial';
+  var live=(k==='in_progress'||k==='processing')&&!fin;
+  var circ=213.63,dash=(c.pct/100*circ).toFixed(1);
+  var title=esc(o.game||'')+' — '+esc(o.pack||'');
+  var notes='',ref=Number(o.smmRefundEgp)||0;
+  if(ref>0)notes+='<div class="smm-note2 ok"><i class="fas fa-rotate-left"></i><span>تم رد <b>'+esc(ref.toFixed(2))+' جنيه</b> إلى محفظتك'+(k==='canceled'?' عن الكمية التي لم تُنفَّذ':(k==='partial'?' عن الكمية المتبقية':''))+'.</span></div>';
+  if(o.smmRefundPending)notes+='<div class="smm-note2 warn"><i class="fas fa-circle-exclamation"></i><span>جارٍ مراجعة قيمة الكمية المتبقية لردها إلى محفظتك.</span></div>';
+  if(k==='rejected')notes+='<div class="smm-note2 bad"><i class="fas fa-circle-info"></i><span>'+esc(o.rejectionReason||o.smmLabel||'تعذر تنفيذ الطلب')+'</span></div>';
+  if(o.smmCancelRequested&&!fin)notes+='<div class="smm-note2"><i class="fas fa-ban"></i><span>طلب الإلغاء قيد المعالجة — سيُرد لمحفظتك قيمة الكمية غير المنفذة تلقائياً.</span></div>';
+  if(!o.providerOrderId&&k!=='rejected'&&!fin){
+    var age=Date.now()-(Number(o.createdAt)||Date.now());
+    notes+=age>180000?'<div class="smm-note2 warn"><i class="fas fa-triangle-exclamation"></i><span>لم يصلنا رقم المتابعة من المزود بعد. <b>لا تكرر الطلب</b> — لو لم تتغير الحالة تواصل مع الدعم وابعت كود الطلب.</span></div>':'<div class="smm-note2"><i class="fas fa-paper-plane"></i><span>جارٍ إرسال طلبك إلى المزود…</span></div>';
+  }
+  var checked=o.smmCheckedAt||Number(o.updatedAt)||0;
+  var nums='<div class="smm-nums"><div class="smm-num g"><span>وصل</span><b>'+N(c.done)+'</b></div><div class="smm-num o"><span>المتبقي</span><b>'+(c.rem==null?'—':N(c.rem))+'</b></div><div class="smm-num"><span>الكمية</span><b>'+N(c.q)+'</b></div></div>';
+  var ring='<div class="smm-ring"><svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="34"/><circle class="fg" cx="40" cy="40" r="34" stroke-dasharray="'+dash+' '+circ+'"/></svg><div class="smm-rv"><b>'+c.pct+'%</b><span>'+(k==='completed'?'اكتمل':'نسبة الإنجاز')+'</span></div></div>';
+  var trk='<div class="smm-trk"><div class="smm-trk-main">'+ring+nums+'</div><div class="smm-prog'+(live?' live':(fin?' fin':''))+'"><i style="width:'+c.pct+'%"></i></div>'+stepsHtml(c,o)+'</div>';
+  var info='<div class="smm-info">'+(o.smmStart!=null&&o.smmStart!==''?'<span><i class="fas fa-flag-checkered"></i>العدّاد عند البدء: <b>'+N(o.smmStart)+'</b></span>':'')+
+    '<span><i class="fas fa-hashtag"></i><b dir="ltr">'+esc(o.code||'')+'</b></span><span><i class="fas fa-wallet"></i>'+esc(money(o.chargedAmountEgp))+'</span>'+
+    (checked?'<span><i class="fas fa-arrows-rotate"></i>آخر تحديث: '+esc(ago(checked))+'</span>':'')+'</div>';
+  var lnk=o.smmLink?'<div class="smm-lnk"><i class="fas fa-link" style="color:var(--tc)"></i><span title="'+esc(o.smmLink)+'">'+esc(o.smmLink)+'</span><button type="button" data-v="'+esc(o.smmLink)+'" onclick="smmCopy(this)"><i class="fas fa-copy"></i> نسخ</button></div>':'';
+  return '<div class="smm-ord t-'+st.c+'"><div class="smm-ohead"><span class="smm-oico'+(k==='processing'?' spin':(k==='in_progress'?' pulse':''))+'"><i class="fas '+st.ic+'"></i></span><div class="smm-ot"><span class="smm-otitle">'+title+'</span><span class="smm-osub">'+(o.createdAt?esc(new Date(Number(o.createdAt)).toLocaleString('ar-EG')):'')+'</span></div><span class="smm-st '+st.c+' '+(k==='completed'?'done':(k==='canceled'||k==='rejected'?'bad':(k==='in_progress'?'run':'')))+'"><i class="fas '+st.ic+'"></i>'+st.t+'</span></div>'+
+   trk+lnk+info+notes+(window.smmOrderButtons?window.smmOrderButtons(o):'')+'</div>';
+}
+window.smmCopy=function(btn){
+  var v=btn.getAttribute('data-v')||'',done=function(){var t=btn.innerHTML;btn.innerHTML='<i class="fas fa-check"></i> تم';setTimeout(function(){btn.innerHTML=t;},1300);};
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(done).catch(function(){fb();});return;}}catch(_){}
+  function fb(){try{var t=document.createElement('textarea');t.value=v;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);done();}catch(_){}}
+  fb();
+};
 
+function routeUrl(r){try{if(typeof mohabRouteUrl==='function')return mohabRouteUrl(r);}catch(_){}return location.pathname+location.search+(r?'#'+r:'');}
+function hstate(v){return {smm:true,mohabRoute:'smm',smmView:v,smmN:S.pushes,smmPlat:S.platform,smmSvc:S.svcKey};}
+/* تنقل داخلي يتسجل في سجل المتصفح: زر رجوع الهاتف يرجّعك للصفحة اللي قبلها داخل التزويد، ثم للرئيسية */
+function go(v,opts){
+  opts=opts||{};
+  if(S.view===v&&!opts.force){render();return;}
+  S.view=v;
+  if(opts.replace){try{history.replaceState(hstate(v),'',routeUrl('smm'));}catch(_){}}
+  else{S.pushes++;try{history.pushState(hstate(v),'',routeUrl('smm'));}catch(_){}}
+  render();var b=$('smmBody');if(b)b.scrollTop=0;
+}
 window.openSmmPage=async function(fromRoute){
   var p=$('smmPage');if(!p)return;
+  var wasOpen=p.classList.contains('open');
   p.classList.add('open');p.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
-  if(!fromRoute){try{mohabPushRoute('smm',{smm:true,mohabRoute:'smm'});}catch(_){}}
-  S.view='platforms';S.q='';render();
+  S.view='platforms';S.q='';
+  if(!wasOpen){S.pushes=1;try{history.pushState(hstate('platforms'),'',routeUrl('smm'));}catch(_){}}
+  render();
   await load();
   if(!ready()){$('smmBody').innerHTML='<div class="smm-empty">'+(enabledFlag()?'سيتم إضافة الخدمات قريباً.':'خدمات التزويد غير متاحة حالياً. حاول لاحقاً.')+'</div>';return;}
   render();
@@ -7200,20 +7357,35 @@ window.openSmmPage=async function(fromRoute){
 window.closeSmmPage=function(fromPop){
   var p=$('smmPage');if(!p||!p.classList.contains('open'))return;
   p.classList.remove('open');p.setAttribute('aria-hidden','true');document.body.style.overflow='';
-  if(!fromPop){try{if(history.state&&history.state.smm)history.back();else mohabReplaceRoute('',{});}catch(_){}}
+  var n=S.pushes;S.pushes=0;S.view='platforms';
+  if(!fromPop){
+    try{
+      /* نرجع كل الصفحات الداخلية اللي أضافها التزويد في خطوة واحدة؛ والـ popstate العام يثبّت نقطة الرجوع للرئيسية */
+      if(history.state&&history.state.smm&&n>0)history.go(-n);else mohabReplaceRoute('',{});
+    }catch(_){}
+  }
 };
-window.smmShowOrders=function(){S.from=S.view==='orders'?S.from:S.view;S.view='orders';render();$('smmBody').scrollTop=0;};
+window.smmShowOrders=function(){if(S.view==='orders'){render();return;}go('orders');};
 window.smmBack=function(){
-  if(S.view==='order'){S.view='services';render();}
-  else if(S.view==='services'){S.view='platforms';render();}
-  else if(S.view==='orders'){S.view=(S.from==='order'?'services':S.from)||'platforms';render();}
-  else window.closeSmmPage();
+  if(S.pushes>1&&history.state&&history.state.smm){history.back();return;}
+  if(S.view!=='platforms'){S.view=S.view==='order'?'services':'platforms';render();return;}
+  window.closeSmmPage();
 };
-window.addEventListener('popstate',function(){var p=$('smmPage');if(p&&p.classList.contains('open'))window.closeSmmPage(true);});
+window.addEventListener('popstate',function(e){
+  var p=$('smmPage');if(!p||!p.classList.contains('open'))return;
+  var st=e.state;
+  if(st&&st.smm){
+    S.pushes=st.smmN||1;if(st.smmPlat!==undefined)S.platform=st.smmPlat;if(st.smmSvc!==undefined)S.svcKey=st.smmSvc;
+    S.view=st.smmView||'platforms';render();var b=$('smmBody');if(b)b.scrollTop=0;return;
+  }
+  /* رجعنا لقبل صفحة التزويد: نقفلها بدون history.back، ونثبّت نقطة رجوع داخل الموقع عشان ما يطلعش بره */
+  window.closeSmmPage(true);
+  try{history.pushState({mohabHomeRoot:true},'',routeUrl(''));}catch(_){}
+});
 document.addEventListener('click',function(e){
   var t=e.target;if(!t||!t.closest)return;var body=$('smmBody');if(!body||!body.contains(t))return;
-  var pl=t.closest('[data-plat]');if(pl){S.platform=pl.getAttribute('data-plat');S.view='services';render();body.scrollTop=0;return;}
-  var sv=t.closest('[data-svc]');if(sv){S.svcKey=sv.getAttribute('data-svc');S.view='order';render();body.scrollTop=0;return;}
+  var pl=t.closest('[data-plat]');if(pl){S.platform=pl.getAttribute('data-plat');go('services');return;}
+  var sv=t.closest('[data-svc]');if(sv){S.svcKey=sv.getAttribute('data-svc');go('order');return;}
   var ch=t.closest('.smm-chip');if(ch){var qe=$('smmQty');if(qe){qe.value=ch.getAttribute('data-q');if(S._upd)S._upd();}return;}
   if(t.closest('#smmPaste')){try{navigator.clipboard.readText().then(function(x){$('smmLink').value=String(x||'').trim();}).catch(function(){});}catch(_){}return;}
   if(t.closest('#smmBuyBtn'))buy();
@@ -7294,7 +7466,7 @@ async function buy(){
         price:(cur()==='USD'?(cost/rate).toFixed(2)+' $':cost.toFixed(2)+' جنيه'),originalPrice:cost.toFixed(2)+' جنيه',chargedAmountEgp:cost,chargedAmountUsd:cost$,baseAmountEgp:cost,
         discountPercent:0,discountAmountEgp:0,currency:'EGP',costUsd:cost$,method:'تزويد سوشيال ميديا',status:'paid',paymentType:'wallet',createdAt:firebase.database.ServerValue.TIMESTAMP,
         smm:true,smmServiceKey:S.svcKey,smmPlatform:svc.platform||'',smmLink:link,smmQuantity:qty,smmComments:comments,smmPer1000Egp:Number(svc.pricePer1000Egp),
-        smmRefill:!!svc.refill,smmCancel:!!svc.cancel,smmState:'pending',smmLabel:'قيد المراجعة'});
+        smmRefill:!!svc.refill,smmCancel:!!svc.cancel,smmState:'pending',smmLabel:'جارٍ الإرسال'});
     }catch(e){
       console.error('SMM order create failed',e);
       try{await refundOnce(key,cost);}catch(_){}
@@ -7309,7 +7481,8 @@ async function buy(){
     }catch(e){uncertain=true;}
     var T=firebase.database.ServerValue.TIMESTAMP;
     if(data&&data.status===true&&data.order){
-      await orderRef.update({status:'processing',providerOrderId:String(data.order),smmState:'pending',smmLabel:'قيد الانتظار',updatedAt:T,topupUpdatedAt:T}).catch(function(){});
+      liveSet(key,{pid:String(data.order),sig:String(data.sig||''),state:'pending',label:'قيد الانتظار'});
+      await orderRef.update({status:'processing',providerOrderId:String(data.order),smmState:'pending',smmLabel:'قيد الانتظار',updatedAt:T,topupUpdatedAt:T}).catch(function(e){console.warn('SMM: تعذر حفظ رقم المزود في قاعدة البيانات (التتبع يعمل محليًا):',e&&e.message);});
       showDone(code,'تم إرسال طلبك بنجاح','يمكنك متابعة حالته وعدد ما وصل لحظة بلحظة من «طلباتي».',true);
       setTimeout(function(){window.smmRefreshOrders(true);},2500);
     }else if(data&&data.status===false&&data.code!=='DUPLICATE'&&data.code!=='INTERNAL'){
@@ -7329,106 +7502,138 @@ async function buy(){
 function showDone(code,title,msg,good){
   $('smmBody').innerHTML='<div class="smm-form smm-done"><div class="ck" style="'+(good?'':'background:linear-gradient(135deg,#f59e0b,#f43f5e)')+'"><i class="fas '+(good?'fa-check':'fa-hourglass-half')+'"></i></div><h3 style="margin:6px 0">'+esc(title)+'</h3><div class="smm-note">'+esc(msg)+'<br>كود الطلب: <b dir="ltr">'+esc(code)+'</b></div>'+
    '<button type="button" class="smm-buy" id="smmGoOrders">متابعة طلباتي</button><button type="button" class="smm-buy alt" id="smmGoHome">طلب جديد</button></div>';
-  $('smmGoOrders').onclick=function(){S.from='platforms';S.view='orders';render();};
-  $('smmGoHome').onclick=function(){S.view='platforms';render();};
+  $('smmGoOrders').onclick=function(){go('orders',{replace:true});};
+  $('smmGoHome').onclick=function(){go('platforms',{replace:true});};
 }
 
 /* ---------- تتبع الطلبات ---------- */
 var busy=false,lastCheck={};
-var LABELS={pending:'قيد الانتظار',in_progress:'جاري التنفيذ',completed:'مكتمل',partial:'مكتمل جزئياً — تم رد قيمة المتبقي',canceled:'ملغي — تم رد قيمة المتبقي'};
+var LABELS={pending:'قيد الانتظار',processing:'قيد المعالجة',in_progress:'قيد التنفيذ',completed:'مكتمل',partial:'مكتمل جزئياً — تم رد قيمة المتبقي',canceled:'ملغي — تم رد قيمة المتبقي'};
+function gap(){var p=$('smmPage');return (p&&p.classList.contains('open')&&S.view==='orders')?8000:25000;}
+function nz(v){if(v==null||v==='')return null;var n=Number(v);return Number.isFinite(n)?n:null;}
+async function apiUrl(){
+  if(!S.api||!S.api.workerUrl){try{S.api=await mzDbGet('settings/smmApi');}catch(_){}}
+  var u=S.api&&S.api.workerUrl;return /^https:\/\//i.test(String(u||''))?u:'';
+}
 async function refresh(force){
   if(busy)return;var u=user();if(!u)return;
   var cache;try{cache=walletOrdersCache;}catch(_){return;}
   if(!Array.isArray(cache))return;
-  var now=Date.now();
-  var pend=cache.filter(function(o){return o&&o.smm&&o.providerOrderId&&!o.smmFinal&&(force||now-(lastCheck[o.key]||0)>25000);}).slice(0,40);
+  liveLoad();
+  var now=Date.now(),g=gap();
+  var pend=cache.filter(function(o){if(!o||!o.smm)return false;var e=eff(o);return e.providerOrderId&&!e.smmFinal&&e.status!=='rejected'&&e.status!=='cancelled'&&(force||now-(lastCheck[o.key]||0)>g);}).slice(0,40);
   if(!pend.length)return;
-  busy=true;
+  busy=true;var changedAny=false;
   try{
-    if(!S.api){S.api=await mzDbGet('settings/smmApi').catch(function(){return null;});}
-    var url=S.api&&S.api.workerUrl;if(!/^https:\/\//i.test(String(url||'')))return;
+    var url=await apiUrl();if(!url)return;
     var idToken=await firebase.auth().currentUser.getIdToken();
     pend.forEach(function(o){lastCheck[o.key]=now;});
-    var res=await workerFetch(url,{action:'smm_status',items:pend.map(function(o){return{key:o.key};})},idToken,30000);
+    var items=pend.map(function(o){var l=LIVE[o.key]||{};return {key:o.key,pid:l.pid||undefined,sig:l.sig||undefined};});
+    var res=await workerFetch(url,{action:'smm_status',items:items},idToken,30000);
     var d=await res.json().catch(function(){return null;});
     if(!d||d.status!==true||!d.results)return;
     for(var i=0;i<pend.length;i++){
-      var o=pend[i],r=d.results[o.key];if(!r||r.error||!r.state)continue;
+      var o=pend[i],r=d.results[o.key];if(!r)continue;
+      if(r.error||!r.state){liveSet(o.key,{err:String(r.error||'')});continue;}
       var ref=db.ref('wallet_orders/'+u.uid+'/'+o.key),T=firebase.database.ServerValue.TIMESTAMP;
-      var qty=Number(o.smmQuantity)||0,remains=r.remains!=null&&r.remains!==''?Number(r.remains):null,start=r.start_count!=null&&r.start_count!==''?Number(r.start_count):null;
-      var providerCharge=Number(r.charge),upd={smmState:r.state,smmLabel:LABELS[r.state]||o.smmLabel||'',smmProviderStatus:String(r.raw||''),smmStart:Number.isFinite(start)?start:null,smmRemains:Number.isFinite(remains)?remains:null,smmProviderCharge:Number.isFinite(providerCharge)?providerCharge:null,smmProviderCurrency:String(r.currency||''),updatedAt:T};
-      var charged=Number(o.chargedAmountEgp)||0;
-      if(r.state==='completed'){upd.status='shipped';upd.smmRemains=0;upd.smmFinal=true;upd.shippedAt=T;}
+      var qty=Number(o.smmQuantity)||0,remains=nz(r.remains),start=nz(r.start_count),providerCharge=nz(r.charge),charged=Number(o.chargedAmountEgp)||0;
+      var upd={smmState:r.state,smmLabel:LABELS[r.state]||o.smmLabel||'',smmProviderStatus:String(r.raw||''),smmStart:start,smmRemains:remains,smmProviderCharge:providerCharge,smmProviderCurrency:String(r.currency||''),updatedAt:T};
+      if(!o.providerOrderId&&r.pid)upd.providerOrderId=String(r.pid);
+      if(o.status==='paid'||o.status==='new')upd.status='processing';
+      var lv={pid:r.pid?String(r.pid):undefined,state:r.state,raw:String(r.raw||''),remains:remains,start:start,label:upd.smmLabel,final:false};
+      if(r.state==='completed'){upd.status='shipped';upd.smmRemains=0;upd.smmFinal=true;upd.shippedAt=T;lv.remains=0;lv.final=true;lv.status='shipped';}
       else if(r.state==='partial'){
-        var rem=Number.isFinite(remains)&&qty>0?Math.max(0,Math.min(remains,qty)):null;
-        if(rem===null){upd.smmRefundPending=true;upd.smmLabel='مكتمل جزئياً — بانتظار مراجعة قيمة المتبقي';}
+        var rem=remains!=null&&qty>0?Math.max(0,Math.min(remains,qty)):null;
+        if(rem===null){upd.smmRefundPending=true;upd.smmLabel='مكتمل جزئياً — بانتظار مراجعة قيمة المتبقي';lv.refundPending=true;}
         else{
           var amt=Math.round(charged*(rem/qty)*100)/100;
           var okR=amt>0?await refundOnce(o.key,amt).catch(function(){return null;}):true;
           if(okR===null)continue;
-          upd.smmRefundEgp=amt;upd.refundIssued=true;upd.smmRefundPending=false;
-          upd.smmLabel='مكتمل جزئياً — تم رد قيمة المتبقي';
+          upd.smmRefundEgp=amt;upd.refundIssued=true;upd.smmRefundPending=false;upd.smmLabel='مكتمل جزئياً — تم رد قيمة المتبقي';lv.refund=amt;
         }
-        upd.status='shipped';upd.smmFinal=true;upd.shippedAt=T;
+        upd.status='shipped';upd.smmFinal=true;upd.shippedAt=T;lv.final=true;lv.status='shipped';lv.label=upd.smmLabel;
       }else if(r.state==='canceled'){
-        var cancelRemain=Number.isFinite(remains)&&qty>0?Math.max(0,Math.min(remains,qty)):null;
-        if(cancelRemain===null){upd.smmRefundPending=true;}
+        var cr=remains!=null&&qty>0?Math.max(0,Math.min(remains,qty)):null;
+        if(cr===null&&providerCharge===0&&qty>0)cr=qty;
+        if(cr===null){upd.smmRefundPending=true;lv.refundPending=true;}
         else{
-          var cancelRefund=Math.round(charged*(cancelRemain/qty)*100)/100;
-          var okC=cancelRefund>0?await refundOnce(o.key,cancelRefund).catch(function(){return null;}):true;
+          var cRef=Math.round(charged*(cr/qty)*100)/100;
+          var okC=cRef>0?await refundOnce(o.key,cRef).catch(function(){return null;}):true;
           if(okC===null)continue;
-          upd.smmRefundEgp=cancelRefund;upd.refundIssued=true;upd.smmRefundPending=false;
+          upd.smmRefundEgp=cRef;upd.refundIssued=true;upd.smmRefundPending=false;lv.refund=cRef;
         }
-        upd.status='cancelled';upd.smmFinal=true;upd.smmLabel=cancelRemain===null?'ملغي — بانتظار مراجعة قيمة المتبقي':'ملغي — تم رد قيمة المتبقي';
+        upd.status='cancelled';upd.smmFinal=true;upd.smmLabel=cr===null?'ملغي — بانتظار مراجعة قيمة المتبقي':'ملغي — تم رد قيمة المتبقي';
+        lv.final=true;lv.status='cancelled';lv.label=upd.smmLabel;
       }
-      var changed=o.smmState!==r.state||o.smmRemains!==upd.smmRemains||o.smmStart!==upd.smmStart;
+      /* نحفظ محليًا أولًا (يظهر للمستخدم فورًا مهما كانت قواعد القاعدة) ثم نكتب في القاعدة */
+      var changed=o.smmState!==r.state||o.smmRemains!==upd.smmRemains||o.smmStart!==upd.smmStart||!!upd.smmFinal;
+      liveSet(o.key,lv);if(changed)changedAny=true;
       if(changed){var ek=ref.child('statusHistory').push().key;upd['statusHistory/'+ek]={status:upd.status||o.status||'processing',at:T,details:upd.smmLabel};}
-      await ref.update(upd).catch(function(e){console.warn('smm update',e);});
+      try{await ref.update(upd);}
+      catch(e1){
+        console.warn('SMM: تعذر تحديث الطلب بالكامل في قاعدة البيانات، نجرب تحديثًا مصغرًا',e1&&e1.message);
+        try{var min={smmState:upd.smmState,smmLabel:upd.smmLabel,smmRemains:upd.smmRemains,smmStart:upd.smmStart,updatedAt:T};['status','smmFinal','smmRefundEgp','refundIssued','smmRefundPending','shippedAt','providerOrderId'].forEach(function(k){if(k in upd)min[k]=upd[k];});await ref.update(min);}
+        catch(e2){console.warn('SMM: التتبع يعمل محليًا فقط (قواعد القاعدة تمنع الكتابة):',e2&&e2.message);}
+      }
     }
   }catch(e){console.warn('SMM refresh',e);}
-  finally{busy=false;var p=$('smmPage');if(p&&p.classList.contains('open')){updDot();if(S.view==='orders')render2();}}
+  finally{
+    busy=false;updDot();
+    var p=$('smmPage');if(p&&p.classList.contains('open')&&S.view==='orders')render2();
+    try{var wp=document.getElementById('walletOrdersPage');if(changedAny&&wp&&wp.classList.contains('open')&&walletOrdersRef&&walletOrdersListener)walletOrdersRef.once('value',walletOrdersListener);}catch(_){}
+  }
 }
-function render2(){var b=$('smmBody');if(!b||S.view!=='orders')return;var os=myOrders().sort(function(a,b){return (Number(b.createdAt)||0)-(Number(a.createdAt)||0);});b.innerHTML='<div>'+(os.length?os.map(ordHtml).join(''):'<div class="smm-empty">لا توجد طلبات تزويد بعد.</div>')+'</div>';updDot();}
+function render2(){var b=$('smmBody');if(!b||S.view!=='orders')return;b.classList.add('smm-noanim');var os=myOrders().sort(function(a,b){return (Number(b.createdAt)||0)-(Number(a.createdAt)||0);});b.innerHTML='<div>'+(os.length?os.map(ordHtml).join(''):'<div class="smm-empty">لا توجد طلبات تزويد بعد.</div>')+'</div>';updDot();}
 window.smmRefreshOrders=refresh;
-setInterval(function(){if(document.visibilityState==='visible')refresh(false);},30000);
-setTimeout(function(){refresh(false);},4000);
+window.smmManualRefresh=async function(btn){
+  var t=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fas fa-rotate fa-spin"></i> جارٍ التحقق…';
+  try{await refresh(true);}catch(_){}
+  if(btn.isConnected){btn.disabled=false;btn.innerHTML=t;}
+};
+setInterval(function(){if(document.visibilityState==='visible')refresh(false);},8000);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')refresh(false);});
+setTimeout(function(){refresh(false);},3000);
 
 window.smmOrderButtons=function(o){
-  if(!o||!o.smm)return '';
-  var b='';
-  if(!o.smmFinal&&o.providerOrderId)b+='<button type="button" onclick="smmRefreshOrders(true);this.disabled=true;this.textContent=\'جارٍ التحقق…\'"><i class="fas fa-rotate"></i> تحديث الحالة</button>';
-  if(!o.smmFinal&&o.smmCancel&&!o.smmCancelRequested&&(o.smmState==='pending'||o.smmState==='in_progress')&&o.providerOrderId)b+='<button type="button" class="warn" onclick="smmCancelOrder(\''+esc(o.key)+'\')"><i class="fas fa-ban"></i> إلغاء المتبقي</button>';
-  if(o.smmFinal&&o.smmState==='completed'&&o.smmRefill&&o.providerOrderId)b+='<button type="button" onclick="smmRefillOrder(\''+esc(o.key)+'\')"><i class="fas fa-shield-heart"></i> طلب تعويض</button>';
+  if(!o||!o.smm)return '';o=eff(o);
+  var k=stateOf(o),b='',live=!o.smmFinal&&o.providerOrderId&&k!=='rejected'&&k!=='canceled';
+  if(live)b+='<button type="button" onclick="smmManualRefresh(this)"><i class="fas fa-rotate"></i>تحديث الحالة</button>';
+  /* الإلغاء متاح طالما الطلب لسه منتهاش؛ والمزود هو اللي يقرر لو الخدمة تسمح */
+  if(live&&!o.smmCancelRequested&&(k==='pending'||k==='processing'||k==='in_progress'))b+='<button type="button" class="warn" onclick="smmCancelOrder(\''+esc(o.key)+'\')"><i class="fas fa-ban"></i>إلغاء المتبقي</button>';
+  if(o.smmFinal&&k==='completed'&&o.smmRefill&&o.providerOrderId)b+='<button type="button" onclick="smmRefillOrder(\''+esc(o.key)+'\')"><i class="fas fa-shield-heart"></i>طلب تعويض</button>';
   return b?'<div class="smm-ord-btns">'+b+'</div>':'';
 };
 window.smmOrderRows=function(o,row){
-  var rows=[];
+  o=eff(o);var c=calc(o),k=c.k,rows=[];
+  rows.push(row('signal','حالة التزويد',esc((ST[k]||ST.pending).t),(k==='canceled'||k==='rejected')?'warn':''));
   rows.push(row('link','الرابط','<span dir="ltr" style="word-break:break-all">'+esc(o.smmLink||'—')+'</span>'));
-  rows.push(row('hashtag','الكمية المطلوبة',esc(N(o.smmQuantity||0))));
-  var q=Number(o.smmQuantity)||0,rem=o.smmRemains!=null?Number(o.smmRemains):null;
+  rows.push(row('hashtag','الكمية المطلوبة',esc(N(c.q))));
   if(o.smmStart!=null&&Number.isFinite(Number(o.smmStart)))rows.push(row('flag-checkered','العدّاد عند البدء',esc(N(o.smmStart))));
-  if(rem!=null&&q>0){
-    var done=Math.max(0,q-rem),pct=Math.min(100,Math.round(done/q*100));
-    rows.push(row('chart-simple','تم تسليم',esc(N(done))+' من '+esc(N(q))+' ('+pct+'%)'));
-    rows.push('<div class="smm-prog"><i style="width:'+pct+'%"></i></div>');
-    if(rem>0)rows.push(row('hourglass-half','المتبقي',esc(N(rem))));
+  if(c.q>0){
+    rows.push(row('chart-simple','تم تسليم',esc(N(c.done))+' من '+esc(N(c.q))+' ('+c.pct+'%)'));
+    rows.push('<div class="smm-prog'+(((k==='in_progress'||k==='processing')&&!o.smmFinal)?' live':'')+'" style="--tc:#06b6d4"><i style="width:'+c.pct+'%"></i></div>');
+    if(c.rem!=null&&c.rem>0)rows.push(row('hourglass-half','المتبقي',esc(N(c.rem))));
   }
   if(Number(o.smmRefundEgp)>0)rows.push(row('rotate-left','تم رد',esc(Number(o.smmRefundEgp).toFixed(2))+' جنيه','warn'));
-  if(o.smmNeedsReview&&!o.providerOrderId)rows.push(row('circle-exclamation','ملاحظة','بانتظار تأكيد الإرسال — لا تكرر الطلب','warn'));
+  if(!o.providerOrderId&&k!=='rejected'&&!o.smmFinal)rows.push(row('circle-exclamation','ملاحظة','جارٍ تأكيد الإرسال للمزود — لا تكرر الطلب','warn'));
   if(o.smmCancelRequested&&!o.smmFinal)rows.push(row('ban','الإلغاء','طلب الإلغاء قيد المعالجة من المزود','warn'));
   if(o.smmRefundPending)rows.push(row('circle-exclamation','استرداد المتبقي','يحتاج مراجعة قيمة الكمية المتبقية من الدعم','warn'));
   if(o.smmRefillId)rows.push(row('shield-heart','طلب التعويض','رقم '+esc(o.smmRefillId)));
   return rows;
 };
 window.smmCancelOrder=async function(key){
-  if(!await notice('إلغاء الطلب','هل تريد محاولة إلغاء هذا الطلب؟ لو تم الإلغاء سيُرد المبلغ لمحفظتك.','warning',true))return;
+  if(!await notice('إلغاء الطلب','سيتم إلغاء الكمية التي لم تُنفَّذ بعد فقط، وما تم تسليمه فعلياً لا يُسترد. سيُرد لمحفظتك قيمة المتبقي تلقائياً بعد تأكيد المزود.\n\nهل تريد المتابعة؟','warning',true))return;
   try{
+    var url=await apiUrl();if(!url){await notice('تعذر الإلغاء','الخدمة غير متاحة الآن. حاول لاحقاً.','warning');return;}
+    liveLoad();var l=LIVE[key]||{};
     var idToken=await firebase.auth().currentUser.getIdToken();
-    var res=await workerFetch(S.api.workerUrl,{action:'smm_cancel',orderKey:key},idToken,20000),d=await res.json().catch(function(){return null;});
+    var res=await workerFetch(url,{action:'smm_cancel',orderKey:key,pid:l.pid||undefined,sig:l.sig||undefined},idToken,20000),d=await res.json().catch(function(){return null;});
     if(d&&d.status===true){
-      var u=user();if(u)await db.ref('wallet_orders/'+u.uid+'/'+key).update({smmCancelRequested:true,smmCancelRequestedAt:firebase.database.ServerValue.TIMESTAMP,smmLabel:'طلب الإلغاء قيد المعالجة',updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(function(){});
-      await notice('تم إرسال طلب الإلغاء','تم إرسال طلب الإلغاء للمزود. سيتم احتساب ما تم تسليمه ورد قيمة الكمية المتبقية بعد تأكيد حالة الإلغاء.','success');
-      setTimeout(function(){refresh(true);},1200);
+      liveSet(key,{cancelReq:true});
+      var u=user();if(u)await db.ref('wallet_orders/'+u.uid+'/'+key).update({smmCancelRequested:true,smmCancelRequestedAt:firebase.database.ServerValue.TIMESTAMP,updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(function(){});
+      await notice('تم إرسال طلب الإلغاء','تم إرسال طلب الإلغاء للمزود. سيُحتسب ما تم تسليمه ويُرد قيمة الكمية المتبقية بعد تأكيد حالة الإلغاء.','success');
+      [1200,5000,12000].forEach(function(t){setTimeout(function(){refresh(true);},t);});
+      var p=$('smmPage');if(p&&p.classList.contains('open')&&S.view==='orders')render2();
     }
     else await notice('تعذر الإلغاء',(d&&d.message)||'لا يمكن إلغاء هذا الطلب الآن.','warning');
   }catch(e){await notice('تعذر الإلغاء','حدث خطأ في الاتصال. حاول لاحقاً.','warning');}
@@ -7438,8 +7643,10 @@ window.smmRefillOrder=async function(key){
   if(o&&o.smmRefillAt&&Date.now()-Number(o.smmRefillAt)<86400000){await notice('تم الطلب مسبقاً','تم إرسال طلب تعويض خلال آخر 24 ساعة.','info');return;}
   if(!await notice('طلب تعويض','سيتم إرسال طلب تعويض لهذا الطلب. هل تريد المتابعة؟','warning',true))return;
   try{
+    var url=await apiUrl();if(!url){await notice('تعذر طلب التعويض','الخدمة غير متاحة الآن. حاول لاحقاً.','warning');return;}
+    liveLoad();var l=LIVE[key]||{};
     var u=user(),idToken=await firebase.auth().currentUser.getIdToken();
-    var res=await workerFetch(S.api.workerUrl,{action:'smm_refill',orderKey:key},idToken,20000),d=await res.json().catch(function(){return null;});
+    var res=await workerFetch(url,{action:'smm_refill',orderKey:key,pid:l.pid||undefined,sig:l.sig||undefined},idToken,20000),d=await res.json().catch(function(){return null;});
     if(d&&d.status===true){await db.ref('wallet_orders/'+u.uid+'/'+key).update({smmRefillId:String(d.refill),smmRefillAt:firebase.database.ServerValue.TIMESTAMP}).catch(function(){});await notice('تم إرسال طلب التعويض','رقم الطلب: '+d.refill,'success');}
     else await notice('تعذر طلب التعويض',(d&&d.message)||'غير متاح الآن.','warning');
   }catch(e){await notice('تعذر طلب التعويض','حدث خطأ في الاتصال. حاول لاحقاً.','warning');}
