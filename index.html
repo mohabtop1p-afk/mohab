@@ -2693,6 +2693,9 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
         });
 
         window.addEventListener('popstate', function(e) {
+            if(walletOrdersSkipPopstate){walletOrdersSkipPopstate=false;return;}
+            const walletOrdersPage=document.getElementById('walletOrdersPage');
+            if(walletOrdersPage && walletOrdersPage.classList.contains('open')) { closeWalletOrdersPage(true); return; }
             if (document.getElementById('walletPage') && document.getElementById('walletPage').classList.contains('open')) {
                 closeWallet(true);
                 return;
@@ -2723,6 +2726,9 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
                 }
             } else if (document.getElementById('welcomeEventModal').classList.contains('active')) {
                 closeWelcomeModal();
+            } else {
+                // عند الوصول للواجهة الرئيسية، إعادة تثبيت نقطة رجوع داخل المتجر بدل الخروج منه.
+                try{history.pushState({mohabHomeRoot:true},'',mohabRouteUrl(''));}catch(_){}
             }
         });
 
@@ -3075,6 +3081,8 @@ globalGames = data || {};
             }catch(_){}
             grid.innerHTML = htmlString;
             applyPublicGameFilters();
+            // تثبيت مدخل رئيسي للتطبيق حتى لا يخرج زر الرجوع من المتجر مباشرة.
+            try{if(!history.state||!history.state.mohabHomeRoot)history.replaceState({mohabHomeRoot:true},'',location.href);}catch(_){}
             mohabApplyInitialRoute();
             // Wait only for the first games snapshot and its essential card images.
             // Secondary widgets, videos, and below-the-fold lazy images never block the visitor.
@@ -3751,7 +3759,7 @@ globalGames = data || {};
             const earnedAt=Date.now(),hours=Math.max(1,Math.min(8760,Number(walletDiscountSettings.expiryHours)||24));return {percent:enabled[enabled.length-1].percent,status:'available',earnedAt,expiresAt:earnedAt+hours*3600000};
         }
         db.ref('wallet_discount_settings').on('value',snap=>{const v=snap.val();if(v&&typeof v==='object')walletDiscountSettings=v;});
-        let walletPageHistoryPushed=false, walletOrdersHistoryPushed=false;
+        let walletPageHistoryPushed=false, walletOrdersHistoryPushed=false, walletOrdersSkipPopstate=false;
         function openWallet(fromRoute = false) {
             if(!walletPageHistoryPushed && !fromRoute){mohabPushRoute('wallet',{mohabWallet:true});walletPageHistoryPushed=true;}
             else if(fromRoute) walletPageHistoryPushed=false;
@@ -4438,11 +4446,25 @@ globalGames = data || {};
         function walletMarkOrdersRead(){walletSetUnreadEvents([]);}
         function openWalletOrdersPage(){
             if(!walletUser){openWallet();return;}
+            const page=document.getElementById('walletOrdersPage');
+            if(!page)return;
+            if(!page.classList.contains('open')&&!walletOrdersHistoryPushed){
+                try{mohabPushRoute('wallet/orders',{mohabWalletOrders:true,mohabRoute:'wallet/orders'});walletOrdersHistoryPushed=true;}catch(_){}
+            }
             walletMarkOrdersRead();
             setTimeout(()=>walletRecheckProcessingOrders(true),300);setTimeout(()=>{try{window.smmRefreshOrders&&window.smmRefreshOrders(true);}catch(_){}},500);
-            const page=document.getElementById('walletOrdersPage');if(page){page.classList.add('open');page.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
+            page.classList.add('open');page.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
         }
-        function closeWalletOrdersPage(fromPopState=false){const page=document.getElementById('walletOrdersPage');if(page){page.classList.remove('open');page.setAttribute('aria-hidden','true');}document.body.style.overflow='';if(walletOrdersHistoryPushed){walletOrdersHistoryPushed=false;if(!fromPopState && history.state && history.state.mohabWalletOrders)history.back();}}
+        function closeWalletOrdersPage(fromPopState=false){
+            const page=document.getElementById('walletOrdersPage');
+            if(page){page.classList.remove('open');page.setAttribute('aria-hidden','true');}
+            document.body.style.overflow='';
+            if(walletOrdersHistoryPushed){
+                const shouldBack=!fromPopState&&history.state&&history.state.mohabWalletOrders;
+                walletOrdersHistoryPushed=false;
+                if(shouldBack){walletOrdersSkipPopstate=true;history.back();}
+            }
+        }
         function walletListenOrders(){
             if(!walletUser)return;
             if(walletOrdersListener && walletOrdersRef)walletOrdersRef.off('value',walletOrdersListener);
@@ -7009,14 +7031,20 @@ window.mzOpenOrders=openOrders;
 .smm-empty{text-align:center;color:var(--text-muted,#94a3b8);padding:46px 10px;font-size:.88rem}
 .smm-done{text-align:center;padding:26px 16px}
 .smm-done .ck{width:84px;height:84px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;font-size:40px;color:#fff;background:linear-gradient(135deg,#10b981,#06b6d4);animation:smmPop .5s ease both;box-shadow:0 16px 36px -14px #10b981}
-.smm-prog{height:8px;border-radius:99px;background:rgba(148,163,184,.2);overflow:hidden;margin:4px 0}
-.smm-prog i{display:block;height:100%;background:linear-gradient(90deg,#06b6d4,#34d399);border-radius:99px;transition:width .6s}
-.smm-ord{border:1px solid var(--surface-border,rgba(255,255,255,.1));background:var(--surface,#131c2e);border-radius:20px;padding:14px;margin-bottom:11px;animation:smmUp .3s ease both}
+.smm-prog{height:10px;border-radius:99px;background:rgba(148,163,184,.20);overflow:hidden;margin:10px 0 8px;box-shadow:inset 0 1px 3px rgba(0,0,0,.18)}
+.smm-prog i{display:block;height:100%;background:linear-gradient(90deg,#06b6d4,#34d399);border-radius:99px;transition:width .6s ease}
+.smm-ord{border:1px solid var(--surface-border,rgba(255,255,255,.1));background:linear-gradient(145deg,rgba(19,28,46,.98),rgba(13,22,37,.98));border-radius:20px;padding:15px;margin-bottom:12px;animation:smmUp .3s ease both;box-shadow:0 10px 24px rgba(0,0,0,.12)}
 .smm-ord-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .smm-ord b{font-size:.9rem;line-height:1.6}
-.smm-st{flex:0 0 auto;padding:4px 10px;border-radius:99px;font-size:.66rem;font-weight:900;background:rgba(245,158,11,.15);color:#fbbf24}
-.smm-st.done{background:rgba(16,185,129,.15);color:#34d399}.smm-st.bad{background:rgba(248,113,113,.15);color:#f87171}.smm-st.run{background:rgba(59,130,246,.15);color:#60a5fa}
-.smm-ord small{display:block;color:var(--text-muted,#94a3b8);font-size:.72rem;line-height:1.9;margin-top:6px;word-break:break-all}
+.smm-st{flex:0 0 auto;padding:5px 11px;border-radius:99px;font-size:.68rem;font-weight:900;background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.18)}
+.smm-st.done{background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.2)}.smm-st.bad{background:rgba(248,113,113,.15);color:#f87171;border-color:rgba(248,113,113,.2)}.smm-st.run{background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.2)}
+.smm-track-numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.smm-track-stat{padding:9px 11px;border:1px solid rgba(148,163,184,.13);background:rgba(148,163,184,.06);border-radius:12px;min-width:0}
+.smm-track-stat span{display:block;color:var(--text-muted,#94a3b8);font-size:.66rem;margin-bottom:4px}
+.smm-track-stat b{display:block;font-size:.92rem;color:var(--text-main,#f8fafc);font-variant-numeric:tabular-nums}
+.smm-track-meta{display:flex;justify-content:space-between;gap:8px;color:var(--text-muted,#94a3b8);font-size:.7rem;line-height:1.7}
+.smm-ord small{display:block;color:var(--text-muted,#94a3b8);font-size:.72rem;line-height:1.9;margin-top:8px;word-break:break-all}
+@media(max-width:420px){.smm-track-numbers{gap:6px}.smm-track-stat{padding:8px}}
 .smm-ord-btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
 .smm-ord-btns button{border:1px solid rgba(6,182,212,.4);background:rgba(6,182,212,.1);color:#67e8f9;border-radius:11px;padding:8px 12px;font:800 .74rem inherit;font-family:inherit;cursor:pointer}
 .smm-ord-btns button.warn{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.1);color:#fca5a5}
@@ -7148,12 +7176,15 @@ function quickList(s){
 }
 function commentsCount(){var e=$('smmComments');return e?String(e.value||'').split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean).length:0;}
 function ordHtml(o){
-  var q=Number(o.smmQuantity)||0,rem=o.smmRemains!=null?Number(o.smmRemains):null,done=rem!=null&&q>0?Math.max(0,q-rem):(o.smmState==='completed'?q:0),pct=q>0?Math.min(100,Math.round(done/q*100)):0;
-  var cls=o.smmState==='completed'?'done':(o.smmState==='canceled'||o.status==='rejected'||o.status==='cancelled'?'bad':(o.smmState==='in_progress'?'run':''));
-  var lab=o.smmLabel||({paid:'تم الدفع',processing:'قيد التنفيذ',shipped:'مكتمل',rejected:'مرفوض',cancelled:'ملغي'})[o.status]||'قيد المراجعة';
+  var q=Number(o.smmQuantity)||0,rem=o.smmRemains!=null&&Number.isFinite(Number(o.smmRemains))?Math.max(0,Math.min(q,Number(o.smmRemains))):null;
+  var done=rem!=null&&q>0?Math.max(0,q-rem):(o.smmState==='completed'?q:0),pct=q>0?Math.min(100,Math.round(done/q*100)):0;
+  if(o.smmState==='completed'){done=q;rem=0;pct=100;}
+  var cls=(o.smmState==='completed'||o.smmState==='partial')?'done':(o.smmState==='canceled'||o.status==='rejected'||o.status==='cancelled'?'bad':(o.smmState==='in_progress'?'run':''));
+  var lab=o.smmLabel||({pending:'قيد الانتظار',paid:'قيد المراجعة',processing:'جاري التنفيذ',shipped:'مكتمل',rejected:'مرفوض',cancelled:'ملغي'})[o.smmState||o.status]||'قيد المراجعة';
+  var delivered=q>0?'<div class="smm-track-numbers"><div class="smm-track-stat"><span>تم التسليم</span><b>'+N(done)+' / '+N(q)+'</b></div><div class="smm-track-stat"><span>المتبقي</span><b>'+(rem==null?'بانتظار بيانات المزود':N(rem))+'</b></div></div><div class="smm-prog"><i style="width:'+pct+'%"></i></div><div class="smm-track-meta"><span>نسبة الإنجاز</span><b>'+pct+'%</b></div>':'';
   return '<div class="smm-ord"><div class="smm-ord-top"><b>'+esc(o.game||'')+' — '+esc(o.pack||'')+'</b><span class="smm-st '+cls+'">'+esc(lab)+'</span></div>'+
-   '<div class="smm-prog"><i style="width:'+pct+'%"></i></div>'+
-   '<small>تم تسليم <b>'+N(done)+'</b> من '+N(q)+' ('+pct+'%)'+(o.smmStart!=null?' • العدّاد عند البدء: '+N(o.smmStart):'')+(rem>0?' • المتبقي: '+N(rem):'')+'<br>الرابط: <span dir="ltr">'+esc(o.smmLink||'')+'</span><br>كود الطلب: <span dir="ltr">'+esc(o.code||'')+'</span> • الإجمالي: '+esc(money(o.chargedAmountEgp))+(Number(o.smmRefundEgp)>0?' • تم رد '+esc(Number(o.smmRefundEgp).toFixed(2))+' جنيه':'')+'</small>'+
+   delivered+
+   '<small>'+(o.smmStart!=null?'العداد عند البدء: <b>'+N(o.smmStart)+'</b><br>':'')+'الرابط: <span dir="ltr">'+esc(o.smmLink||'')+'</span><br>كود الطلب: <span dir="ltr">'+esc(o.code||'')+'</span> • الإجمالي: '+esc(money(o.chargedAmountEgp))+(Number(o.smmRefundEgp)>0?' • تم رد '+esc(Number(o.smmRefundEgp).toFixed(2))+' جنيه':'')+(o.smmCancelRequested&&!o.smmFinal?' • طلب الإلغاء قيد المعالجة':'')+(o.smmRefundPending?' • استرداد المتبقي يحتاج مراجعة الدعم':'')+'</small>'+
    (window.smmOrderButtons?window.smmOrderButtons(o):'')+'</div>';
 }
 
@@ -7278,7 +7309,7 @@ async function buy(){
     }catch(e){uncertain=true;}
     var T=firebase.database.ServerValue.TIMESTAMP;
     if(data&&data.status===true&&data.order){
-      await orderRef.update({status:'processing',providerOrderId:String(data.order),smmState:'pending',smmLabel:'قيد المراجعة',updatedAt:T,topupUpdatedAt:T}).catch(function(){});
+      await orderRef.update({status:'processing',providerOrderId:String(data.order),smmState:'pending',smmLabel:'قيد الانتظار',updatedAt:T,topupUpdatedAt:T}).catch(function(){});
       showDone(code,'تم إرسال طلبك بنجاح','يمكنك متابعة حالته وعدد ما وصل لحظة بلحظة من «طلباتي».',true);
       setTimeout(function(){window.smmRefreshOrders(true);},2500);
     }else if(data&&data.status===false&&data.code!=='DUPLICATE'&&data.code!=='INTERNAL'){
@@ -7304,7 +7335,7 @@ function showDone(code,title,msg,good){
 
 /* ---------- تتبع الطلبات ---------- */
 var busy=false,lastCheck={};
-var LABELS={pending:'قيد المراجعة',in_progress:'جاري التنفيذ',completed:'تم التنفيذ بالكامل',partial:'اكتمل جزئياً — تم رد قيمة المتبقي',canceled:'ملغي — تم رد المبلغ'};
+var LABELS={pending:'قيد الانتظار',in_progress:'جاري التنفيذ',completed:'مكتمل',partial:'مكتمل جزئياً — تم رد قيمة المتبقي',canceled:'ملغي — تم رد قيمة المتبقي'};
 async function refresh(force){
   if(busy)return;var u=user();if(!u)return;
   var cache;try{cache=walletOrdersCache;}catch(_){return;}
@@ -7318,25 +7349,37 @@ async function refresh(force){
     var url=S.api&&S.api.workerUrl;if(!/^https:\/\//i.test(String(url||'')))return;
     var idToken=await firebase.auth().currentUser.getIdToken();
     pend.forEach(function(o){lastCheck[o.key]=now;});
-    var res=await workerFetch(url,{action:'smm_status',items:pend.map(function(o){return{key:o.key};})},idToken,20000);
+    var res=await workerFetch(url,{action:'smm_status',items:pend.map(function(o){return{key:o.key};})},idToken,30000);
     var d=await res.json().catch(function(){return null;});
     if(!d||d.status!==true||!d.results)return;
     for(var i=0;i<pend.length;i++){
       var o=pend[i],r=d.results[o.key];if(!r||r.error||!r.state)continue;
       var ref=db.ref('wallet_orders/'+u.uid+'/'+o.key),T=firebase.database.ServerValue.TIMESTAMP;
       var qty=Number(o.smmQuantity)||0,remains=r.remains!=null&&r.remains!==''?Number(r.remains):null,start=r.start_count!=null&&r.start_count!==''?Number(r.start_count):null;
-      var upd={smmState:r.state,smmLabel:LABELS[r.state]||o.smmLabel||'',smmProviderStatus:String(r.raw||''),smmStart:Number.isFinite(start)?start:null,smmRemains:Number.isFinite(remains)?remains:null,updatedAt:T};
+      var providerCharge=Number(r.charge),upd={smmState:r.state,smmLabel:LABELS[r.state]||o.smmLabel||'',smmProviderStatus:String(r.raw||''),smmStart:Number.isFinite(start)?start:null,smmRemains:Number.isFinite(remains)?remains:null,smmProviderCharge:Number.isFinite(providerCharge)?providerCharge:null,smmProviderCurrency:String(r.currency||''),updatedAt:T};
       var charged=Number(o.chargedAmountEgp)||0;
       if(r.state==='completed'){upd.status='shipped';upd.smmRemains=0;upd.smmFinal=true;upd.shippedAt=T;}
       else if(r.state==='partial'){
-        var rem=Number.isFinite(remains)&&qty>0?Math.min(remains,qty):0,amt=Math.round(charged*(rem/qty)*100)/100;
-        var okR=amt>0?await refundOnce(o.key,amt).catch(function(){return null;}):true;
-        if(okR===null)continue;
-        upd.status='shipped';upd.smmFinal=true;upd.shippedAt=T;upd.smmRefundEgp=amt;upd.refundIssued=true;
+        var rem=Number.isFinite(remains)&&qty>0?Math.max(0,Math.min(remains,qty)):null;
+        if(rem===null){upd.smmRefundPending=true;upd.smmLabel='مكتمل جزئياً — بانتظار مراجعة قيمة المتبقي';}
+        else{
+          var amt=Math.round(charged*(rem/qty)*100)/100;
+          var okR=amt>0?await refundOnce(o.key,amt).catch(function(){return null;}):true;
+          if(okR===null)continue;
+          upd.smmRefundEgp=amt;upd.refundIssued=true;upd.smmRefundPending=false;
+          upd.smmLabel='مكتمل جزئياً — تم رد قيمة المتبقي';
+        }
+        upd.status='shipped';upd.smmFinal=true;upd.shippedAt=T;
       }else if(r.state==='canceled'){
-        var okC=await refundOnce(o.key,charged).catch(function(){return null;});
-        if(okC===null)continue;
-        upd.status='cancelled';upd.smmFinal=true;upd.smmRefundEgp=charged;upd.refundIssued=true;
+        var cancelRemain=Number.isFinite(remains)&&qty>0?Math.max(0,Math.min(remains,qty)):null;
+        if(cancelRemain===null){upd.smmRefundPending=true;}
+        else{
+          var cancelRefund=Math.round(charged*(cancelRemain/qty)*100)/100;
+          var okC=cancelRefund>0?await refundOnce(o.key,cancelRefund).catch(function(){return null;}):true;
+          if(okC===null)continue;
+          upd.smmRefundEgp=cancelRefund;upd.refundIssued=true;upd.smmRefundPending=false;
+        }
+        upd.status='cancelled';upd.smmFinal=true;upd.smmLabel=cancelRemain===null?'ملغي — بانتظار مراجعة قيمة المتبقي':'ملغي — تم رد قيمة المتبقي';
       }
       var changed=o.smmState!==r.state||o.smmRemains!==upd.smmRemains||o.smmStart!==upd.smmStart;
       if(changed){var ek=ref.child('statusHistory').push().key;upd['statusHistory/'+ek]={status:upd.status||o.status||'processing',at:T,details:upd.smmLabel};}
@@ -7354,7 +7397,7 @@ window.smmOrderButtons=function(o){
   if(!o||!o.smm)return '';
   var b='';
   if(!o.smmFinal&&o.providerOrderId)b+='<button type="button" onclick="smmRefreshOrders(true);this.disabled=true;this.textContent=\'جارٍ التحقق…\'"><i class="fas fa-rotate"></i> تحديث الحالة</button>';
-  if(!o.smmFinal&&o.smmCancel&&o.smmState==='pending'&&o.providerOrderId)b+='<button type="button" class="warn" onclick="smmCancelOrder(\''+esc(o.key)+'\')"><i class="fas fa-ban"></i> إلغاء الطلب</button>';
+  if(!o.smmFinal&&o.smmCancel&&!o.smmCancelRequested&&(o.smmState==='pending'||o.smmState==='in_progress')&&o.providerOrderId)b+='<button type="button" class="warn" onclick="smmCancelOrder(\''+esc(o.key)+'\')"><i class="fas fa-ban"></i> إلغاء المتبقي</button>';
   if(o.smmFinal&&o.smmState==='completed'&&o.smmRefill&&o.providerOrderId)b+='<button type="button" onclick="smmRefillOrder(\''+esc(o.key)+'\')"><i class="fas fa-shield-heart"></i> طلب تعويض</button>';
   return b?'<div class="smm-ord-btns">'+b+'</div>':'';
 };
@@ -7372,6 +7415,8 @@ window.smmOrderRows=function(o,row){
   }
   if(Number(o.smmRefundEgp)>0)rows.push(row('rotate-left','تم رد',esc(Number(o.smmRefundEgp).toFixed(2))+' جنيه','warn'));
   if(o.smmNeedsReview&&!o.providerOrderId)rows.push(row('circle-exclamation','ملاحظة','بانتظار تأكيد الإرسال — لا تكرر الطلب','warn'));
+  if(o.smmCancelRequested&&!o.smmFinal)rows.push(row('ban','الإلغاء','طلب الإلغاء قيد المعالجة من المزود','warn'));
+  if(o.smmRefundPending)rows.push(row('circle-exclamation','استرداد المتبقي','يحتاج مراجعة قيمة الكمية المتبقية من الدعم','warn'));
   if(o.smmRefillId)rows.push(row('shield-heart','طلب التعويض','رقم '+esc(o.smmRefillId)));
   return rows;
 };
@@ -7380,7 +7425,11 @@ window.smmCancelOrder=async function(key){
   try{
     var idToken=await firebase.auth().currentUser.getIdToken();
     var res=await workerFetch(S.api.workerUrl,{action:'smm_cancel',orderKey:key},idToken,20000),d=await res.json().catch(function(){return null;});
-    if(d&&d.status===true){await notice('تم إرسال طلب الإلغاء','سيتم تحديث الحالة ورد المبلغ تلقائياً خلال لحظات.','success');setTimeout(function(){refresh(true);},1500);}
+    if(d&&d.status===true){
+      var u=user();if(u)await db.ref('wallet_orders/'+u.uid+'/'+key).update({smmCancelRequested:true,smmCancelRequestedAt:firebase.database.ServerValue.TIMESTAMP,smmLabel:'طلب الإلغاء قيد المعالجة',updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(function(){});
+      await notice('تم إرسال طلب الإلغاء','تم إرسال طلب الإلغاء للمزود. سيتم احتساب ما تم تسليمه ورد قيمة الكمية المتبقية بعد تأكيد حالة الإلغاء.','success');
+      setTimeout(function(){refresh(true);},1200);
+    }
     else await notice('تعذر الإلغاء',(d&&d.message)||'لا يمكن إلغاء هذا الطلب الآن.','warning');
   }catch(e){await notice('تعذر الإلغاء','حدث خطأ في الاتصال. حاول لاحقاً.','warning');}
 };
