@@ -7482,7 +7482,7 @@ async function buy(){
     var T=firebase.database.ServerValue.TIMESTAMP;
     if(data&&data.status===true&&data.order){
       liveSet(key,{pid:String(data.order),sig:String(data.sig||''),state:'pending',label:'قيد الانتظار'});
-      await orderRef.update({status:'processing',providerOrderId:String(data.order),smmState:'pending',smmLabel:'قيد الانتظار',updatedAt:T,topupUpdatedAt:T}).catch(function(e){console.warn('SMM: تعذر حفظ رقم المزود في قاعدة البيانات (التتبع يعمل محليًا):',e&&e.message);});
+      await orderRef.update({status:'processing',providerOrderId:String(data.order),providerSig:String(data.sig||''),smmState:'pending',smmLabel:'قيد الانتظار',updatedAt:T,topupUpdatedAt:T}).catch(function(e){console.warn('SMM: تعذر حفظ رقم المزود في قاعدة البيانات (التتبع يعمل محليًا):',e&&e.message);});
       showDone(code,'تم إرسال طلبك بنجاح','يمكنك متابعة حالته وعدد ما وصل لحظة بلحظة من «طلباتي».',true);
       setTimeout(function(){window.smmRefreshOrders(true);},2500);
     }else if(data&&data.status===false&&data.code!=='DUPLICATE'&&data.code!=='INTERNAL'){
@@ -7539,6 +7539,7 @@ async function refresh(force){
       var qty=Number(o.smmQuantity)||0,remains=nz(r.remains),start=nz(r.start_count),providerCharge=nz(r.charge),charged=Number(o.chargedAmountEgp)||0;
       var upd={smmState:r.state,smmLabel:LABELS[r.state]||o.smmLabel||'',smmProviderStatus:String(r.raw||''),smmStart:start,smmRemains:remains,smmProviderCharge:providerCharge,smmProviderCurrency:String(r.currency||''),updatedAt:T};
       if(!o.providerOrderId&&r.pid)upd.providerOrderId=String(r.pid);
+      if(!o.providerSig&&(LIVE[o.key]||{}).sig)upd.providerSig=String(LIVE[o.key].sig);
       if(o.status==='paid'||o.status==='new')upd.status='processing';
       var lv={pid:r.pid?String(r.pid):undefined,state:r.state,raw:String(r.raw||''),remains:remains,start:start,label:upd.smmLabel,final:false};
       if(r.state==='completed'){upd.status='shipped';upd.smmRemains=0;upd.smmFinal=true;upd.shippedAt=T;lv.remains=0;lv.final=true;lv.status='shipped';}
@@ -7572,7 +7573,7 @@ async function refresh(force){
       try{await ref.update(upd);}
       catch(e1){
         console.warn('SMM: تعذر تحديث الطلب بالكامل في قاعدة البيانات، نجرب تحديثًا مصغرًا',e1&&e1.message);
-        try{var min={smmState:upd.smmState,smmLabel:upd.smmLabel,smmRemains:upd.smmRemains,smmStart:upd.smmStart,updatedAt:T};['status','smmFinal','smmRefundEgp','refundIssued','smmRefundPending','shippedAt','providerOrderId'].forEach(function(k){if(k in upd)min[k]=upd[k];});await ref.update(min);}
+        try{var min={smmState:upd.smmState,smmLabel:upd.smmLabel,smmRemains:upd.smmRemains,smmStart:upd.smmStart,updatedAt:T};['status','smmFinal','smmRefundEgp','refundIssued','smmRefundPending','shippedAt','providerOrderId','providerSig'].forEach(function(k){if(k in upd)min[k]=upd[k];});await ref.update(min);}
         catch(e2){console.warn('SMM: التتبع يعمل محليًا فقط (قواعد القاعدة تمنع الكتابة):',e2&&e2.message);}
       }
     }
