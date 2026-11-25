@@ -10,6 +10,9 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://*.firebaseio.com https://www.googleapis.com https://apis.google.com https://www.google.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https: about:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https:; upgrade-insecure-requests">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="format-detection" content="telephone=no">
+    <meta name="description" content="MOHAB STORE المتجر الرسمي لشحن الألعاب والتطبيقات وخدمات السوشيال ميديا بتسليم فوري وأمان.">
+    <link rel="canonical" href="https://mohabstore.online/">
+    <meta property="og:type" content="website"><meta property="og:site_name" content="MOHAB STORE">
     <script id="mohab-security-guard">(function(){
 'use strict';
 var W=window,D=document;
@@ -1829,10 +1832,10 @@ body.light-theme .wallet-notice-icon{color:#fff!important}
 </style>
 <style id="mohab-slider-v2">
 /* ===== السلايدر: مقاس موحد للهاتف والكمبيوتر =====
-   النسبة 2:1 على كل الأجهزة  →  الصورة المثالية 2000 × 1000 بكسل
+   النسبة 4:1 على كل الأجهزة  →  الصورة المثالية 1600 × 400 بكسل (أقل مقاس مقبول 1200 × 300)
    على الشاشات العريضة (كمبيوتر أو وضع الكمبيوتر في الهاتف) يتوسط السلايدر بعرض أقصى 800px (ارتفاع 400px) ليبقى متناسقًا مع باقي الصفحة */
-.slider-container{max-width:800px}
-.slider{aspect-ratio:2/1!important;max-height:none!important}
+.slider-container{max-width:900px}
+.slider{aspect-ratio:4/1!important;max-height:none!important}
 @media (max-width:840px){.slider-container{max-width:100%}}
 /* الصورة المطابقة للمقاس تملأ الإطار بالكامل، وغير المطابقة تبقى كاملة بدون قص مع خلفية ضبابية */
 .slide.fit-cover{object-fit:cover!important}
@@ -2547,11 +2550,28 @@ body.light-theme .wallet-nav-btn.wnb-loading #walletNavBalance{color:#0e7490!imp
             if (currentCurrency === 'USD' && currentGameId && currentPriceType && document.getElementById('stepPrices')?.classList.contains('active')) showPrices(currentPriceType, true);
         }, err => console.error('USD pricing settings:', err));
 
-        // روابط مباشرة قابلة للمشاركة: #game/<id>/prices/<method>
-        // نستخدم hash صريحاً ونحدّث شريط العنوان في كل انتقال داخل المتجر.
+                // ===== روابط نظيفة لكل صفحة (بدون #) مثل: /social-server  /wallet  /game/<id>/prices/<method> =====
+        // تعمل على GitHub Pages عبر ملف 404.html (نسخة من index.html) + مجلدات الصفحات الرئيسية.
+        const MOHAB_ROUTE_ALIAS = { smm: 'social-server' };
+        const MOHAB_PATH_ALIAS = { 'social-server': 'smm', 'socialserver': 'smm', 'social': 'smm', 'smm': 'smm' };
+        const MOHAB_HOME_TITLE = 'MOHAB STORE | المتجر الرسمي';
+        const MOHAB_META = {
+            'smm': ['سيرفر التزويد | خدمات السوشيال ميديا | MOHAB STORE', 'سيرفر MOHAB STORE لخدمات السوشيال ميديا: متابعين، لايكات، مشاهدات وأكثر بأسعار مناسبة وتنفيذ سريع.'],
+            'wallet': ['المحفظة | MOHAB STORE', 'محفظة MOHAB STORE: اشحن رصيدك وادفع بسهولة وتابع عملياتك.'],
+            'wallet/orders': ['طلباتي | MOHAB STORE', 'تابع طلباتك في MOHAB STORE.'],
+            'luck': ['عجلة الحظ | MOHAB STORE', 'جرّب حظك في عجلة الحظ من MOHAB STORE.'],
+            'chatbot': ['المساعد الذكي | MOHAB STORE', 'المساعد الذكي لمتجر MOHAB STORE.'],
+            'recovery': ['استعادة الحساب | MOHAB STORE', 'استعادة حسابك في MOHAB STORE.']
+        };
+        function mohabRoutePath(route) {
+            let r = String(route || '').replace(/^\/+|\/+$/g, '');
+            if (!r) return '/';
+            const first = r.split('/')[0];
+            if (MOHAB_ROUTE_ALIAS[first]) r = MOHAB_ROUTE_ALIAS[first] + r.slice(first.length);
+            return '/' + r;
+        }
         function mohabRouteUrl(route) {
-            const base = location.pathname + location.search;
-            return base + (route ? '#'+route : '');
+            return mohabRoutePath(route) + location.search;
         }
         function mohabPushRoute(route, state) {
             const url = mohabRouteUrl(route);
@@ -2563,14 +2583,66 @@ body.light-theme .wallet-nav-btn.wnb-loading #walletNavBalance{color:#0e7490!imp
             try { history.replaceState(state || { mohabRoute: route }, '', url); }
             catch (err) { location.replace(url); }
         }
+        function mohabPathRoute() {
+            let p = location.pathname || '/';
+            try { p = decodeURIComponent(p); } catch (_) {}
+            p = p.replace(/^\/+|\/+$/g, '');
+            if (p === 'index.html' || p === '404.html') p = '';
+            if (!p) return '';
+            const parts = p.split('/');
+            const first = parts[0].trim().toLowerCase().replace(/[\s_]+/g, '-');
+            if (first === 'game') return p.replace(/^[^/]+/, 'game');
+            if (MOHAB_PATH_ALIAS[first]) { parts[0] = MOHAB_PATH_ALIAS[first]; return parts.join('/'); }
+            parts[0] = first;
+            return parts.join('/');
+        }
         function mohabCurrentRoute() {
-            let raw = (location.hash || '').replace(/^#/, '');
+            const fromPath = mohabPathRoute();
+            if (fromPath) return fromPath;
+            let raw = (location.hash || '').replace(/^#/, '');   // روابط قديمة بصيغة #game/...
             try { return decodeURIComponent(raw); } catch (_) { return raw; }
+        }
+        function mohabSyncMeta() {
+            try {
+                const route = mohabCurrentRoute();
+                let title = MOHAB_HOME_TITLE, desc = 'MOHAB STORE المتجر الرسمي لشحن الألعاب والتطبيقات وخدمات السوشيال ميديا بتسليم فوري وأمان.';
+                if (route.startsWith('game/')) {
+                    const id = route.split('/')[1];
+                    const g = (typeof globalGames !== 'undefined' && globalGames && globalGames[id]) || null;
+                    if (g && g.name) { title = 'شحن ' + g.name + ' | MOHAB STORE'; desc = 'اشحن ' + g.name + ' بأفضل الأسعار وتسليم فوري من MOHAB STORE.'; }
+                } else if (MOHAB_META[route]) { title = MOHAB_META[route][0]; desc = MOHAB_META[route][1]; }
+                if (document.title !== title) document.title = title;
+                let m = document.querySelector('meta[name="description"]');
+                if (!m) { m = document.createElement('meta'); m.name = 'description'; document.head.appendChild(m); }
+                m.content = desc;
+                let c = document.querySelector('link[rel="canonical"]');
+                if (!c) { c = document.createElement('link'); c.rel = 'canonical'; document.head.appendChild(c); }
+                c.href = location.origin + mohabRoutePath(route === '' ? '' : (route.startsWith('game/') ? route.split('/').slice(0, 2).join('/') : route));
+            } catch (_) {}
+        }
+        (function () {
+            ['pushState', 'replaceState'].forEach(function (k) {
+                const orig = history[k];
+                history[k] = function () { const r = orig.apply(this, arguments); setTimeout(mohabSyncMeta, 0); return r; };
+            });
+            window.addEventListener('popstate', function () { setTimeout(mohabSyncMeta, 0); });
+        })();
+        function mohabWhenFn(name, cb, tries) {
+            tries = tries || 0;
+            if (typeof window[name] === 'function') { cb(window[name]); return; }
+            if (tries > 100) return;
+            setTimeout(function () { mohabWhenFn(name, cb, tries + 1); }, 80);
         }
         function mohabApplyInitialRoute() {
             if (window.__mohabInitialRouteApplied) return;
             window.__mohabInitialRouteApplied = true;
             const route = mohabCurrentRoute();
+            // تحويل الروابط القديمة (#...) أو المكتوبة بشكل مختلف إلى الرابط النظيف الرسمي
+            try {
+                const clean = mohabRouteUrl(route.startsWith('game/') ? route : route);
+                if ((location.pathname + location.search) !== clean || location.hash) history.replaceState(history.state, '', clean);
+            } catch (_) {}
+            mohabSyncMeta();
             if (!route) return;
             if (route.startsWith('game/')) {
                 const parts = route.split('/');
@@ -2591,10 +2663,13 @@ body.light-theme .wallet-nav-btn.wnb-loading #walletNavBalance{color:#0e7490!imp
                 }
                 return;
             }
+            if (route === 'smm') { mohabWhenFn('openSmmPage', function (f) { f(true); }); return; }
             if (route === 'wallet') { openWallet(true); return; }
             if (route === 'luck') { openLuckPage(null, true); return; }
             if (route === 'chatbot') { openChatbotPage(null, true); return; }
             if (route === 'recovery') { openRecovery(true); return; }
+            // مسار غير معروف: نعرض الرئيسية ونصحح الرابط
+            try { history.replaceState({ mohabHomeRoot: true }, '', mohabRouteUrl('')); mohabSyncMeta(); } catch (_) {}
         }
 
         let visitorId = localStorage.getItem('mohab_visitor_id');
@@ -3157,7 +3232,7 @@ globalGames = data || {};
             if (isPrime) {
                 page.classList.add('open'); page.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
                 frame.src=currentExternalTarget;
-                if(!history.state || !history.state.mohabPrimePage)history.pushState({mohabPrimePage:true},'','#prime-gifts');
+                if(!history.state || !history.state.mohabPrimePage)history.pushState({mohabPrimePage:true},'',mohabRouteUrl('prime-gifts'));
                 return;
             }
             // الإبقاء على سلوك الروابط الخارجية الأخرى لتجنب المواقع التي تمنع التضمين داخل iframe.
@@ -3320,7 +3395,7 @@ globalGames = data || {};
             }
             const title = `قائمة أسعار ${game.name}${methodName ? ' - ' + methodName : ''}`;
             // استبعاد معاملات التتبع من الرابط مع الاحتفاظ بمسار قائمة الأسعار القابل للفتح مباشرة.
-            const cleanUrl = `${location.origin}${location.pathname}#game/${encodeURIComponent(currentGameId)}/prices/${encodeURIComponent(currentPriceType || 'id')}`;
+            const cleanUrl = `${location.origin}${mohabRoutePath('game/' + encodeURIComponent(currentGameId) + '/prices/' + encodeURIComponent(currentPriceType || 'id'))}`;
             const shareData = { title, text: `${title} من MOHAB STORE`, url: cleanUrl };
             try {
                 if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
@@ -5001,7 +5076,7 @@ globalGames = data || {};
                 // إزالة مسار القائمة من الرابط دون إنشاء انتقال تاريخي جديد أو
                 // الاعتماد على history.back() الذي كان يعيد المستخدم لخطوة الأسعار.
                 try {
-                    history.replaceState({ mohabRoute: 'home' }, '', location.pathname + location.search);
+                    history.replaceState({ mohabRoute: 'home' }, '', mohabRouteUrl(''));
                 } catch (err) {
                     if (location.hash) location.hash = '';
                 }
@@ -8048,5 +8123,21 @@ try{firebase.auth().onAuthStateChanged(function(){setTimeout(function(){if(!wind
 </script>
 <!-- ===================== نهاية إضافة تزويد السوشيال ميديا ===================== -->
 
+<style id="mohab-slider-v3">
+/* ===== شكل السلايدر الجديد: شريط عريض 4:1 بحواف ناعمة + نقاط تحته ===== */
+#sliderContainer{padding-inline:clamp(12px,3.6vw,22px)}
+#sliderWrapper.slider{aspect-ratio:4/1!important;max-height:none!important;border-radius:clamp(14px,4.6vw,22px)!important;border:1.5px solid var(--mz-border-strong,rgba(255,255,255,.14))!important;box-shadow:0 8px 22px -14px rgba(0,0,0,.55)!important;background:var(--surface,#0b1220)}
+#sliderWrapper .slide{object-fit:cover!important}
+#sliderWrapper .slide-bg-blur{display:none}
+#sliderWrapper .slide-loading{gap:0}
+#sliderWrapper .slide-loading::after,#sliderWrapper .slide-loading span{display:none}
+#sliderWrapper .slide-loading::before{width:24px;height:24px;border-width:3px}
+#sliderContainer .slider-dots{position:static!important;transform:none!important;display:flex;justify-content:center;align-items:center;gap:7px;margin:11px auto 0;padding:0!important;background:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+#sliderContainer .slider-dots:empty{display:none}
+#sliderContainer .slider-dots .dot{width:8px!important;height:8px!important;border-radius:99px!important;background:var(--mz-border-strong,rgba(148,163,184,.45))!important;box-shadow:none!important;opacity:.75;transition:width .3s ease,background-color .3s ease,opacity .3s!important}
+#sliderContainer .slider-dots .dot.active{width:24px!important;background:var(--primary,#06b6d4)!important;opacity:1;box-shadow:0 0 10px var(--primary-glow,rgba(6,182,212,.35))!important}
+body.light-theme #sliderContainer .slider-dots .dot{background:#cbd5e1!important}
+body.light-theme #sliderContainer .slider-dots .dot.active{background:var(--primary,#0891b2)!important}
+</style>
 </body>
 </html>

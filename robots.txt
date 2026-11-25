@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mohabstore.online/sitemap.xml
