@@ -7313,6 +7313,156 @@ body.light-theme #smmPage .smm-plat .smm-from{
 @media(max-width:360px){#smmPage .smm-plat .smm-ico{width:64px;height:64px}#smmPage .smm-plat .smm-from{font-size:.68rem}}
 @media(prefers-reduced-motion:reduce){#smmHomeBanner,#smmHomeBanner::after,#smmPage .smm-plat{animation:none!important;transition:none!important}}
 </style>
+<style id="wallet-pro-v1">
+/* ===== MOHAB STORE: تصميم احترافي جديد لبروفايل المستخدم + مربع الرصيد + تبويبات المحفظة (CSS فقط) ===== */
+@keyframes wProSpin{to{transform:rotate(360deg)}}
+@keyframes wProPulse{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}70%{box-shadow:0 0 0 7px rgba(52,211,153,0)}}
+
+/* ---------- التبويبات (حسابي / إيداع رصيد / سجل الإيداع) ---------- */
+#walletPage .wallet-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:5px;margin-bottom:16px;border-radius:20px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.16)}
+#walletPage .wallet-tabs .wallet-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 4px;border:0;border-radius:16px;background:transparent;color:var(--text-muted,#94a3b8);font-size:.74rem;font-weight:800;line-height:1.35;box-shadow:none;transition:background .25s ease,color .25s ease,box-shadow .25s ease,transform .15s ease}
+#walletPage .wallet-tabs .wallet-tab i{font-size:1.05rem}
+#walletPage .wallet-tabs .wallet-tab:active{transform:scale(.96)}
+#walletPage .wallet-tabs .wallet-tab.active{color:#fff;background:linear-gradient(135deg,#06b6d4,#3b82f6);box-shadow:0 10px 20px -10px rgba(6,182,212,.9),inset 0 1px 0 rgba(255,255,255,.3)}
+
+/* ---------- بطاقة البروفايل ---------- */
+#walletPage .wallet-profile{
+  position:relative;isolation:isolate;overflow:hidden;gap:0;margin:0 0 18px;padding:0 16px 16px;border-radius:30px;
+  border:1px solid rgba(148,163,184,.2);
+  background:linear-gradient(165deg,rgba(255,255,255,.06),rgba(255,255,255,.015));
+  box-shadow:0 24px 44px -28px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.08);
+}
+#walletPage .wallet-profile::before{
+  content:"";position:absolute;inset:0 0 auto 0;height:128px;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(rgba(255,255,255,.16) 1px,transparent 1.6px) 0 0/15px 15px,
+    radial-gradient(190px 120px at 12% 0%,rgba(6,182,212,.6),transparent 72%),
+    radial-gradient(210px 130px at 92% 8%,rgba(139,92,246,.55),transparent 72%),
+    radial-gradient(170px 100px at 55% 100%,rgba(59,130,246,.38),transparent 72%);
+  -webkit-mask-image:linear-gradient(#000 45%,transparent);mask-image:linear-gradient(#000 45%,transparent);
+}
+#walletPage .wallet-profile-avatar-wrap{
+  position:relative;width:108px;height:108px;margin:34px 0 0;padding:0;flex:0 0 auto;border-radius:50%;
+  background:none;animation:none;box-shadow:0 18px 30px -14px rgba(6,182,212,.7),0 0 0 8px rgba(34,211,238,.09);
+}
+#walletPage .wallet-profile-avatar-wrap::before{
+  content:"";position:absolute;inset:-5px;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from 0deg,#22d3ee,#818cf8,#c084fc,#22d3ee);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));
+  animation:wProSpin 7s linear infinite;
+}
+#walletPage .wallet-profile-avatar{border:4px solid #0f1a2e;box-shadow:0 8px 18px rgba(0,0,0,.35)}
+#walletPage .wallet-profile-badge{bottom:3px;right:3px;width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#34d399,#059669);border:3px solid #0f1a2e;box-shadow:0 6px 12px -4px rgba(16,185,129,.8)}
+#walletPage .wallet-profile .wallet-profile-avatar-wrap+.wallet-profile-title{margin-top:16px;font-size:1.06rem;font-weight:900;letter-spacing:.2px;color:var(--text-main,#f8fafc)!important}
+#walletPage .wallet-profile .wallet-profile-title+.wallet-profile-title{margin-top:3px;font-size:.72rem;font-weight:700;letter-spacing:0;color:var(--text-muted,#94a3b8)!important}
+#walletPage .wallet-username-line{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;gap:6px;margin-top:11px;padding:5px;border-radius:20px;background:rgba(148,163,184,.09);border:1px solid rgba(148,163,184,.18);direction:ltr}
+#walletPage .wallet-username-line b{min-height:40px;padding:6px 16px;border:0;border-radius:15px;background:transparent;box-shadow:none;font-size:1.02rem;font-weight:800;letter-spacing:.2px;color:#a5f3fc!important}
+#walletPage .wallet-copy-username{width:42px;min-width:42px;min-height:42px;padding:0;border:0;border-radius:15px;color:#fff;background:linear-gradient(135deg,#06b6d4,#3b82f6);box-shadow:0 8px 16px -8px rgba(6,182,212,.9);transition:transform .15s ease}
+#walletPage .wallet-copy-username:active{transform:scale(.92)}
+#walletPage .wallet-profile-settings{display:inline-flex;align-items:center;gap:8px;margin:12px 0 0;padding:10px 18px;border-radius:999px;border:1px solid rgba(148,163,184,.26);background:rgba(148,163,184,.08);color:var(--text-main,#f8fafc);font-weight:800;font-size:.8rem;transition:background .2s ease,transform .15s ease}
+#walletPage .wallet-profile-settings i{color:var(--primary,#06b6d4)}
+#walletPage .wallet-profile-settings:active{transform:scale(.96)}
+#walletPage .wallet-profile-hint{display:inline-flex;align-items:center;gap:6px;margin:12px 0 14px;font-size:.68rem;font-weight:700;color:var(--text-muted,#94a3b8)}
+#walletPage .wallet-profile-hint i{color:#34d399}
+
+/* ---------- مربع الرصيد ---------- */
+#walletPage .wallet-profile .wallet-balance{
+  width:100%;margin:0;padding:18px 18px 16px;border-radius:24px;text-align:right;
+  border:1px solid rgba(125,211,252,.3);
+  background-image:linear-gradient(135deg,rgba(6,12,32,var(--wallet-bg-overlay,.76)),rgba(16,38,84,var(--wallet-bg-overlay,.68))),var(--wallet-balance-image,url("https://a.top4top.io/p_3940sxuie1.jpg"));
+  background-position:center;background-size:var(--wallet-bg-size,cover);background-repeat:no-repeat;
+  box-shadow:0 22px 40px -22px rgba(37,99,235,.75),inset 0 1px 0 rgba(255,255,255,.14);
+}
+#walletPage .wallet-profile .wallet-balance::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(210px 150px at 100% 0%,rgba(56,189,248,.36),transparent 70%),
+    radial-gradient(190px 150px at 0% 100%,rgba(139,92,246,.36),transparent 70%);
+}
+#walletPage .wallet-profile .wallet-balance::after{
+  content:"";position:absolute;top:0;bottom:0;left:0;width:34%;z-index:0;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.09),transparent);
+  animation:smmProSweep 7s ease-in-out infinite;
+}
+#walletPage .wallet-profile .wallet-balance small{
+  display:flex;align-items:center;gap:9px;font-size:.8rem;font-weight:800;color:rgba(224,239,255,.9)!important;text-shadow:none!important;
+}
+#walletPage .wallet-profile .wallet-balance small i{width:32px;height:32px;display:grid;place-items:center;border-radius:11px;font-size:.85rem;color:#7dd3fc;background:rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+#walletPage .wallet-profile .wallet-balance strong{
+  display:flex;align-items:baseline;justify-content:flex-end;gap:7px;margin-top:14px;direction:ltr;
+  font-family:'Almarai',sans-serif;font-size:2.35rem;font-weight:800;line-height:1.15;letter-spacing:-.3px;font-variant-numeric:tabular-nums;
+  color:#fff!important;text-shadow:0 4px 22px rgba(56,189,248,.45)!important;
+}
+#walletPage .wallet-balance strong .wb-dec{font-size:.55em;font-weight:700;opacity:.72;letter-spacing:0}
+#walletPage .wallet-balance strong .wb-cur{align-self:center;margin-inline-start:4px;padding:5px 11px;border-radius:999px;font-size:.3em;font-weight:800;letter-spacing:1.2px;color:#e0f2fe;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);text-shadow:none}
+#walletPage .wallet-profile .wallet-balance #walletUserLabel{
+  display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:.74rem;font-weight:700;color:rgba(203,225,255,.82)!important;text-shadow:none!important;
+}
+#walletPage .wallet-profile .wallet-balance #walletUserLabel::before{content:"";flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#34d399;animation:wProPulse 2s ease-out infinite}
+
+/* ---------- الوضع النهاري ---------- */
+body.light-theme #walletPage .wallet-tabs{background:#eef3f8;border-color:#d6e0ea}
+body.light-theme #walletPage .wallet-tabs .wallet-tab{background:transparent;color:#64748b;border:0;box-shadow:none}
+body.light-theme #walletPage .wallet-tabs .wallet-tab.active{color:#fff;background:linear-gradient(135deg,#06b6d4,#3b82f6);box-shadow:0 10px 18px -10px rgba(8,145,178,.85),inset 0 1px 0 rgba(255,255,255,.35)}
+body.light-theme #walletPage .wallet-profile{border-color:#d6e4f0;background:linear-gradient(165deg,#ffffff,#f1f7fd);box-shadow:0 22px 40px -28px rgba(15,23,42,.35),inset 0 1px 0 #fff}
+body.light-theme #walletPage .wallet-profile::before{
+  background:
+    radial-gradient(rgba(15,23,42,.10) 1px,transparent 1.6px) 0 0/15px 15px,
+    radial-gradient(190px 120px at 12% 0%,rgba(6,182,212,.34),transparent 72%),
+    radial-gradient(210px 130px at 92% 8%,rgba(139,92,246,.30),transparent 72%),
+    radial-gradient(170px 100px at 55% 100%,rgba(59,130,246,.22),transparent 72%);
+}
+body.light-theme #walletPage .wallet-profile-avatar{border-color:#fff;box-shadow:0 8px 18px rgba(15,23,42,.18)}
+body.light-theme #walletPage .wallet-profile-badge{border-color:#fff}
+body.light-theme #walletPage .wallet-profile .wallet-profile-avatar-wrap+.wallet-profile-title{color:#172033!important}
+body.light-theme #walletPage .wallet-profile .wallet-profile-title+.wallet-profile-title{color:#64748b!important}
+body.light-theme #walletPage .wallet-username-line{background:#eef4fa;border-color:#d6e4f0}
+body.light-theme #walletPage .wallet-username-line b{color:#0e7490!important;background:transparent;border:0;box-shadow:none}
+body.light-theme #walletPage .wallet-profile-settings{color:#172033;background:#fff;border-color:#d6e0ea;box-shadow:0 4px 12px -8px rgba(15,23,42,.3)}
+body.light-theme #walletPage .wallet-profile-hint{color:#64748b}
+body.light-theme #walletPage .wallet-profile .wallet-balance{
+  border-color:#c7e0f2;
+  background-image:linear-gradient(135deg,rgba(255,255,255,.86),rgba(226,241,255,.82)),var(--wallet-balance-image,url("https://a.top4top.io/p_3940sxuie1.jpg"))!important;
+  box-shadow:0 20px 36px -24px rgba(37,99,235,.55),inset 0 1px 0 #fff;
+}
+body.light-theme #walletPage .wallet-profile .wallet-balance::before{
+  background:
+    radial-gradient(210px 150px at 100% 0%,rgba(56,189,248,.22),transparent 70%),
+    radial-gradient(190px 150px at 0% 100%,rgba(139,92,246,.16),transparent 70%);
+}
+body.light-theme #walletPage .wallet-profile .wallet-balance::after{background:linear-gradient(100deg,transparent,rgba(255,255,255,.8),transparent)}
+body.light-theme #walletPage .wallet-profile .wallet-balance small{color:#334155!important;text-shadow:none!important}
+body.light-theme #walletPage .wallet-profile .wallet-balance small i{color:#0e7490;background:rgba(8,145,178,.12);box-shadow:none}
+body.light-theme #walletPage .wallet-profile .wallet-balance strong{color:#0f2a4a!important;text-shadow:none!important}
+body.light-theme #walletPage .wallet-balance strong .wb-cur{color:#0e7490;background:rgba(8,145,178,.12);border-color:rgba(8,145,178,.25)}
+body.light-theme #walletPage .wallet-profile .wallet-balance #walletUserLabel{color:#475569!important;text-shadow:none!important}
+@media(max-width:360px){#walletPage .wallet-profile .wallet-balance strong{font-size:2rem}#walletPage .wallet-tabs .wallet-tab{font-size:.68rem}}
+@media(prefers-reduced-motion:reduce){#walletPage .wallet-profile-avatar-wrap::before,#walletPage .wallet-profile .wallet-balance::after,#walletPage .wallet-profile .wallet-balance #walletUserLabel::before{animation:none!important}}
+</style>
+<script id="wallet-balance-split">
+/* تنسيق عرض الرصيد فقط (الرقم كبير + الكسور + العملة في كبسولة) - لا يغيّر قيمة الرصيد أو منطقه */
+(function(){
+  var el=document.getElementById('walletBalanceMain');if(!el||!window.MutationObserver)return;
+  var mo=new MutationObserver(run);
+  function run(){
+    try{
+      if(el.firstElementChild)return;
+      var m=(el.textContent||'').match(/^\s*([\d,]+)(\.\d+)?\s+([A-Za-z]{3})\s*$/);if(!m)return;
+      mo.disconnect();
+      el.textContent='';
+      var a=document.createElement('span');a.className='wb-int';a.textContent=m[1];
+      var b=document.createElement('span');b.className='wb-dec';b.textContent=m[2]||'';
+      var c=document.createElement('span');c.className='wb-cur';c.textContent=m[3];
+      el.appendChild(a);el.appendChild(b);el.appendChild(document.createTextNode(' '));el.appendChild(c);
+    }catch(e){}
+    try{mo.observe(el,{childList:true,characterData:true});}catch(e){}
+  }
+  run();
+  try{mo.observe(el,{childList:true,characterData:true});}catch(e){}
+})();
+</script>
+
 
 
 <section id="smmPage" aria-hidden="true" role="dialog" aria-modal="true" aria-label="خدمات السوشيال ميديا">
